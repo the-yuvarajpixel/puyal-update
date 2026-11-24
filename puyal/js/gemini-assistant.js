@@ -1,0 +1,909 @@
+// ============================================================================
+// PUYAL AI Assistant & Voice Suite (Online + Offline Emergency Guidance)
+// Integrates:
+// 1. Multi-turn Chatbot & Voice Commands (gemini-4-hydrogen, gemini-3.1-flash-lite)
+// 2. Audio Transcription (gemini-3.5-transcribe)
+// 3. Neural TTS & Live Voice (gemini-3.8-flash-lite-tts, gemini-3.8-live)
+// ============================================================================
+
+(function () {
+  'use strict';
+
+  // Determine current role based on page or session
+  const isUserPage = window.location.pathname.includes('user');
+  const appRole = isUserPage ? 'civilian' : 'admin';
+
+  let chatHistory = [];
+  let isRecordingForChat = false;
+  let mediaRecorder = null;
+  let audioChunks = [];
+  let isLiveVoiceActive = false;
+
+  function generateOfflineAiReply(msg, role) {
+    const lower = String(msg || '').toLowerCase();
+    if (role === 'admin') {
+      if (/group|dispatch|strike|flood|collapse/.test(lower)) {
+        return '**[Offline Tactical Protocol — Grouped Dispatch]**\n1. Pair **1 ALS Ambulance + 1 NDRF Boat/Rescue Unit** per active flooded or collapsed cluster.\n2. Prioritize Critical SOS alerts within 2km radius before secondary staging.\n3. Cached team & incident statuses remain active and will sync live on reconnect.';
+      }
+      if (/conserve|fleet|readiness|resource/.test(lower)) {
+        return '**[Offline Tactical Protocol — Fleet Conservation]**\n1. Hold minimum 25% of depot ambulances & fire tenders in reserve for high-casualty surges.\n2. Route closest available station unit using straight-line distance estimates.\n3. All queued actions auto-sync when connectivity returns.';
+      }
+      if (/perimeter|2km|evac|corridor/.test(lower)) {
+        return '**[Offline Tactical Protocol — 2km Perimeter]**\n1. Establish a 2km exclusion radius upwind of fire/hazmat scenes or downstream of flood breaches.\n2. Route civilian evacuation outward along high-elevation arterial roads toward command depots.\n3. Emergency contacts: **112 National**, **108 Ambulance**, **101 Fire**.';
+      }
+      return '**[PUYAL AI Offline Command Mode]**\nYou are currently offline. Cached incidents, stations, and 2km map perimeters are still active.\n• **Triage Order:** Critical SOS → Structural Collapse/Fire → Medical Trauma → Road Accident.\n• Emergency lines: **112**, **108**, **101**.';
+    }
+
+    if (/fire|burn|smoke|flame|gas|heat/.test(lower)) {
+      return '**[Offline Fire Survival Protocol]**\n1. **Stay low** beneath the smoke layer where air is cleaner.\n2. Cover nose/mouth with a wet cloth and test doors with back of hand before opening.\n3. Exit via stairs only — **never** use elevators.\n4. Once outside, dial **101 (Fire)** or **112** and queue an incident in PUYAL.';
+    }
+    if (/flood|water|drown|cyclone|rain|surge|high ground/.test(lower)) {
+      return '**[Offline Flood & Cyclone Protocol]**\n1. **Move immediately to the highest floor or elevated ground.**\n2. Never walk or drive through moving floodwater and stay clear of downed power lines.\n3. Turn off main electricity/gas if safe to do so.\n4. Keep PUYAL SOS active — location/reports save locally and sync automatically on signal return.';
+    }
+    if (/bleed|blood|heart|breath|injur|wound|first aid|ambulance|medical/.test(lower)) {
+      return '**[Offline First-Aid Protocol]**\n1. **Stop severe bleeding:** Apply firm, direct continuous pressure with a clean cloth.\n2. Keep injured victims warm, still, and breathing comfortably; protect neck/spine in trauma.\n3. For burns, cool with clean running water for 20 minutes — do not apply ice or butter.\n4. Call **108 (Ambulance)** / **112** if cellular voice is available.';
+    }
+    if (/shelter|evac|safe|collapse|earthquake|trapped/.test(lower)) {
+      return '**[Offline Shelter & Rescue Protocol]**\n1. Avoid damaged walls/bridges; move to an open high-ground assembly zone.\n2. If trapped, cover mouth from dust, conserve energy, and **tap rhythmically on pipes or walls**.\n3. Keep your PUYAL SOS GPS beacon armed — queued reports auto-transmit as soon as signal returns.';
+    }
+    return '**[PUYAL AI Offline Safety Guide]**\nInternet is unavailable, so local emergency survival protocols are active:\n• **Flood/Cyclone:** Move to high ground immediately.\n• **Fire/Smoke:** Stay low, exit via stairs.\n• **Medical/Bleeding:** Apply firm clean pressure.\n• Submit SOS or incident reports in PUYAL anytime — they save offline and auto-sync on reconnect. Call **112** / **108** if cellular signal exists.';
+  }
+
+  // --------------------------------------------------------------------------
+  // Audio Transcription Utility (gemini-3.5-transcribe + offline safe fallback)
+  // --------------------------------------------------------------------------
+  async function transcribeAudioBlob(blob) {
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      return 'Offline voice recording captured — describe emergency details or tap SOS for local dispatch queueing.';
+    }
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        try {
+          const base64Data = reader.result;
+          const res = await fetch('/api/gemini/transcribe', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              audioBase64: base64Data,
+              mimeType: blob.type || 'audio/webm'
+            })
+          });
+          const data = await res.json();
+          if (data && data.success && data.text) {
+            resolve(data.text);
+          } else {
+            resolve('Emergency assistance requested at location.');
+          }
+        } catch (e) {
+          console.warn('Transcription offline fallback:', e);
+          resolve('Emergency assistance requested at location.');
+        }
+      };
+      reader.onerror = () => resolve('Emergency assistance requested at location.');
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  // --------------------------------------------------------------------------
+  // Voice Recording Helper
+  // --------------------------------------------------------------------------
+  async function startRecording(onComplete, onStateChange) {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      if (typeof window.showToast === 'function') {
+        window.showToast('Microphone access is not supported in this browser.', 'error');
+      } else {
+        console.warn('Microphone access is not supported in this browser.');
+      }
+      return null;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioChunks = [];
+      const recorder = new MediaRecorder(stream);
+
+      recorder.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) audioChunks.push(e.data);
+      };
+
+      recorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+        // Stop audio tracks
+        stream.getTracks().forEach(t => t.stop());
+        if (onStateChange) onStateChange('transcribing');
+        try {
+          const text = await transcribeAudioBlob(audioBlob);
+          if (onComplete) onComplete(text);
+        } catch (err) {
+          console.warn('Transcription failed:', err);
+        } finally {
+          if (onStateChange) onStateChange('idle');
+        }
+      };
+
+      recorder.start();
+      if (onStateChange) onStateChange('recording');
+      return recorder;
+    } catch (err) {
+      console.error('Microphone error:', err);
+      if (typeof window.showToast === 'function') {
+        window.showToast('Microphone permission was denied or not available.', 'error');
+      }
+      return null;
+    }
+  }
+
+  // Global helper for other pages (like report incident form)
+  window.recordAndTranscribeWithGemini = function (targetInputId, statusIndicatorId) {
+    const targetInput = document.getElementById(targetInputId);
+    const statusEl = statusIndicatorId ? document.getElementById(statusIndicatorId) : null;
+
+    if (window._activeFormRecorder && window._activeFormRecorder.state === 'recording') {
+      window._activeFormRecorder.stop();
+      window._activeFormRecorder = null;
+      return;
+    }
+
+    startRecording(
+      (text) => {
+        if (targetInput) {
+          targetInput.value = (targetInput.value ? targetInput.value + ' ' : '') + text;
+          targetInput.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+      },
+      (state) => {
+        if (statusEl) {
+          if (state === 'recording') {
+            statusEl.innerHTML = '🔴 Listening... (Click to Finish & Transcribe)';
+            statusEl.style.color = '#dc2626';
+          } else if (state === 'transcribing') {
+            statusEl.innerHTML = '✨ Transcribing with Gemini 3.5...';
+            statusEl.style.color = '#0284c7';
+          } else {
+            statusEl.innerHTML = '🎙️ Transcribe Voice Report (Gemini 3.5)';
+            statusEl.style.color = '';
+          }
+        }
+      }
+    ).then(rec => {
+      window._activeFormRecorder = rec;
+    });
+  };
+
+  // --------------------------------------------------------------------------
+  // Build and Inject Assistant Floating UI
+  // --------------------------------------------------------------------------
+  function injectAssistantUI() {
+    if (document.getElementById('gemini-assistant-root')) return;
+
+    const root = document.createElement('div');
+    root.id = 'gemini-assistant-root';
+    root.innerHTML = `
+      <!-- Floating Launch Button -->
+      <button id="gemini-toggle-btn" class="gemini-floating-btn" title="Open PUYAL AI Command Assistant">
+        <span class="ai-sparkle">✨</span>
+        <span class="ai-label">PUYAL AI</span>
+        <span class="ai-badge">${appRole === 'admin' ? 'Command' : 'Safety'}</span>
+      </button>
+
+      <!-- Slide-Out Chat & Voice Panel -->
+      <div id="gemini-chat-panel" class="gemini-chat-drawer hidden">
+        <div class="gemini-chat-header">
+          <div class="header-left">
+            <div class="gemini-logo-icon">🤖</div>
+            <div>
+              <div class="gemini-title">PUYAL AI</div>
+              <div class="gemini-sub">Gemini 3.8 / 4.0 &bull; Disaster Intelligence</div>
+            </div>
+          </div>
+          <div class="header-right">
+            <a href="voice-studio.html" class="btn-live-voice-chip" style="background: rgba(56,189,248,0.18); color:#7dd3fc; border-color:#38bdf8; text-decoration:none;" title="Open Voice AI, Hardware &amp; Android APK Studio">
+              🎛️ Studio
+            </a>
+            <button id="btn-open-live-voice" class="btn-live-voice-chip" title="Launch Gemini 3.8 Live Voice Mode">
+              🎙️ Live Voice
+            </button>
+            <button id="gemini-close-btn" class="gemini-close-btn" title="Close Panel">&times;</button>
+          </div>
+        </div>
+
+        <!-- Model Selector Bar -->
+        <div class="gemini-model-bar">
+          <label for="gemini-model-select">AI MODEL:</label>
+          <select id="gemini-model-select" class="gemini-model-select">
+            <option value="gemini-4-hydrogen" selected>Gemini 4 Hydrogen (Maps &amp; Voice Suite)</option>
+            <option value="gemini-3.1-flash-lite">Gemini 3.1 Flash Lite (Ultra-Fast)</option>
+          </select>
+        </div>
+
+        <!-- Quick Suggested Chips -->
+        <div class="gemini-quick-chips">
+          ${appRole === 'admin' ? `
+            <button class="ai-chip" onclick="window.sendGeminiQuickPrompt('Find nearest hospitals, trauma centers, and emergency shelters near our sector')">📍 Nearby Hospitals &amp; Shelters</button>
+            <button class="ai-chip" onclick="window.sendGeminiQuickPrompt('Recommend grouped strike force dispatch for flood and structure collapse')">🚀 Grouped Dispatch</button>
+            <button class="ai-chip" onclick="window.sendGeminiQuickPrompt('Evaluate resource conservation and fleet readiness status')">🌱 Conserve Fleet</button>
+            <button class="ai-chip" onclick="window.sendGeminiQuickPrompt('Calculate evacuation corridor around active 2km perimeter')">⭕ 2km Perimeter Strategy</button>
+          ` : `
+            <button class="ai-chip" onclick="window.sendGeminiQuickPrompt('Find nearby hospitals, emergency shelters, and medical aid stations')">📍 Nearby Hospitals &amp; Shelters</button>
+            <button class="ai-chip" onclick="window.sendGeminiQuickPrompt('What are immediate survival steps if water is entering my home?')">🌊 Water Rising</button>
+            <button class="ai-chip" onclick="window.sendGeminiQuickPrompt('How do I treat severe bleeding or burn injuries while waiting for ambulance?')">🩹 First Aid</button>
+            <button class="ai-chip" onclick="window.sendGeminiQuickPrompt('Where is the nearest safe shelter and high ground evacuation zone?')">🏢 Safe Shelters</button>
+          `}
+        </div>
+
+        <!-- Messages Thread -->
+        <div id="gemini-messages-thread" class="gemini-messages-thread">
+          <div class="ai-msg bot">
+            <div class="msg-bubble">
+              <strong>${appRole === 'admin' ? '🛡️ Commander Dispatch Assistant Active' : '🕊️ Emergency Safety Guide Active'}</strong>
+              <p style="margin:4px 0 0 0;">
+                ${appRole === 'admin'
+                  ? 'I can optimize multi-unit team assignments, calculate casualty risk scores, and coordinate perimeter zones. How can I assist current operations?'
+                  : 'I am here to guide you through any emergency with step-by-step survival protocols, first aid, and dispatch updates. What is your current situation?'}
+              </p>
+            </div>
+            <span class="msg-time">Just now</span>
+          </div>
+        </div>
+
+        <!-- Input Bar -->
+        <div class="gemini-input-bar">
+          <button id="btn-chat-mic" class="gemini-mic-btn" title="Speak to Transcribe (Gemini 3.5 Transcribe)">
+            🎙️
+          </button>
+          <textarea id="gemini-chat-input" class="gemini-textarea" placeholder="${appRole === 'admin' ? 'Ask tactical question or dispatch advice...' : 'Type or speak your emergency question...'}" rows="1"></textarea>
+          <button id="gemini-send-btn" class="gemini-send-btn" title="Send message">
+            ➤
+          </button>
+        </div>
+      </div>
+
+      <!-- Live Voice Conversation Modal (Gemini 3.8 Live API) -->
+      <div id="gemini-live-voice-modal" class="gemini-live-modal hidden">
+        <div class="live-modal-content">
+          <button id="btn-close-live-voice" class="live-close-btn">&times;</button>
+          <div class="live-badge">GEMINI 3.8 LIVE API &bull; DUPLEX VOICE</div>
+          <h2 class="live-title">Real-Time Voice Conversation</h2>
+          <p class="live-desc">Hands-free emergency voice link. Speak naturally to receive instant audio safety guidance.</p>
+
+          <!-- Animated Voice Wave Visualizer -->
+          <div class="voice-visualizer-container">
+            <div id="voice-pulse-ring" class="voice-pulse-ring"></div>
+            <div class="voice-center-orb">
+              <span id="voice-orb-icon">🎙️</span>
+            </div>
+          </div>
+
+          <div id="live-voice-status" class="live-voice-status">Listening... Speak now</div>
+          <div id="live-voice-transcript" class="live-voice-transcript">"Emergency assistant connected. What help do you need?"</div>
+
+          <div class="live-controls">
+            <button id="btn-toggle-live-mic" class="btn-live-action">
+              <span id="live-mic-icon">🔴</span>
+              <span id="live-mic-text">Stop Talking</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Inject styles
+    const style = document.createElement('style');
+    style.textContent = `
+      .gemini-floating-btn {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        color: #ffffff;
+        border: 1.5px solid #38bdf8;
+        border-radius: 9999px;
+        padding: 12px 20px;
+        font-family: inherit;
+        font-size: 14px;
+        font-weight: 800;
+        cursor: pointer;
+        box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.4), 0 0 15px rgba(56, 189, 248, 0.3);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+      .gemini-floating-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 14px 28px -5px rgba(15, 23, 42, 0.5), 0 0 20px rgba(56, 189, 248, 0.5);
+      }
+      .ai-sparkle { font-size: 16px; }
+      .ai-badge {
+        background: #38bdf8;
+        color: #0f172a;
+        font-size: 10px;
+        padding: 2px 7px;
+        border-radius: 9999px;
+        text-transform: uppercase;
+        font-weight: 800;
+      }
+      .gemini-chat-drawer {
+        position: fixed;
+        bottom: 84px;
+        right: 24px;
+        width: 400px;
+        max-width: calc(100vw - 32px);
+        height: 560px;
+        max-height: calc(100vh - 110px);
+        background: #ffffff;
+        border-radius: 16px;
+        box-shadow: 0 20px 40px -10px rgba(15, 23, 42, 0.3), 0 0 0 1px rgba(15, 23, 42, 0.1);
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        animation: geminiSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      @keyframes geminiSlideUp {
+        from { opacity: 0; transform: translateY(16px) scale(0.98); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+      }
+      .gemini-chat-drawer.hidden { display: none !important; }
+      .gemini-chat-header {
+        background: #0f172a;
+        color: #ffffff;
+        padding: 14px 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+      }
+      .header-left { display: flex; align-items: center; gap: 10px; }
+      .gemini-logo-icon {
+        width: 34px; height: 34px; border-radius: 8px; background: rgba(56, 189, 248, 0.15);
+        border: 1px solid #38bdf8; display: flex; align-items: center; justify-content: center; font-size: 18px;
+      }
+      .gemini-title { font-size: 15px; font-weight: 800; line-height: 1.2; }
+      .gemini-sub { font-size: 10px; color: #94a3b8; }
+      .header-right { display: flex; align-items: center; gap: 8px; }
+      .btn-live-voice-chip {
+        background: rgba(239, 68, 68, 0.2);
+        color: #fca5a5;
+        border: 1px solid #ef4444;
+        font-size: 11px;
+        font-weight: 700;
+        padding: 5px 10px;
+        border-radius: 9999px;
+        cursor: pointer;
+      }
+      .btn-live-voice-chip:hover { background: #ef4444; color: #fff; }
+      .gemini-close-btn {
+        background: transparent; border: none; color: #94a3b8; font-size: 22px; cursor: pointer; padding: 0 4px;
+      }
+      .gemini-close-btn:hover { color: #fff; }
+      .gemini-model-bar {
+        background: #f8fafc;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 8px 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 11px;
+        font-weight: 700;
+        color: #475569;
+      }
+      .gemini-model-select {
+        flex: 1;
+        padding: 4px 8px;
+        font-size: 11px;
+        border-radius: 6px;
+        border: 1px solid #cbd5e1;
+        background: #fff;
+        color: #0f172a;
+        font-weight: 600;
+        outline: none;
+      }
+      .gemini-quick-chips {
+        padding: 8px 12px;
+        display: flex;
+        gap: 6px;
+        overflow-x: auto;
+        white-space: nowrap;
+        background: #f1f5f9;
+        border-bottom: 1px solid #e2e8f0;
+      }
+      .ai-chip {
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-radius: 9999px;
+        padding: 4px 10px;
+        font-size: 11px;
+        font-weight: 600;
+        color: #334155;
+        cursor: pointer;
+        flex-shrink: 0;
+      }
+      .ai-chip:hover { background: #e0f2fe; border-color: #38bdf8; color: #0369a1; }
+      .gemini-messages-thread {
+        flex: 1;
+        padding: 14px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        background: #f8fafc;
+      }
+      .ai-msg { display: flex; flex-direction: column; max-width: 86%; }
+      .ai-msg.user { align-self: flex-end; align-items: flex-end; }
+      .ai-msg.bot { align-self: flex-start; align-items: flex-start; }
+      .msg-bubble {
+        padding: 10px 14px;
+        border-radius: 12px;
+        font-size: 13px;
+        line-height: 1.5;
+        word-break: break-word;
+      }
+      .ai-msg.user .msg-bubble {
+        background: #0284c7;
+        color: #ffffff;
+        border-bottom-right-radius: 2px;
+      }
+      .ai-msg.bot .msg-bubble {
+        background: #ffffff;
+        color: #0f172a;
+        border: 1px solid #e2e8f0;
+        border-bottom-left-radius: 2px;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      }
+      .gemini-places-box {
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px solid #e2e8f0;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .gemini-places-head {
+        font-size: 10px;
+        font-weight: 800;
+        text-transform: uppercase;
+        color: #0369a1;
+        letter-spacing: 0.3px;
+      }
+      .gemini-place-link {
+        display: block;
+        padding: 6px 8px;
+        border-radius: 6px;
+        background: #f0f9ff;
+        border: 1px solid #bae6fd;
+        color: #0c4a6e;
+        text-decoration: none;
+        font-size: 12px;
+        font-weight: 700;
+      }
+      .gemini-place-link:hover {
+        background: #e0f2fe;
+        border-color: #38bdf8;
+      }
+      .gemini-place-snippet {
+        display: block;
+        font-size: 11px;
+        font-weight: 400;
+        color: #475569;
+        margin-top: 2px;
+      }
+      .msg-time { font-size: 10px; color: #94a3b8; margin-top: 3px; }
+      .gemini-input-bar {
+        padding: 10px 12px;
+        background: #ffffff;
+        border-top: 1px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .gemini-mic-btn {
+        width: 36px; height: 36px; border-radius: 50%; border: 1px solid #cbd5e1;
+        background: #f8fafc; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      }
+      .gemini-mic-btn:hover { background: #e2e8f0; }
+      .gemini-mic-btn.recording { background: #fee2e2; border-color: #ef4444; animation: alertPulse 1.2s infinite; }
+      .gemini-textarea {
+        flex: 1;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        padding: 8px 10px;
+        font-size: 13px;
+        font-family: inherit;
+        resize: none;
+        outline: none;
+        max-height: 80px;
+      }
+      .gemini-textarea:focus { border-color: #0284c7; }
+      .gemini-send-btn {
+        width: 36px; height: 36px; border-radius: 8px; border: none;
+        background: #0284c7; color: #fff; font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      }
+      .gemini-send-btn:hover { background: #0369a1; }
+      /* Live Voice Modal */
+      .gemini-live-modal {
+        position: fixed; inset: 0; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(8px);
+        z-index: 100000; display: flex; align-items: center; justify-content: center; padding: 20px;
+      }
+      .gemini-live-modal.hidden { display: none !important; }
+      .live-modal-content {
+        background: #0f172a; border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 24px;
+        width: 480px; max-width: 100%; padding: 36px 28px; text-align: center; color: #fff; position: relative;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+      }
+      .live-close-btn {
+        position: absolute; top: 16px; right: 18px; background: transparent; border: none;
+        color: #94a3b8; font-size: 26px; cursor: pointer;
+      }
+      .live-badge {
+        display: inline-block; background: rgba(56, 189, 248, 0.15); color: #38bdf8;
+        border: 1px solid #38bdf8; font-size: 10px; font-weight: 800; padding: 3px 10px; border-radius: 9999px; margin-bottom: 12px;
+      }
+      .live-title { font-size: 22px; font-weight: 800; margin: 0 0 6px 0; }
+      .live-desc { font-size: 13px; color: #94a3b8; margin: 0 0 28px 0; }
+      .voice-visualizer-container {
+        position: relative; width: 140px; height: 140px; margin: 0 auto 24px auto;
+        display: flex; align-items: center; justify-content: center;
+      }
+      .voice-pulse-ring {
+        position: absolute; inset: 0; border-radius: 50%; border: 3px solid #38bdf8;
+        animation: livePulse 2s cubic-bezier(0.24, 0, 0.38, 1) infinite;
+      }
+      @keyframes livePulse {
+        0% { transform: scale(0.8); opacity: 0.8; }
+        50% { transform: scale(1.2); opacity: 0.3; }
+        100% { transform: scale(0.8); opacity: 0.8; }
+      }
+      .voice-center-orb {
+        width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, #0284c7 0%, #38bdf8 100%);
+        display: flex; align-items: center; justify-content: center; font-size: 32px; box-shadow: 0 0 30px rgba(56, 189, 248, 0.6);
+      }
+      .live-voice-status { font-size: 14px; font-weight: 700; color: #38bdf8; margin-bottom: 12px; }
+      .live-voice-transcript {
+        background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px; padding: 14px; font-size: 13px; color: #e2e8f0; min-height: 60px; margin-bottom: 24px; font-style: italic;
+      }
+      .btn-live-action {
+        background: #ef4444; color: #fff; border: none; padding: 12px 24px; border-radius: 9999px;
+        font-weight: 800; font-size: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;
+      }
+      .btn-live-action:hover { background: #dc2626; }
+    `;
+
+    document.head.appendChild(style);
+    document.body.appendChild(root);
+
+    // Event listeners
+    const toggleBtn = document.getElementById('gemini-toggle-btn');
+    const panel = document.getElementById('gemini-chat-panel');
+    const closeBtn = document.getElementById('gemini-close-btn');
+    const sendBtn = document.getElementById('gemini-send-btn');
+    const inputEl = document.getElementById('gemini-chat-input');
+    const micBtn = document.getElementById('btn-chat-mic');
+    const liveVoiceBtn = document.getElementById('btn-open-live-voice');
+    const liveModal = document.getElementById('gemini-live-voice-modal');
+    const liveCloseBtn = document.getElementById('btn-close-live-voice');
+
+    toggleBtn.addEventListener('click', () => {
+      panel.classList.toggle('hidden');
+      if (!panel.classList.contains('hidden')) inputEl.focus();
+    });
+
+    closeBtn.addEventListener('click', () => {
+      panel.classList.add('hidden');
+    });
+
+    sendBtn.addEventListener('click', () => {
+      sendChatMessage();
+    });
+
+    inputEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendChatMessage();
+      }
+    });
+
+    // Chat microphone transcription (gemini-3.5-transcribe)
+    let chatRecorder = null;
+    micBtn.addEventListener('click', async () => {
+      if (chatRecorder && chatRecorder.state === 'recording') {
+        chatRecorder.stop();
+        chatRecorder = null;
+        return;
+      }
+
+      chatRecorder = await startRecording(
+        (text) => {
+          inputEl.value = (inputEl.value ? inputEl.value + ' ' : '') + text;
+          inputEl.focus();
+        },
+        (state) => {
+          if (state === 'recording') micBtn.classList.add('recording');
+          else micBtn.classList.remove('recording');
+        }
+      );
+    });
+
+    // Live Voice Modal (gemini-3.8-live)
+    liveVoiceBtn.addEventListener('click', () => {
+      liveModal.classList.remove('hidden');
+      startLiveVoiceSession();
+    });
+
+    liveCloseBtn.addEventListener('click', () => {
+      liveModal.classList.add('hidden');
+      stopLiveVoiceSession();
+    });
+
+    document.getElementById('btn-toggle-live-mic').addEventListener('click', () => {
+      stopLiveVoiceSession();
+      liveModal.classList.add('hidden');
+    });
+
+    window.sendGeminiQuickPrompt = function (text) {
+      inputEl.value = text;
+      sendChatMessage();
+    };
+  }
+
+  async function resolveAssistantCoordinates() {
+    if (window._currentCoords && window._currentCoords.latitude && window._currentCoords.longitude) {
+      return {
+        latitude: Number(window._currentCoords.latitude),
+        longitude: Number(window._currentCoords.longitude)
+      };
+    }
+    if (typeof window.getCurrentOrCachedCoords === 'function') {
+      const c = window.getCurrentOrCachedCoords();
+      if (c && c.latitude && c.longitude) {
+        return { latitude: Number(c.latitude), longitude: Number(c.longitude) };
+      }
+    }
+    if (typeof navigator !== 'undefined' && navigator.geolocation) {
+      const pos = await new Promise((resolve) => {
+        const timer = setTimeout(() => resolve(null), 1500);
+        navigator.geolocation.getCurrentPosition(
+          (p) => { clearTimeout(timer); resolve(p); },
+          () => { clearTimeout(timer); resolve(null); },
+          { timeout: 1400, maximumAge: 60000 }
+        );
+      });
+      if (pos && pos.coords) {
+        return { latitude: pos.coords.latitude, longitude: pos.coords.longitude };
+      }
+    }
+    return { latitude: 13.0604, longitude: 80.2496 };
+  }
+
+  function renderGroundedPlacesHtml(places) {
+    if (!Array.isArray(places) || places.length === 0) return '';
+    const itemsHtml = places.map((p) => {
+      const safeTitle = escapeHtml(p.title || 'Google Maps Place');
+      const safeUri = escapeHtml(p.uri || 'https://www.google.com/maps');
+      const snippets = Array.isArray(p.reviewSnippets) && p.reviewSnippets.length > 0
+        ? `<span class="gemini-place-snippet">${escapeHtml(p.reviewSnippets[0])}</span>`
+        : '';
+      return `<a class="gemini-place-link" href="${safeUri}" target="_blank" rel="noopener noreferrer">📍 ${safeTitle} ↗${snippets}</a>`;
+    }).join('');
+    return `
+      <div class="gemini-places-box">
+        <div class="gemini-places-head">🗺️ Grounded with Google Maps</div>
+        ${itemsHtml}
+      </div>
+    `;
+  }
+
+  // --------------------------------------------------------------------------
+  // Send Chat Message
+  // --------------------------------------------------------------------------
+  async function sendChatMessage() {
+    const inputEl = document.getElementById('gemini-chat-input');
+    const thread = document.getElementById('gemini-messages-thread');
+    const modelSelect = document.getElementById('gemini-model-select');
+
+    const msg = (inputEl.value || '').trim();
+    if (!msg) return;
+
+    inputEl.value = '';
+
+    // Append user message
+    const userMsgEl = document.createElement('div');
+    userMsgEl.className = 'ai-msg user';
+    userMsgEl.innerHTML = `
+      <div class="msg-bubble">${escapeHtml(msg)}</div>
+      <span class="msg-time">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+    `;
+    thread.appendChild(userMsgEl);
+    thread.scrollTop = thread.scrollHeight;
+
+    // Append bot placeholder
+    const botMsgEl = document.createElement('div');
+    botMsgEl.className = 'ai-msg bot';
+    botMsgEl.innerHTML = `
+      <div class="msg-bubble" style="opacity: 0.7;">Thinking...</div>
+      <span class="msg-time">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+    `;
+    thread.appendChild(botMsgEl);
+    thread.scrollTop = thread.scrollHeight;
+
+    const selectedModel = modelSelect ? modelSelect.value : 'gemini-4-hydrogen';
+    const coords = await resolveAssistantCoordinates();
+    const useMapsGrounding = selectedModel === 'gemini-4-hydrogen';
+
+    let reply = null;
+    let places = [];
+    const looksLikeModularCmd = /^(hey\s+puyal|turn\s+(on|off)|switch\s+(on|off)|toggle|activate\s+sos|sector\s+status|sound\s+siren|silence\s+siren|shut\s+off|start\s+generator)/i.test(msg);
+
+    if (typeof navigator === 'undefined' || navigator.onLine) {
+      if (looksLikeModularCmd) {
+        try {
+          const modRes = await fetch('/api/voice-suite/execute', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ utterance: msg, model: selectedModel })
+          });
+          if (modRes.ok) {
+            const modData = await modRes.json();
+            if (modData && modData.success && modData.reply) {
+              const badge = modData.route === 'hardware_module'
+                ? '🔌 **[Hardware Bridge]** '
+                : modData.route === 'custom_module'
+                  ? '🧩 **[Command Module]** '
+                  : '';
+              reply = `${badge}${modData.reply}`;
+            }
+          }
+        } catch (err) {
+          console.warn('Voice module check skipped:', err);
+        }
+      }
+
+      if (!reply) {
+        try {
+          const res = await fetch('/api/gemini/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              message: msg,
+              history: chatHistory,
+              model: selectedModel,
+              role: appRole,
+              latitude: coords.latitude,
+              longitude: coords.longitude,
+              useMapsGrounding
+            })
+          });
+          if (res.ok) {
+            const data = await res.json();
+            reply = data.reply || null;
+            places = Array.isArray(data.places) ? data.places : [];
+          }
+        } catch (err) {
+          console.warn('Chat offline fallback activated:', err);
+        }
+      }
+    }
+
+    if (!reply) {
+      reply = generateOfflineAiReply(msg, appRole);
+    }
+
+    const bubbleEl = botMsgEl.querySelector('.msg-bubble');
+    bubbleEl.innerHTML = formatMarkdown(reply) + renderGroundedPlacesHtml(places);
+    bubbleEl.style.opacity = '1';
+
+    chatHistory.push({ role: 'user', text: msg });
+    chatHistory.push({ role: 'assistant', text: reply });
+    thread.scrollTop = thread.scrollHeight;
+  }
+
+  // --------------------------------------------------------------------------
+  // Live Voice Session (gemini-3.8-live)
+  // --------------------------------------------------------------------------
+  let liveRecorder = null;
+
+  async function startLiveVoiceSession() {
+    isLiveVoiceActive = true;
+    const statusEl = document.getElementById('live-voice-status');
+    const transcriptEl = document.getElementById('live-voice-transcript');
+
+    statusEl.innerText = 'Listening to your voice... Speak now';
+    transcriptEl.innerText = '"I am listening. Describe your emergency or what instructions you need."';
+
+    liveRecorder = await startRecording(
+      async (spokenText) => {
+        if (!isLiveVoiceActive) return;
+        statusEl.innerText = '✨ Gemini 3.8 Live Thinking...';
+        transcriptEl.innerText = `"${spokenText}"`;
+
+        let reply = '';
+        if (typeof navigator === 'undefined' || navigator.onLine) {
+          try {
+            const res = await fetch('/api/gemini/live-voice', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ speechText: spokenText, lang: 'en' })
+            });
+            if (res.ok) {
+              const data = await res.json();
+              reply = data.speechReply || '';
+            }
+          } catch (e) {
+            console.warn('Live voice offline fallback:', e);
+          }
+        }
+        if (!reply) {
+          reply = 'Offline voice mode active. Stay clear of hazards, move to high ground or open air, and keep PUYAL SOS armed for automatic dispatch sync.';
+        }
+
+        transcriptEl.innerHTML = `<strong>You:</strong> "${spokenText}"<br><br><strong>PUYAL AI Live:</strong> "${reply}"`;
+        statusEl.innerText = '🔊 Speaking response...';
+
+        // Play synthesized audio using Web Speech API
+        if ('speechSynthesis' in window) {
+          window.speechSynthesis.cancel();
+          const utterance = new SpeechSynthesisUtterance(reply);
+          utterance.rate = 1.05;
+          utterance.onend = () => {
+            if (isLiveVoiceActive) {
+              statusEl.innerText = 'Listening again...';
+              startLiveVoiceSession();
+            }
+          };
+          window.speechSynthesis.speak(utterance);
+        } else {
+          setTimeout(() => {
+            if (isLiveVoiceActive) {
+              statusEl.innerText = 'Listening again...';
+              startLiveVoiceSession();
+            }
+          }, 3000);
+        }
+      },
+      (state) => {
+        if (state === 'recording') statusEl.innerText = '🔴 Listening...';
+      }
+    );
+  }
+
+  function stopLiveVoiceSession() {
+    isLiveVoiceActive = false;
+    if (liveRecorder && liveRecorder.state === 'recording') {
+      liveRecorder.stop();
+      liveRecorder = null;
+    }
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+  }
+
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  function formatMarkdown(text) {
+    let html = escapeHtml(text);
+    // Bold
+    html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    // Bullet points
+    html = html.replace(/^\s*[-*]\s+(.*)$/gm, '&bull; $1<br>');
+    // Newlines
+    html = html.replace(/\n/g, '<br>');
+    return html;
+  }
+
+  // Initialize once DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', injectAssistantUI);
+  } else {
+    injectAssistantUI();
+  }
+})();

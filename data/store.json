@@ -1,0 +1,594 @@
+{
+  "users": [
+    {
+      "uid": "admin_primary_1",
+      "email": "admin@rapidresponse.org",
+      "password": "RapidResponse@1",
+      "role": "admin",
+      "displayName": "Command Admin",
+      "createdAt": "2026-11-22T10:22:06.991Z"
+    },
+    {
+      "uid": "demo_user_1",
+      "email": "civilian.demo@rapidresponse.org",
+      "password": "demopassword123",
+      "role": "user",
+      "displayName": "Civilian Responder (Demo)",
+      "createdAt": "2026-11-10T07:16:31.240Z"
+    }
+  ],
+  "incidents": [
+    {
+      "id": 1794637452168,
+      "title": "🚨 LIVE SOS ALERT — fast.stream@test.local",
+      "category": "SOS Emergency",
+      "severity": "Critical",
+      "severityScore": 98,
+      "latitude": 13.0604,
+      "longitude": 80.2496,
+      "coords": {
+        "lat": 13.0604,
+        "lon": 80.2496
+      },
+      "location": "13.06040, 80.24960 (GPS ±5m)",
+      "affected": 1,
+      "description": "SOS triggered by fast.stream@test.local. Live camera and audio feed initiated. Dispatched to command center.",
+      "contact": "fast.stream@test.local",
+      "status": "Reported",
+      "timestamp": "11/14/2026, 6:24:12 AM",
+      "reportedBy": "fast.stream@test.local",
+      "reportedRole": "civilian",
+      "source": "sos",
+      "createdAt": "2026-11-14T06:24:12.168Z"
+    },
+    {
+      "id": 1794637211211,
+      "title": "🚨 LIVE SOS ALERT — civilian.demo@rapidresponse.org",
+      "category": "SOS Emergency",
+      "severity": "Critical",
+      "severityScore": 98,
+      "latitude": 13.0604,
+      "longitude": 80.2496,
+      "coords": {
+        "lat": 13.0604,
+        "lon": 80.2496
+      },
+      "location": "13.06040, 80.24960 (GPS ±12m)",
+      "affected": 1,
+      "description": "SOS triggered by civilian.demo@rapidresponse.org. Live camera and audio feed initiated. Dispatched to command center.",
+      "contact": "civilian.demo@rapidresponse.org",
+      "status": "Reported",
+      "timestamp": "11/14/2026, 6:20:11 AM",
+      "reportedBy": "civilian.demo@rapidresponse.org",
+      "reportedRole": "civilian",
+      "source": "sos",
+      "createdAt": "2026-11-14T06:20:11.212Z"
+    }
+  ],
+  "sos_alerts": [
+    {
+      "id": "sos_1794637211188",
+      "userId": "demo_user_1",
+      "email": "civilian.demo@rapidresponse.org",
+      "reportedRole": "civilian",
+      "latitude": 13.0604,
+      "longitude": 80.2496,
+      "accuracy": 12,
+      "active": false,
+      "media": {
+        "hasVideo": true,
+        "hasAudio": true
+      },
+      "timestamp": "2026-11-14T06:20:11.188Z",
+      "displayTime": "6:20:11 AM",
+      "locationUpdatedAt": "2026-11-14T06:20:13.666Z",
+      "resolvedAt": "2026-11-14T06:20:13.670Z"
+    }
+  ],
+  "emailTokens": [
+    {
+      "token": "link_1794295014734_zcysbhj",
+      "email": "civilian.demo@rapidresponse.org",
+      "role": "user",
+      "expiresAt": 1794296814734,
+      "createdAt": "2026-11-10T07:16:54.734Z"
+    },
+    {
+      "token": "link_1794297944654_1pdxc7k",
+      "email": "civilian.demo@rapidresponse.org",
+      "role": "user",
+      "expiresAt": 1794299744654,
+      "createdAt": "2026-11-10T08:05:44.654Z"
+    }
+  ],
+  "government_stations": [
+    {
+      "stationId": "STN-CEN-01",
+      "name": "EOC Central Disaster Command Depot",
+      "zone": "Central Metro",
+      "address": "Anna Salai Disaster Operations Complex",
+      "contact": "+91 44 2859 3900",
+      "distanceKm": 2.4,
+      "ambulances": {
+        "als": 4,
+        "bls": 12,
+        "deployed": 5
+      },
+      "fireTenders": {
+        "water": 6,
+        "foam": 4,
+        "ladder": 2,
+        "deployed": 4
+      },
+      "ndrfTeams": {
+        "total": 4,
+        "activePersonnel": 120,
+        "deployed": 3
+      },
+      "ervVehicles": {
+        "total": 10,
+        "deployed": 3
+      },
+      "rescueBoats": {
+        "total": 8,
+        "deployed": 1
+      },
+      "medicalSquads": {
+        "total": 6,
+        "deployed": 2
+      },
+      "status": "Operational",
+      "latitude": 13.0604,
+      "longitude": 80.2496
+    },
+    {
+      "stationId": "STN-NTH-02",
+      "name": "North Metro Fire & Trauma Response Base",
+      "zone": "North Industrial Belt",
+      "address": "GT Road Industrial Corridor",
+      "contact": "+91 44 2522 1108",
+      "distanceKm": 5.1,
+      "ambulances": {
+        "als": 4,
+        "bls": 8,
+        "deployed": 1
+      },
+      "fireTenders": {
+        "water": 10,
+        "foam": 6,
+        "ladder": 3,
+        "deployed": 3
+      },
+      "ndrfTeams": {
+        "total": 4,
+        "activePersonnel": 96,
+        "deployed": 1
+      },
+      "ervVehicles": {
+        "total": 8,
+        "deployed": 2
+      },
+      "rescueBoats": {
+        "total": 4,
+        "deployed": 0
+      },
+      "medicalSquads": {
+        "total": 4,
+        "deployed": 1
+      },
+      "status": "Operational",
+      "latitude": 13.12,
+      "longitude": 80.28
+    },
+    {
+      "stationId": "STN-CST-03",
+      "name": "Coastal Marine & Flood Rescue Station",
+      "zone": "Coastal & Riverfront Zone",
+      "address": "Marina Coastal Relief Outpost",
+      "contact": "+91 44 2844 7100",
+      "distanceKm": 3.8,
+      "ambulances": {
+        "als": 3,
+        "bls": 6,
+        "deployed": 1
+      },
+      "fireTenders": {
+        "water": 4,
+        "foam": 2,
+        "ladder": 1,
+        "deployed": 1
+      },
+      "ndrfTeams": {
+        "total": 6,
+        "activePersonnel": 144,
+        "deployed": 3
+      },
+      "ervVehicles": {
+        "total": 6,
+        "deployed": 1
+      },
+      "rescueBoats": {
+        "total": 16,
+        "deployed": 4
+      },
+      "medicalSquads": {
+        "total": 5,
+        "deployed": 2
+      },
+      "status": "Operational",
+      "latitude": 13.045,
+      "longitude": 80.2824
+    },
+    {
+      "stationId": "STN-STH-04",
+      "name": "South Expressway Rapid Trauma Depot",
+      "zone": "South Highway Corridor",
+      "address": "NH-48 Emergency Response Base",
+      "contact": "+91 44 2234 1080",
+      "distanceKm": 7.2,
+      "ambulances": {
+        "als": 8,
+        "bls": 14,
+        "deployed": 4
+      },
+      "fireTenders": {
+        "water": 6,
+        "foam": 3,
+        "ladder": 1,
+        "deployed": 2
+      },
+      "ndrfTeams": {
+        "total": 3,
+        "activePersonnel": 72,
+        "deployed": 1
+      },
+      "ervVehicles": {
+        "total": 12,
+        "deployed": 4
+      },
+      "rescueBoats": {
+        "total": 2,
+        "deployed": 0
+      },
+      "medicalSquads": {
+        "total": 5,
+        "deployed": 2
+      },
+      "status": "Operational",
+      "latitude": 12.98,
+      "longitude": 80.21
+    }
+  ],
+  "dispatches": [],
+  "teams": [
+    {
+      "teamId": "TEAM-FIRE-01",
+      "name": "Alpha Blaze Strike Unit",
+      "category": "Fire",
+      "expertise": "Fire Suppression & Heavy Rescue",
+      "stationId": "STN-CEN-01",
+      "stationName": "EOC Central Disaster Command Depot",
+      "latitude": 13.061,
+      "longitude": 80.249,
+      "personnelCount": 8,
+      "vehicles": [
+        "Water Tender (6000L)",
+        "Hydraulic Ladder Truck"
+      ],
+      "contact": "+91 44 2859 3911",
+      "status": "Available",
+      "assignedIncidentId": null,
+      "assignedIncidentTitle": null,
+      "assignedAt": null
+    },
+    {
+      "teamId": "TEAM-MED-01",
+      "name": "Trauma ALS Rapid Squad 1",
+      "category": "Medical Emergency",
+      "expertise": "Advanced Life Support & Critical Trauma",
+      "stationId": "STN-CEN-01",
+      "stationName": "EOC Central Disaster Command Depot",
+      "latitude": 13.0595,
+      "longitude": 80.2512,
+      "personnelCount": 5,
+      "vehicles": [
+        "ALS Mobile ICU Ambulance",
+        "Rapid Paramedic Bike"
+      ],
+      "contact": "+91 44 2859 3922",
+      "status": "Available",
+      "assignedIncidentId": null,
+      "assignedIncidentTitle": null,
+      "assignedAt": null
+    },
+    {
+      "teamId": "TEAM-NDRF-01",
+      "name": "NDRF Urban Search & Rescue 04",
+      "category": "Structural Collapse",
+      "expertise": "Disaster Search & Heavy Debris Extraction",
+      "stationId": "STN-NTH-02",
+      "stationName": "North Metro Fire & Trauma Response Base",
+      "latitude": 13.118,
+      "longitude": 80.279,
+      "personnelCount": 16,
+      "vehicles": [
+        "Heavy Rescue Carrier",
+        "Structural Breaker Van"
+      ],
+      "contact": "+91 44 2522 1119",
+      "status": "Available",
+      "assignedIncidentId": null,
+      "assignedIncidentTitle": null,
+      "assignedAt": null
+    },
+    {
+      "teamId": "TEAM-MARINE-01",
+      "name": "Coastal Flood & Boat Rescue Unit",
+      "category": "Flood",
+      "expertise": "Flood Water Evacuation & Deep Water Rescue",
+      "stationId": "STN-CST-03",
+      "stationName": "Coastal Marine & Flood Rescue Station",
+      "latitude": 13.046,
+      "longitude": 80.283,
+      "personnelCount": 10,
+      "vehicles": [
+        "Inflatable Motor Boats (x2)",
+        "Amphibious Evac Cruiser"
+      ],
+      "contact": "+91 44 2844 7115",
+      "status": "Available",
+      "assignedIncidentId": null,
+      "assignedIncidentTitle": null,
+      "assignedAt": null
+    },
+    {
+      "teamId": "TEAM-ERV-01",
+      "name": "Expressway Highway Patrol ERV",
+      "category": "Road Accident",
+      "expertise": "Highway Extrication & Rapid Triage",
+      "stationId": "STN-STH-04",
+      "stationName": "South Expressway Rapid Trauma Depot",
+      "latitude": 12.981,
+      "longitude": 80.211,
+      "personnelCount": 6,
+      "vehicles": [
+        "Highway Emergency Response Vehicle (ERV)",
+        "Tow & Cutter Unit"
+      ],
+      "contact": "+91 44 2234 1095",
+      "status": "Available",
+      "assignedIncidentId": null,
+      "assignedIncidentTitle": null,
+      "assignedAt": null
+    },
+    {
+      "teamId": "TEAM-HAZMAT-01",
+      "name": "HAZMAT Chemical & Industrial Squad",
+      "category": "Fire",
+      "expertise": "Chemical Containment, Gas Leak & Decontamination",
+      "stationId": "STN-NTH-02",
+      "stationName": "North Metro Fire & Trauma Response Base",
+      "latitude": 13.122,
+      "longitude": 80.281,
+      "personnelCount": 7,
+      "vehicles": [
+        "Hazmat Haz-Pod Rover",
+        "Decon Shower Carrier"
+      ],
+      "contact": "+91 44 2522 1133",
+      "status": "Available",
+      "assignedIncidentId": null,
+      "assignedIncidentTitle": null,
+      "assignedAt": null
+    }
+  ],
+  "voice_modules": [
+    {
+      "id": "mod_sos_dispatch",
+      "name": "SOS Emergency Beacon",
+      "slug": "sos_dispatch",
+      "category": "Emergency",
+      "enabled": true,
+      "triggers": [
+        "activate sos",
+        "start sos",
+        "emergency beacon",
+        "send help now"
+      ],
+      "actionType": "puyal_sos",
+      "target": "/api/sos",
+      "responseTemplate": "SOS beacon armed. Haptic pulse engaged and live GPS coordinates queued for Command Center.",
+      "description": "Triggers an instant PUYAL emergency SOS alert and haptic feedback sequence by voice.",
+      "builtin": true
+    },
+    {
+      "id": "mod_sector_status",
+      "name": "Sector Readiness Briefing",
+      "slug": "sector_status",
+      "category": "Operations",
+      "enabled": true,
+      "triggers": [
+        "sector status",
+        "command briefing",
+        "active incidents",
+        "fleet readiness"
+      ],
+      "actionType": "puyal_status",
+      "target": "/api/health",
+      "responseTemplate": "Sector briefing ready: {{incidentsCount}} active incidents, {{activeSosCount}} live SOS feeds, and {{devicesOnline}} hardware modules online.",
+      "description": "Reads live incident counts, active SOS feeds, and connected hardware module telemetry.",
+      "builtin": true
+    },
+    {
+      "id": "mod_perimeter_lights",
+      "name": "Perimeter Floodlights",
+      "slug": "perimeter_lights",
+      "category": "Smart Home / Hardware",
+      "enabled": true,
+      "triggers": [
+        "perimeter lights",
+        "floodlights",
+        "emergency lighting",
+        "beacon lights"
+      ],
+      "actionType": "hardware_control",
+      "target": "hw_perimeter_lights",
+      "responseTemplate": "Perimeter floodlights relay set to {{state}}.",
+      "description": "Controls emergency perimeter smart lights via MQTT/HTTP/Web Serial relay.",
+      "builtin": true
+    },
+    {
+      "id": "mod_siren_alert",
+      "name": "Tactical Siren & PA Horn",
+      "slug": "siren_alert",
+      "category": "Smart Home / Hardware",
+      "enabled": true,
+      "triggers": [
+        "siren",
+        "alarm horn",
+        "evacuation siren",
+        "pa horn"
+      ],
+      "actionType": "hardware_control",
+      "target": "hw_siren_horn",
+      "responseTemplate": "Tactical siren & PA horn switched {{state}}.",
+      "description": "Activates or silences the facility evacuation siren module.",
+      "builtin": true
+    },
+    {
+      "id": "mod_flood_pump",
+      "name": "Flood Sump Pump Relay",
+      "slug": "flood_pump",
+      "category": "Smart Home / Hardware",
+      "enabled": true,
+      "triggers": [
+        "sump pump",
+        "water pump",
+        "drainage pump",
+        "flood pump"
+      ],
+      "actionType": "hardware_control",
+      "target": "hw_sump_pump",
+      "responseTemplate": "Flood sump pump relay switched {{state}}.",
+      "description": "Engages ESP32/Home Assistant sump pump relay during flood alerts.",
+      "builtin": true
+    }
+  ],
+  "hardware_devices": [
+    {
+      "id": "hw_perimeter_lights",
+      "name": "Emergency Perimeter Floodlights",
+      "protocol": "Home Assistant / HTTP",
+      "topicOrEndpoint": "puyal/sector1/lights/perimeter",
+      "webhookUrl": "",
+      "serialCommandOn": "RELAY1:ON",
+      "serialCommandOff": "RELAY1:OFF",
+      "state": "OFF",
+      "zone": "Sector Perimeter",
+      "icon": "💡",
+      "voiceAliases": [
+        "perimeter lights",
+        "floodlights",
+        "emergency lights",
+        "lights"
+      ],
+      "lastUpdated": "2026-11-22T10:24:06.122Z",
+      "lastSource": "dashboard"
+    },
+    {
+      "id": "hw_siren_horn",
+      "name": "Evacuation Siren & PA Horn",
+      "protocol": "MQTT / ESP32 Relay",
+      "topicOrEndpoint": "puyal/sector1/alarm/siren",
+      "webhookUrl": "",
+      "serialCommandOn": "SIREN:ON",
+      "serialCommandOff": "SIREN:OFF",
+      "state": "OFF",
+      "zone": "Command Roof",
+      "icon": "📢",
+      "voiceAliases": [
+        "siren",
+        "alarm",
+        "evacuation siren",
+        "pa horn"
+      ],
+      "lastUpdated": "2026-11-22T10:22:06.984Z"
+    },
+    {
+      "id": "hw_sump_pump",
+      "name": "Flood Sump Pump Controller",
+      "protocol": "ESP32 GPIO / Web Serial",
+      "topicOrEndpoint": "puyal/basement/pump/main",
+      "webhookUrl": "",
+      "serialCommandOn": "PUMP:ON",
+      "serialCommandOff": "PUMP:OFF",
+      "state": "OFF",
+      "zone": "Lower Utility Deck",
+      "icon": "🌊",
+      "voiceAliases": [
+        "sump pump",
+        "water pump",
+        "flood pump",
+        "pump"
+      ],
+      "lastUpdated": "2026-11-22T10:22:06.984Z"
+    },
+    {
+      "id": "hw_backup_gen",
+      "name": "Backup Generator Transfer Switch",
+      "protocol": "Modbus / HTTP Webhook",
+      "topicOrEndpoint": "puyal/power/generator/ats",
+      "webhookUrl": "",
+      "serialCommandOn": "GEN_ATS:ON",
+      "serialCommandOff": "GEN_ATS:OFF",
+      "state": "STANDBY",
+      "zone": "Power Substation",
+      "icon": "⚡",
+      "voiceAliases": [
+        "generator",
+        "backup power",
+        "transfer switch"
+      ],
+      "lastUpdated": "2026-11-22T10:22:06.984Z"
+    },
+    {
+      "id": "hw_ble_beacon",
+      "name": "BLE Rescue Strobe Beacon",
+      "protocol": "Web Bluetooth (BLE)",
+      "topicOrEndpoint": "ble://puyal-rescue-beacon-01",
+      "webhookUrl": "",
+      "serialCommandOn": "BEACON:STROBE",
+      "serialCommandOff": "BEACON:OFF",
+      "state": "OFF",
+      "zone": "Mobile Field Kit",
+      "icon": "📡",
+      "voiceAliases": [
+        "rescue beacon",
+        "strobe",
+        "bluetooth beacon"
+      ],
+      "lastUpdated": "2026-11-22T10:22:06.984Z"
+    }
+  ],
+  "apk_config": {
+    "packageId": "com.puyal.command",
+    "appName": "PUYAL Command",
+    "versionName": "1.0.0",
+    "versionCode": 1,
+    "serverUrl": "http://localhost:3000",
+    "permissions": [
+      "android.permission.INTERNET",
+      "android.permission.ACCESS_NETWORK_STATE",
+      "android.permission.ACCESS_FINE_LOCATION",
+      "android.permission.ACCESS_COARSE_LOCATION",
+      "android.permission.RECORD_AUDIO",
+      "android.permission.CAMERA",
+      "android.permission.VIBRATE",
+      "android.permission.POST_NOTIFICATIONS",
+      "android.permission.BLUETOOTH_CONNECT",
+      "android.permission.BLUETOOTH_SCAN"
+    ],
+    "themeColor": "#0f172a",
+    "backgroundColor": "#0f172a"
+  }
+}

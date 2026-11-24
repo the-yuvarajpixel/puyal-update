@@ -1,0 +1,34 @@
+{
+  "packageId": "com.puyal.command",
+  "host": "localhost:3000",
+  "name": "PUYAL Command",
+  "launcherName": "PUYAL Comman",
+  "display": "standalone",
+  "themeColor": "#0f172a",
+  "navigationColor": "#0f172a",
+  "backgroundColor": "#0f172a",
+  "enableNotifications": true,
+  "startUrl": "/",
+  "iconUrl": "http://localhost:3000/pwa-512x512.png",
+  "maskableIconUrl": "http://localhost:3000/pwa-maskable-512x512.png",
+  "webManifestUrl": "http://localhost:3000/manifest.webmanifest",
+  "appVersionName": "1.0.0",
+  "appVersionCode": 1,
+  "shortcuts": [
+    {
+      "name": "SOS Live Stream",
+      "shortName": "SOS",
+      "url": "/dashboard-user.html?action=sos"
+    },
+    {
+      "name": "Voice AI Studio",
+      "shortName": "Voice AI",
+      "url": "/voice-studio.html"
+    }
+  ],
+  "features": {
+    "locationDelegation": {
+      "enabled": true
+    }
+  }
+}

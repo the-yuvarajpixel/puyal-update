@@ -1,0 +1,3817 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PUYAL — Admin Command Control</title>
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="PUYAL" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <!-- Open-Source Local Leaflet GIS & Mapping Engine -->
+  <link rel="stylesheet" href="/vendor/leaflet/leaflet.css" />
+  <script src="/vendor/leaflet/leaflet.js"></script>
+  <script src="js/leaflet-idb-cache.js"></script>
+  <script src="js/gps-accuracy-badge.js"></script>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <link rel="alternate icon" href="favicon.ico" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    .emergency-alert-banner {
+      background: linear-gradient(135deg, #dc2626, #991b1b);
+      color: #fff;
+      padding: 14px 20px;
+      border-radius: var(--radius-lg);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      box-shadow: 0 4px 20px rgba(220, 38, 38, 0.35);
+      animation: alertPulse 2s infinite alternate;
+    }
+    @keyframes alertPulse {
+      from { box-shadow: 0 0 10px rgba(220, 38, 38, 0.4); }
+      to { box-shadow: 0 0 24px rgba(220, 38, 38, 0.8); }
+    }
+    .sync-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: var(--radius-full);
+      background: rgba(5, 150, 105, 0.15);
+      color: var(--success);
+      border: 1px solid rgba(5, 150, 105, 0.3);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ============ NAVBAR ============ -->
+  <nav class="navbar">
+    <div class="nav-brand">
+      <span class="sos-tag">SOS</span>
+      <h1 data-i18n="nav.brand_admin">PUYAL — Admin Command Center</h1>
+    </div>
+    <div class="nav-right" style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+      <!-- Multilingual Translation Selector & Instant Translate Button -->
+      <div class="lang-selector-bar" style="display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.08); padding: 4px 8px; border-radius: var(--radius-md); border: 1px solid rgba(255,255,255,0.18);">
+        <span style="font-size: 14px;">🌐</span>
+        <select id="global-lang-select" onchange="translatePage(this.value)" aria-label="Select Language" style="background: transparent; color: #fff; border: none; font-size: 12px; font-weight: 600; outline: none; cursor: pointer; padding: 2px 4px;">
+          <option value="en" style="background: #1e293b; color: #fff;">English (English)</option>
+          <option value="ta" style="background: #1e293b; color: #fff;">தமிழ் (Tamil)</option>
+          <option value="hi" style="background: #1e293b; color: #fff;">हिन्दी (Hindi)</option>
+          <option value="te" style="background: #1e293b; color: #fff;">తెలుగు (Telugu)</option>
+          <option value="ml" style="background: #1e293b; color: #fff;">മലയാളം (Malayalam)</option>
+          <option value="kn" style="background: #1e293b; color: #fff;">ಕನ್ನಡ (Kannada)</option>
+          <option value="bn" style="background: #1e293b; color: #fff;">বাংলা (Bengali)</option>
+          <option value="es" style="background: #1e293b; color: #fff;">Español (Spanish)</option>
+        </select>
+        <button type="button" id="btn-translate-page" class="btn" style="background: var(--primary); color: #fff; padding: 4px 10px; font-size: 12px; font-weight: 700; border-radius: var(--radius-sm); border: none; cursor: pointer;" onclick="onGlobalTranslateClick()">
+          <span data-i18n="nav.translate_btn">🌐 Translate</span>
+        </button>
+      </div>
+      <a href="voice-studio.html" class="nav-btn" style="background: rgba(2,132,199,0.24); border: 1px solid rgba(56,189,248,0.45); color: #e0f2fe; text-decoration: none; font-size: 12px; padding: 6px 10px; border-radius: var(--radius-sm); font-weight: 700;">🤖 Voice &amp; APK</a>
+      <span class="sync-badge" id="sync-status" data-i18n="nav.live_sync">● Live Stream Active</span>
+      <span class="nav-user" id="nav-admin-email">Loading...</span>
+      <button class="nav-btn btn-logout" onclick="logout()"><span data-i18n="nav.logout">Logout</span></button>
+    </div>
+  </nav>
+
+  <!-- ============ TOAST ============ -->
+  <div class="toast" id="toast"></div>
+
+  <!-- ============ MAIN CONTENT ============ -->
+  <main class="main-container">
+
+    <!-- ── Live SOS Critical Alert Banner (Auto-shows when SOS is active) ── -->
+    <div id="active-emergency-banner" class="emergency-alert-banner hidden">
+      <div style="display: flex; align-items: center; gap: 14px;">
+        <span style="font-size: 28px;">🚨</span>
+        <div>
+          <div style="font-weight: 800; font-size: 15px; letter-spacing: 0.5px;">ACTIVE SOS BROADCAST RECEIVED</div>
+          <div style="font-size: 13px; opacity: 0.95; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+            <span id="banner-sos-details">Civilian reporting live distress</span>
+            <span id="banner-sos-accuracy-badge"></span>
+          </div>
+        </div>
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <button class="btn btn-confirm" style="background: #fff; color: var(--danger); font-weight: 800; padding: 8px 16px; border: none; cursor: pointer; border-radius: var(--radius-md);" onclick="resolveTopSOS()">
+          ✅ Dispatch Responders &amp; Resolve
+        </button>
+      </div>
+    </div>
+
+    <!-- ── Live SOS Feed ── -->
+    <div class="live-feed-card" id="live-feed-card">
+      <div class="live-feed-header">
+        <h3><span class="live-dot"></span> Live SOS Alerts (Civilian Camera &amp; Audio Feeds)</h3>
+        <span style="font-size: 12px; color: var(--text-muted);" id="sos-count">0 active</span>
+      </div>
+      <div class="live-feed-body" id="live-feed-body">
+        <div class="live-feed-empty" id="no-sos-msg">
+          No active SOS alerts. All is calm.
+        </div>
+      </div>
+    </div>
+
+    <!-- ====================================================================
+         SECTION 1: ADVANCED OPERATIONS ANALYTICS DASHBOARD
+         ==================================================================== -->
+    <section class="analytics-section">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 20px;">
+        <div>
+          <span class="gov-badge" style="background: #eff6ff; color: #1e40af; border-color: #bfdbfe;">
+            MISSION COMMAND INTELLIGENCE
+          </span>
+          <h2 style="font-size: 20px; font-weight: 800; color: var(--navy); margin-top: 4px;">
+            Advanced Operations Analytics Dashboard
+          </h2>
+          <p style="font-size: 13px; color: var(--text-secondary); margin-top: 2px;">
+            Real-time operational insights: emergency volume, triage status, team availability, fleet readiness, and category breakdown.
+          </p>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 12px; font-weight: 700; color: var(--text-muted);">Sync:</span>
+          <span class="sync-badge" style="background: #ecfdf5; color: #047857; border-color: #a7f3d0;">
+            ● Live Data Active
+          </span>
+        </div>
+      </div>
+
+      <!-- 6 Key Operational Insight Metric Cards -->
+      <div class="analytics-grid-6">
+        <!-- 1. Total Incidents -->
+        <div class="analytics-card" style="border-top: 4px solid var(--navy);">
+          <div class="analytics-card-label" data-i18n="admin.kpi.total">Total Emergency Incidents</div>
+          <div class="analytics-card-value" id="stat-total-incidents">0</div>
+          <!-- Backward-compatible hidden ID for old script references if needed -->
+          <span id="stat-total" style="display: none;">0</span>
+          <div class="analytics-card-sub" style="color: var(--text-secondary);">
+            <span>📊 Across all zones</span>
+          </div>
+        </div>
+
+        <!-- 2. Critical Incidents -->
+        <div class="analytics-card" style="border-top: 4px solid var(--danger); background: #fff5f5;">
+          <div class="analytics-card-label" style="color: #991b1b;" data-i18n="admin.kpi.critical">Critical Incidents</div>
+          <div class="analytics-card-value" id="stat-critical-incidents" style="color: var(--danger);">0</div>
+          <span id="stat-critical" style="display: none;">0</span>
+          <div class="analytics-card-sub" style="color: var(--danger); font-weight: 700;">
+            <span>🚨 Immediate priority triage</span>
+          </div>
+        </div>
+
+        <!-- 3. Available Response Teams -->
+        <div class="analytics-card" style="border-top: 4px solid var(--success); background: #f0fdf4;">
+          <div class="analytics-card-label" style="color: #166534;" data-i18n="admin.kpi.available">Available Response Teams</div>
+          <div class="analytics-card-value" id="stat-avail-teams-kpi" style="color: var(--success);">0</div>
+          <div class="analytics-card-sub" style="color: #166534; font-weight: 700;">
+            <span>✅ Ready for immediate dispatch</span>
+          </div>
+        </div>
+
+        <!-- 4. Busy Response Teams -->
+        <div class="analytics-card" style="border-top: 4px solid var(--warning); background: #fffbeb;">
+          <div class="analytics-card-label" style="color: #92400e;" data-i18n="admin.kpi.busy">Busy Response Teams</div>
+          <div class="analytics-card-value" id="stat-busy-teams-kpi" style="color: var(--warning);">0</div>
+          <div class="analytics-card-sub" style="color: #92400e; font-weight: 700;">
+            <span>⚡ Dispatched / On scene</span>
+          </div>
+        </div>
+
+        <!-- 5. Assigned Incidents -->
+        <div class="analytics-card" style="border-top: 4px solid var(--info); background: #eff6ff;">
+          <div class="analytics-card-label" style="color: #1e40af;" data-i18n="admin.kpi.assigned">Assigned Incidents</div>
+          <div class="analytics-card-value" id="stat-assigned-incidents-kpi" style="color: var(--info);">0</div>
+          <span id="stat-pending" style="display: none;">0</span>
+          <div class="analytics-card-sub" style="color: #1e40af; font-weight: 700;">
+            <span>🚑 Response unit on transit</span>
+          </div>
+        </div>
+
+        <!-- 6. Resolved Incidents -->
+        <div class="analytics-card" style="border-top: 4px solid #059669;">
+          <div class="analytics-card-label" style="color: #065f46;" data-i18n="admin.kpi.resolved">Resolved Incidents</div>
+          <div class="analytics-card-value" id="stat-resolved-incidents-kpi" style="color: #059669;">0</div>
+          <span id="stat-resolved" style="display: none;">0</span>
+          <div class="analytics-card-sub" style="color: #065f46;">
+            <span>🏁 Closed emergency operations</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Advanced Breakdown: Incident Distribution by Category & Regional Threat -->
+      <div class="analytics-breakdown-row">
+        <!-- Incident Distribution by Category -->
+        <div class="cat-distribution-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+            <div>
+              <strong style="font-size: 14px; color: var(--navy);">📊 Incident Distribution by Category</strong>
+              <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">
+                Active disaster classification across emergency categories
+              </div>
+            </div>
+            <span style="font-size: 11px; font-weight: 700; color: var(--navy-soft);" id="total-categories-label">6 Types</span>
+          </div>
+          <div id="cat-distribution-bars" style="display: flex; flex-direction: column; gap: 10px;">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+
+        <!-- Fleet Readiness & Threat Severity Index -->
+        <div class="cat-distribution-card" style="display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+              <strong style="font-size: 14px; color: var(--navy);">⚡ Threat Severity &amp; Readiness</strong>
+              <span id="admin-threat-gauge-badge" class="severity-score-badge meter-high">Status: High (74/100)</span>
+            </div>
+            <div class="meter-track" style="margin-bottom: 8px;">
+              <div id="admin-threat-gauge-bar" class="meter-fill meter-high" style="width: 74%;"></div>
+            </div>
+            <div class="meter-labels" style="margin-bottom: 16px;">
+              <span>🟢 Low</span>
+              <span>🟡 Moderate</span>
+              <span>🟠 High</span>
+              <span>🔴 Critical</span>
+            </div>
+          </div>
+
+          <div style="border-top: 1px solid var(--border); padding-top: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div>
+              <div style="font-size: 11px; font-weight: 700; color: var(--text-muted);">FLEET READINESS</div>
+              <div style="font-size: 18px; font-weight: 900; color: #059669;" id="analytics-fleet-readiness">85%</div>
+              <div style="font-size: 11px; color: var(--text-secondary);">Units in ready state</div>
+            </div>
+            <div>
+              <div style="font-size: 11px; font-weight: 700; color: var(--text-muted);">CIVILIANS IMPACTED</div>
+              <div style="font-size: 18px; font-weight: 900; color: var(--danger);" id="analytics-affected-lives">18</div>
+              <div style="font-size: 11px; color: var(--text-secondary);">Lives being protected</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         SECTION 2: TACTICAL GPS DISASTER MAP & ROUTE VISUALIZATION (Leaflet)
+         ==================================================================== -->
+    <section class="tactical-map-section">
+      <div class="map-header">
+        <div>
+          <span id="map-engine-badge" class="gov-badge" style="background: #fef3c7; color: #92400e; border-color: #fde68a;">
+            TACTICAL MAPPING GIS ENGINE
+          </span>
+          <h2 style="font-size: 20px; font-weight: 800; color: var(--navy); margin-top: 4px;" data-i18n="admin.map.heading">
+            Tactical GPS Disaster Map &amp; Real-Time Route Visualizer
+          </h2>
+          <p style="font-size: 13px; color: var(--text-secondary); margin-top: 2px;" data-i18n="admin.map.subheading">
+            Real-time geospatial operational view of disaster pins, emergency response vehicles, station depots, civilian GPS beacons, and 2 km tactical response perimeters.
+          </p>
+        </div>
+
+        <div class="map-toolbar">
+          <!-- Layer Filter Buttons -->
+          <button type="button" class="map-filter-btn active" id="btn-map-all" onclick="setMapFilter('all')">
+            <span data-i18n="admin.map.all_layers">🗺️ All Layers</span>
+          </button>
+          <button type="button" class="map-filter-btn" id="btn-map-disasters" onclick="setMapFilter('disasters')">
+            <span data-i18n="admin.map.disasters">🚨 Disasters</span>
+          </button>
+          <button type="button" class="map-filter-btn" id="btn-map-vehicles" onclick="setMapFilter('vehicles')">
+            <span data-i18n="admin.map.vehicles">🚒 Vehicles</span>
+          </button>
+          <button type="button" class="map-filter-btn" id="btn-map-stations" onclick="setMapFilter('stations')">
+            <span data-i18n="admin.map.stations">🏢 Stations</span>
+          </button>
+          <button type="button" class="map-filter-btn" id="btn-map-sos" onclick="setMapFilter('sos')">
+            <span data-i18n="admin.map.sos">🚨 SOS Beacons</span>
+          </button>
+
+          <!-- 2km Radius Perimeter Toggle -->
+          <button type="button" class="map-filter-btn btn-perimeter active" id="btn-map-2km" onclick="togglePerimeterCircles()">
+            <span data-i18n="admin.map.perimeter">⭕ 2 km Perimeters</span>: ON
+          </button>
+
+          <!-- Recenter Map -->
+          <button type="button" class="map-filter-btn" onclick="recenterTacticalMap()">
+            <span data-i18n="admin.map.center_btn">🎯 Recenter</span>
+          </button>
+
+          <!-- Cache Base Map Tiles into IndexedDB for Offline Mode -->
+          <button type="button" class="map-filter-btn" id="btn-cache-tactical-tiles" onclick="prefetchTacticalOfflineTiles(true)" title="Pre-cache OpenStreetMap tiles in IndexedDB for offline access">
+            💾 Cache Map <span id="tactical-tile-cache-count" style="opacity:0.85; font-size:10px;"></span>
+          </button>
+
+          <!-- Real-Time Dispatch Route Simulation Button -->
+          <button type="button" class="map-filter-btn" style="background: #dc2626; color: #fff; font-weight: 800; border-color: #ef4444;" onclick="triggerDemoDispatchSimulation()">
+            🚀 Simulate Dispatch Demo
+          </button>
+
+          <!-- Three.js 3D Tactical Command Scene Launcher -->
+          <a href="/tactical-3d.html?role=admin" class="map-filter-btn" style="background: #0f172a; color: #38bdf8; font-weight: 800; border-color: #1e293b; text-decoration: none; display: inline-flex; align-items: center; gap: 5px;">
+            🧊 3D Sector Twin
+          </a>
+
+          <!-- Focus specific incident dropdown -->
+          <select id="map-incident-selector" class="filter-select" style="max-width: 200px;" onchange="focusIncidentFromDropdown(this.value)">
+            <option value="">🎯 Focus 2km Incident...</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Leaflet / Google Maps Canvas Container with Floating Center Map Control -->
+      <div class="tactical-map-frame">
+        <div id="tactical-map"></div>
+        <button
+          type="button"
+          id="btn-floating-center-map"
+          class="floating-center-map-btn"
+          onclick="centerTacticalMapOnEmergency()"
+          title="Reset map view to current emergency location"
+          aria-label="Center map on current emergency location"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="7"></circle>
+            <circle cx="12" cy="12" r="2.2" fill="currentColor"></circle>
+            <line x1="12" y1="2" x2="12" y2="5"></line>
+            <line x1="12" y1="19" x2="12" y2="22"></line>
+            <line x1="2" y1="12" x2="5" y2="12"></line>
+            <line x1="19" y1="12" x2="22" y2="12"></line>
+          </svg>
+          <span>Center Map</span>
+        </button>
+      </div>
+
+      <!-- Map Legend Bar -->
+      <div class="map-legend-bar">
+        <div class="legend-items">
+          <div class="legend-item">
+            <span style="display:inline-block; width:14px; height:14px; border-radius:50%; background:#dc2626; border:2px solid #fff; box-shadow:0 0 0 1px #dc2626;"></span>
+            <span>Critical / High Disaster Pin</span>
+          </div>
+          <div class="legend-item">
+            <span style="font-size: 15px;">🚒</span>
+            <span>Emergency Vehicles (Available / En Route)</span>
+          </div>
+          <div class="legend-item">
+            <span style="display:inline-block; width:14px; height:14px; border-radius:3px; background:#0f172a; border:1px solid #38bdf8;"></span>
+            <span>Station Command Depots</span>
+          </div>
+          <div class="legend-item">
+            <span style="display:inline-block; width:14px; height:14px; border-radius:50%; background:#ef4444; animation: alertPulse 1.5s infinite;"></span>
+            <span>Live Civilian SOS Beacon</span>
+          </div>
+          <div class="legend-item">
+            <span style="display:inline-block; width:22px; height:0px; border-top:3px dashed #dc2626;"></span>
+            <span>Active Dispatch Route &amp; Distance</span>
+          </div>
+          <div class="legend-item">
+            <span style="display:inline-block; width:14px; height:14px; border-radius:50%; background:rgba(239,68,68,0.2); border:1.5px dashed #dc2626;"></span>
+            <span>2 km Operational Perimeter Zone</span>
+          </div>
+        </div>
+        <div id="map-engine-attribution" style="font-size: 11px; color: var(--text-muted); font-weight: 700;">
+          OpenStreetMap &bull; Leaflet GIS
+        </div>
+      </div>
+      <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">
+        Situational visualization only — follow official emergency dispatch protocols. When Google Maps is active, usage is subject to
+        <a href="https://maps.google.com/help/terms_maps/?utm_campaign=gmp_mcp_codeassist_v1_aistudio" target="_blank" rel="noopener noreferrer" style="color: var(--primary); text-decoration: underline;">Google Maps End User Terms</a>.
+      </div>
+
+      <!-- ── Google Maps Grounding Tactical Facility Lookup (Gemini 4 Hydrogen) ── -->
+      <div id="admin-maps-grounding-panel" style="margin-top: 16px; background: var(--subtle); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 14px 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px; margin-bottom: 10px;">
+          <div>
+            <span style="font-size: 10px; font-weight: 800; background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; padding: 2px 8px; border-radius: 6px; letter-spacing: 0.4px;">GOOGLE MAPS GROUNDING &bull; GEMINI 4 HYDROGEN</span>
+            <h3 style="font-size: 15px; font-weight: 800; color: var(--navy); margin: 6px 0 2px;">📍 Nearby Hospitals, Shelters &amp; Staging Facilities</h3>
+            <p style="font-size: 12px; color: var(--text-muted); margin: 0;">Queries verified Google Maps locations anchored to the active emergency sector coordinates.</p>
+          </div>
+          <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+            <button type="button" class="map-filter-btn" onclick="searchAdminMapsGrounding('nearest trauma hospitals and emergency care centers')">🏥 Trauma &amp; Hospitals</button>
+            <button type="button" class="map-filter-btn" onclick="searchAdminMapsGrounding('nearby fire stations, police headquarters, and rescue depots')">🚒 Fire &amp; Rescue Stations</button>
+            <button type="button" class="map-filter-btn" onclick="searchAdminMapsGrounding('emergency relief shelters, stadiums, and community evacuation centers nearby')">🏢 Relief Shelters</button>
+          </div>
+        </div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px;">
+          <input type="text" id="admin-maps-query" class="form-control" style="flex: 1; min-width: 220px;" placeholder="Search verified nearby hospitals, shelters, or staging hubs..." value="nearest emergency trauma hospitals and disaster relief shelters" />
+          <button type="button" class="btn btn-primary" style="padding: 8px 16px; white-space: nowrap;" onclick="searchAdminMapsGrounding()">
+            🔍 Query Maps Data
+          </button>
+        </div>
+        <div id="admin-maps-grounding-results" style="font-size: 12px; color: var(--text-secondary); background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 12px;">
+          Click <strong>Query Maps Data</strong> or choose a tactical preset above to retrieve grounded Google Maps locations around the active emergency sector.
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         GOVERNMENT PLATFORM INTEGRATION & FLEET MANAGEMENT
+         ==================================================================== -->
+    <section class="gov-section">
+      <div class="gov-header">
+        <div>
+          <span class="gov-badge">GOVERNMENT PLATFORM INTEGRATION (NDMA / SDMA 108)</span>
+          <h2 style="font-size: 20px; font-weight: 800; color: var(--navy); margin-top: 4px;">
+            Emergency Operations Centers &amp; Rescue Stations
+          </h2>
+          <p style="font-size: 13px; color: var(--text-secondary); margin-top: 2px;">
+            Live Government Station Fleet: Ambulances (ALS/BLS), Fire Tenders, NDRF Battalions, Rapid ERVs &amp; Rescue Boats.
+          </p>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn" style="background: var(--subtle); border: 1px solid var(--border); font-size: 12px; font-weight: 700; padding: 8px 14px; border-radius: var(--radius-md); cursor: pointer;" onclick="resetFleetCapacity()">
+            🔄 Reset Station Fleet
+          </button>
+        </div>
+      </div>
+
+      <!-- Live Fleet Summary Badges -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 20px;">
+        <div class="fleet-item" style="border-left: 4px solid var(--info);">
+          <div class="fleet-num" id="gov-amb-count">0</div>
+          <div class="fleet-label">🚑 Ambulances Available</div>
+        </div>
+        <div class="fleet-item" style="border-left: 4px solid var(--danger);">
+          <div class="fleet-num" id="gov-fire-count">0</div>
+          <div class="fleet-label">🚒 Fire Tenders Ready</div>
+        </div>
+        <div class="fleet-item" style="border-left: 4px solid var(--warning);">
+          <div class="fleet-num" id="gov-ndrf-count">0</div>
+          <div class="fleet-label">🛡️ NDRF Squads Ready</div>
+        </div>
+        <div class="fleet-item" style="border-left: 4px solid var(--success);">
+          <div class="fleet-num" id="gov-boat-count">0</div>
+          <div class="fleet-label">🚤 Rescue Boats Ready</div>
+        </div>
+        <div class="fleet-item" style="border-left: 4px solid var(--navy-mid);">
+          <div class="fleet-num" id="gov-erv-count">0</div>
+          <div class="fleet-label">🚐 Rapid ERVs Ready</div>
+        </div>
+      </div>
+
+      <!-- Government Stations Grid -->
+      <div class="gov-stations-grid" id="gov-stations-container">
+        <div style="padding: 24px; text-align: center; color: var(--text-faint); grid-column: 1/-1;">
+          Loading government station fleet status...
+        </div>
+      </div>
+
+      <!-- AI Smart Grouping & Resource Conservation Dispatch Panel -->
+      <div class="group-dispatch-panel">
+        <div class="group-dispatch-title">
+          <span>⚡ AI Smart Resource Allocation &amp; Conservation Optimizer</span>
+          <span class="conservation-badge" id="conservation-badge">🌱 Prevents Over-Deployment &amp; Conserves Fleet</span>
+        </div>
+        <p style="font-size: 13px; opacity: 0.9; margin-bottom: 16px; line-height: 1.5;">
+          Instead of dispatching multiple isolated vehicles to separate calls in the same zone, the AI bundles ALS ambulances, triage units, and rescue squads into coordinated strike forces based on area severity and people affected.
+        </p>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px;">
+          <div>
+            <label style="font-size: 11px; font-weight: 700; color: #cbd5e1; display: block; margin-bottom: 4px;">TARGET DISASTER AREA</label>
+            <select id="dispatch-area-select" style="width: 100%; padding: 8px 10px; border-radius: var(--radius-sm); border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1); color: #fff; font-weight: 600;">
+              <option value="Bridge Sector 4B, Riverfront">Bridge Sector 4B, Riverfront (Flood Zone)</option>
+              <option value="NH-48 Highway Junction">NH-48 Highway Junction (Accident Corridor)</option>
+              <option value="GT Road Industrial Belt">GT Road Industrial Belt (Hazard Zone)</option>
+              <option value="Central Metro District">Central Metro District (Dense Urban Zone)</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size: 11px; font-weight: 700; color: #cbd5e1; display: block; margin-bottom: 4px;">AREA THREAT SEVERITY</label>
+            <select id="dispatch-severity-select" style="width: 100%; padding: 8px 10px; border-radius: var(--radius-sm); border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1); color: #fff; font-weight: 600;">
+              <option value="Critical">Critical Emergency (81-100 Score)</option>
+              <option value="High">High Threat (56-80 Score)</option>
+              <option value="Medium">Medium Threat (26-55 Score)</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size: 11px; font-weight: 700; color: #cbd5e1; display: block; margin-bottom: 4px;">TOTAL PEOPLE AFFECTED</label>
+            <input type="number" id="dispatch-affected-input" value="8" min="1" max="100" style="width: 100%; padding: 8px 10px; border-radius: var(--radius-sm); border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1); color: #fff; font-weight: 700;" />
+          </div>
+          <div style="display: flex; align-items: flex-end;">
+            <button class="btn" style="width: 100%; background: #059669; color: #fff; font-weight: 800; padding: 10px; border: none; border-radius: var(--radius-md); cursor: pointer;" onclick="executeSmartGroupDispatch()">
+              🚀 Deploy Grouped Strike Force
+            </button>
+          </div>
+        </div>
+        <div id="dispatch-status-alert" class="hidden" style="background: rgba(5,150,105,0.2); border: 1px solid #059669; padding: 10px 14px; border-radius: var(--radius-sm); font-size: 13px;"></div>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         EMERGENCY RESPONSE TEAMS MANAGEMENT & SMART DISPATCH
+         ==================================================================== -->
+    <section class="teams-section">
+      <div class="teams-header">
+        <div>
+          <span class="gov-badge" style="background: #fdf2f8; color: #9d174d; border-color: #fbcfe8;">RESPONSE UNITS &amp; COMMAND SQUADS</span>
+          <h2 style="font-size: 20px; font-weight: 800; color: var(--navy); margin-top: 4px;">
+            Emergency Response Teams &amp; Field Units
+          </h2>
+          <p style="font-size: 13px; color: var(--text-secondary); margin-top: 2px;">
+            Manage specialized emergency crews across Fire, Trauma ALS, NDRF Search &amp; Rescue, Marine, ERV &amp; HAZMAT with live GPS coordinates.
+          </p>
+        </div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <button type="button" class="btn" style="background: #059669; color: #fff; font-weight: 800; font-size: 12px; padding: 8px 14px; border-radius: var(--radius-md); border: none; cursor: pointer; display: flex; align-items: center; gap: 6px;" onclick="openCreateTeamModal()">
+            ➕ Create Response Team
+          </button>
+          <button type="button" class="btn" style="background: var(--navy); color: #fff; font-weight: 800; font-size: 12px; padding: 8px 14px; border-radius: var(--radius-md); border: none; cursor: pointer; display: flex; align-items: center; gap: 6px;" onclick="openCreateStationModal()">
+            🏢 Create Station Depot
+          </button>
+        </div>
+      </div>
+
+      <!-- Teams Filter & KPI Stats Strip -->
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; background: var(--subtle); padding: 12px 16px; border-radius: var(--radius-md); border: 1px solid var(--border);">
+        <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+          <span style="font-size: 12px; font-weight: 700; color: var(--navy);">Fleet Units: <strong id="kpi-total-teams">0</strong></span>
+          <span style="font-size: 12px; font-weight: 700; color: #059669;">● Ready: <strong id="kpi-avail-teams">0</strong></span>
+          <span style="font-size: 12px; font-weight: 700; color: #d97706;">● Dispatched: <strong id="kpi-disp-teams">0</strong></span>
+          <span style="font-size: 12px; font-weight: 700; color: #2563eb;">● Total Personnel: <strong id="kpi-personnel-teams">0</strong></span>
+        </div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <select id="filter-team-cat" class="filter-select" onchange="renderTeams()">
+            <option value="All">All Expertise Categories</option>
+            <option value="Fire">Fire Suppression</option>
+            <option value="Medical Emergency">Medical &amp; Trauma ALS</option>
+            <option value="Structural Collapse">NDRF Search &amp; Rescue</option>
+            <option value="Flood">Flood &amp; Marine Rescue</option>
+            <option value="Road Accident">Rapid ERV Unit</option>
+          </select>
+          <select id="filter-team-status" class="filter-select" onchange="renderTeams()">
+            <option value="All">All Availability</option>
+            <option value="Available">Available Only</option>
+            <option value="Dispatched">Dispatched</option>
+            <option value="On Scene">On Scene</option>
+            <option value="Maintenance">Maintenance</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Teams Grid -->
+      <div id="teams-container" class="teams-grid">
+        <div style="padding: 24px; text-align: center; color: var(--text-faint); grid-column: 1/-1;">
+          Loading emergency response teams...
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Category Stats ── -->
+    <div class="cat-box">
+      <div class="cat-title">Incidents by Category</div>
+      <div id="category-stats" class="cat-list"></div>
+    </div>
+
+    <!-- ── Incidents Table (Ranked by AI Priority) ── -->
+    <div class="table-card">
+      <div class="table-header">
+        <div>
+          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+            <h3>All Civilian Reported Incidents &amp; Priority Ranking</h3>
+            <span style="font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.4px; color: #047857; background: #ecfdf5; border: 1px solid #a7f3d0; padding: 2px 8px; border-radius: 999px;">Civilian Reports Only</span>
+          </div>
+          <span style="font-size: 11px; color: var(--text-muted);">
+            Civilian-only intake ranked by AI: Severity, People Affected, Category Risk &amp; Elapsed Time
+          </span>
+        </div>
+        <div class="filters">
+          <select class="filter-select" id="filter-sort" onchange="renderDashboard()">
+            <option value="priority">Rank: Priority Score (AI Auto)</option>
+            <option value="affected">Sort: Most People Affected</option>
+            <option value="severity">Sort: Highest Severity</option>
+            <option value="newest">Sort: Newest First</option>
+          </select>
+          <select class="filter-select" id="filter-severity" onchange="renderDashboard()">
+            <option value="All">All Severities</option>
+            <option value="Critical">Critical Only</option>
+            <option value="High">High</option>
+            <option value="Medium">Medium</option>
+            <option value="Low">Low</option>
+          </select>
+          <select class="filter-select" id="filter-status" onchange="renderDashboard()">
+            <option value="All">All Statuses</option>
+            <option value="Reported">Reported</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Resolved">Resolved</option>
+          </select>
+          <select class="filter-select" id="filter-source" onchange="renderDashboard()">
+            <option value="All">All Sources</option>
+            <option value="form">Form</option>
+            <option value="voice">Voice</option>
+            <option value="sos">SOS</option>
+          </select>
+          <label class="filter-toggle-label" for="filter-civilian-category" title="When enabled, show only reports marked with the 'civilian' category">
+            <input type="checkbox" id="filter-civilian-category" onchange="renderDashboard()" />
+            <span class="filter-toggle-switch" aria-hidden="true"></span>
+            <span>Civilian Category Only</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Rank &amp; Incident</th>
+              <th>Category</th>
+              <th>Threat Severity</th>
+              <th>Location / Affected</th>
+              <th>Assigned Response Team</th>
+              <th>Status</th>
+              <th style="text-align: right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="incident-table"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <!-- ============ LIVE CIVILIAN VIDEO & AUDIO STREAM RECEIVER MODAL ============ -->
+  <div id="live-stream-modal" class="live-stream-modal-backdrop hidden">
+    <div class="live-stream-box">
+      <div class="stream-header">
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+          <span class="stream-rec-badge" style="position: static;"><span class="rec-dot"></span> LIVE CIVILIAN STREAM</span>
+          <span style="font-size: 13px; font-weight: 700;" id="stream-user-email">Civilian Stream</span>
+          <span id="stream-timer" style="font-family: monospace; font-size: 12px; background: rgba(255,255,255,0.15); padding: 2px 8px; border-radius: 4px; font-weight: 700; color: #86efac;">00:00</span>
+          <span id="stream-packet-badge" style="font-family: monospace; font-size: 11px; background: rgba(56, 189, 248, 0.2); border: 1px solid #38bdf8; color: #38bdf8; padding: 2px 8px; border-radius: 4px;">Syncing WS...</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+          <label for="admin-audio-gain-slider" style="display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; color: #cbd5e1; background: rgba(255,255,255,0.08); padding: 4px 8px; border-radius: var(--radius-sm);">
+            <span>🎚️ Gain</span>
+            <input id="admin-audio-gain-slider" type="range" min="0" max="200" value="120" oninput="setAdminAudioGain(this.value)" style="width: 68px; accent-color: #22c55e; cursor: pointer;" aria-label="Live audio monitor gain" />
+            <span id="admin-audio-gain-val" style="font-family: monospace; min-width: 34px; text-align: right;">120%</span>
+          </label>
+          <button type="button" id="btn-toggle-audio-monitor" onclick="toggleAdminAudioMonitor()" class="btn" style="background: var(--success); color: #fff; font-size: 11px; padding: 4px 10px; border: 1px solid rgba(134, 239, 172, 0.4); border-radius: var(--radius-sm); cursor: pointer; font-weight: 700;">
+            🔊 Audio: LIVE
+          </button>
+          <button onclick="closeLiveStreamModal()" class="modal-close" style="color: #fff; background: none; border: none; font-size: 26px; cursor: pointer; line-height: 1;">&times;</button>
+        </div>
+      </div>
+      <div class="stream-body">
+        <!-- Live Video Container -->
+        <div class="video-stream-container">
+          <canvas id="admin-live-stream-canvas" style="width: 100%; height: 100%; object-fit: cover; display: none;"></canvas>
+          <img id="admin-live-stream-img" src="" style="width: 100%; height: 100%; object-fit: cover; display: none;" />
+          <div id="stream-waiting-indicator" style="text-align: center; color: #94a3b8; padding: 20px;">
+            <div style="font-size: 40px; margin-bottom: 8px;">📹</div>
+            <div style="font-weight: 800; font-size: 15px; color: #fff;">Connecting to Civilian Camera Feed...</div>
+            <div style="font-size: 12px; opacity: 0.8; margin-top: 4px;">Establishing low-latency WebSocket HD video &amp; 24kHz audio stream</div>
+          </div>
+        </div>
+
+        <!-- Live Audio Visualizer -->
+        <div class="audio-visualizer-wave" style="justify-content: space-between; flex-wrap: wrap;">
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <span style="font-size: 11px; font-weight: 800; color: #94a3b8; margin-right: 4px;" id="admin-audio-source-label">🎙️ LIVE AUDIO FEED:</span>
+            <div class="audio-wave-bar" id="wave-1"></div>
+            <div class="audio-wave-bar" id="wave-2"></div>
+            <div class="audio-wave-bar" id="wave-3"></div>
+            <div class="audio-wave-bar" id="wave-4"></div>
+            <div class="audio-wave-bar" id="wave-5"></div>
+            <div class="audio-wave-bar" id="wave-6"></div>
+            <div class="audio-wave-bar" id="wave-7"></div>
+            <div class="audio-wave-bar" id="wave-8"></div>
+          </div>
+          <canvas id="admin-live-audio-canvas" width="160" height="28" style="height: 28px; width: 160px; border-radius: 4px; background: rgba(15, 23, 42, 0.45);"></canvas>
+          <span style="font-size: 11px; font-weight: 800; color: var(--success); margin-left: 8px; font-family: monospace;" id="audio-db-level">Listening...</span>
+        </div>
+
+        <!-- Civilian Dispatch Info & Map Links -->
+        <div style="margin-top: 14px; background: rgba(255,255,255,0.06); padding: 14px; border-radius: var(--radius-md); font-size: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+          <div>
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+              <span>📍 <strong>Coordinates:</strong> <span id="stream-coords">Acquiring GPS...</span></span>
+              <span id="stream-accuracy-badge" aria-live="polite"></span>
+            </div>
+            <div style="margin-top: 4px;">⏱️ <strong>Broadcasting Time:</strong> <span id="stream-time">Live</span></div>
+          </div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <a id="stream-map-link" href="#" target="_blank" class="btn" style="background: var(--info); color: #fff; padding: 8px 14px; font-size: 12px; text-decoration: none; border-radius: var(--radius-sm); font-weight: 700;">🗺️ Satellite Map</a>
+            <button class="btn btn-confirm" style="padding: 8px 14px; font-size: 12px; font-weight: 700;" onclick="resolveCurrentStreamSOS()">✅ Dispatch Responders &amp; Resolve</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ INCIDENT DETAIL MODAL ============ -->
+  <div id="detail-modal" class="modal-backdrop hidden">
+    <div class="modal-box">
+      <div class="modal-top">
+        <h3 id="modal-title"></h3>
+        <button onclick="closeModal()" class="modal-close">&times;</button>
+      </div>
+      <div id="modal-body" class="modal-body"></div>
+      <div class="modal-foot">
+        <button onclick="closeModal()" class="btn-close-modal">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ AI TEAM ASSIGNMENT & DISPATCH MODAL ============ -->
+  <div id="team-assignment-modal" class="modal-backdrop hidden">
+    <div class="modal-box" style="max-width: 720px;">
+      <div class="modal-top">
+        <div>
+          <span class="gov-badge" style="background: #ecfdf5; color: #047857; border-color: #a7f3d0;">AI DISASTER TEAM DISPATCH</span>
+          <h3 id="assign-modal-inc-title" style="margin-top: 4px; font-size: 17px; font-weight: 800;">Incident Team Assignment</h3>
+          <p id="assign-modal-inc-meta" style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+            Analyzing nearest response stations and expertise...
+          </p>
+        </div>
+        <button onclick="closeTeamAssignmentModal()" class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="background: var(--subtle); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 12px 14px; margin-bottom: 16px;">
+          <div style="font-size: 12px; font-weight: 700; color: var(--navy); display: flex; justify-content: space-between;">
+            <span id="assign-incident-details">Incident: —</span>
+            <span id="assign-incident-coords">📍 Coords: —</span>
+          </div>
+          <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;" id="assign-incident-desc">
+            Emergency description...
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <strong style="font-size: 13px; color: var(--navy);">🤖 AI Smart Classified Response Teams (Ranked by Best Fit):</strong>
+          <span style="font-size: 11px; color: var(--text-muted);">Proximity + Category Expertise + Readiness</span>
+        </div>
+
+        <div id="assign-recommended-teams-list" class="recommended-teams-list">
+          <div style="text-align: center; padding: 24px; color: var(--text-faint);">
+            Calculating nearest available response teams...
+          </div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button onclick="closeTeamAssignmentModal()" class="btn-close-modal">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ CREATE EMERGENCY RESPONSE TEAM MODAL ============ -->
+  <div id="create-team-modal" class="modal-backdrop hidden">
+    <div class="modal-box" style="max-width: 540px;">
+      <div class="modal-top">
+        <div>
+          <span class="gov-badge">COMMAND FLEET</span>
+          <h3 style="margin-top: 4px; font-size: 17px; font-weight: 800;">Create Emergency Response Team</h3>
+        </div>
+        <button onclick="closeCreateTeamModal()" class="modal-close">&times;</button>
+      </div>
+      <form id="create-team-form" onsubmit="submitCreateTeam(event)">
+        <div class="modal-body" style="display: flex; flex-direction: column; gap: 12px;">
+          <div class="form-group">
+            <label for="new-team-name">Team Name *</label>
+            <input class="form-control" type="text" id="new-team-name" required placeholder="e.g., Delta Flood &amp; Rescue Squad 3" />
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="new-team-category">Expertise Category *</label>
+              <select class="form-control" id="new-team-category" required onchange="onTeamCategoryChange(this.value)">
+                <option value="Fire">Fire Suppression</option>
+                <option value="Medical Emergency">Medical &amp; Trauma ALS</option>
+                <option value="Structural Collapse">NDRF Search &amp; Rescue</option>
+                <option value="Flood">Flood &amp; Marine Rescue</option>
+                <option value="Road Accident">Rapid ERV Unit</option>
+                <option value="Natural Disaster">Natural Disaster &amp; Cyclone Taskforce</option>
+                <option value="Other">Hazardous Material (HAZMAT)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="new-team-station">Base Station Depot *</label>
+              <select class="form-control" id="new-team-station" required onchange="onStationSelectionChange(this.value)">
+                <!-- Populated dynamically from stations -->
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="new-team-expertise">Specialized Role / Mission</label>
+            <input class="form-control" type="text" id="new-team-expertise" placeholder="e.g., Structural Breaker &amp; Heavy Debris Extraction" />
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="new-team-lat">Latitude *</label>
+              <input class="form-control" type="number" step="0.0001" id="new-team-lat" required value="13.0604" />
+            </div>
+            <div class="form-group">
+              <label for="new-team-lon">Longitude *</label>
+              <input class="form-control" type="number" step="0.0001" id="new-team-lon" required value="80.2496" />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="new-team-personnel">Personnel Crew Count</label>
+              <input class="form-control" type="number" id="new-team-personnel" value="8" min="1" max="50" required />
+            </div>
+            <div class="form-group">
+              <label for="new-team-status">Initial Readiness</label>
+              <select class="form-control" id="new-team-status">
+                <option value="Available">Available (Ready for Dispatch)</option>
+                <option value="On Scene">On Standby / Training</option>
+                <option value="Maintenance">Maintenance</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="new-team-vehicles">Assigned Emergency Vehicles (Comma separated)</label>
+            <input class="form-control" type="text" id="new-team-vehicles" placeholder="e.g., Heavy Water Tender, Foam Cannon Rover" />
+          </div>
+
+          <div class="form-group">
+            <label for="new-team-contact">Emergency Direct Line</label>
+            <input class="form-control" type="text" id="new-team-contact" placeholder="+91 44 2859 3911" />
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button type="button" onclick="closeCreateTeamModal()" class="btn-close-modal">Cancel</button>
+          <button type="submit" class="btn btn-confirm" style="background: #059669; color: #fff; font-weight: 800; padding: 10px 18px; border-radius: var(--radius-md); border: none; cursor: pointer;">
+            🚀 Register &amp; Commission Team
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============ CREATE STATION DEPOT MODAL ============ -->
+  <div id="create-station-modal" class="modal-backdrop hidden">
+    <div class="modal-box" style="max-width: 540px;">
+      <div class="modal-top">
+        <div>
+          <span class="gov-badge">COMMAND DEPOT</span>
+          <h3 style="margin-top: 4px; font-size: 17px; font-weight: 800;">Commission New Station Depot</h3>
+        </div>
+        <button onclick="closeCreateStationModal()" class="modal-close">&times;</button>
+      </div>
+      <form id="create-station-form" onsubmit="submitCreateStation(event)">
+        <div class="modal-body" style="display: flex; flex-direction: column; gap: 12px;">
+          <div class="form-group">
+            <label for="new-station-name">Station Name *</label>
+            <input class="form-control" type="text" id="new-station-name" required placeholder="e.g., Airport Emergency Trauma &amp; Fire Hub" />
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="new-station-zone">Operational Zone *</label>
+              <input class="form-control" type="text" id="new-station-zone" required placeholder="e.g., Southwest Aviation Corridor" />
+            </div>
+            <div class="form-group">
+              <label for="new-station-contact">Station Dispatch Phone *</label>
+              <input class="form-control" type="text" id="new-station-contact" required placeholder="+91 44 2256 0108" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="new-station-address">Physical Address</label>
+            <input class="form-control" type="text" id="new-station-address" placeholder="e.g., Airport Relief Base, Terminal Sector 2" />
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="new-station-lat">Latitude *</label>
+              <input class="form-control" type="number" step="0.0001" id="new-station-lat" required value="12.9900" />
+            </div>
+            <div class="form-group">
+              <label for="new-station-lon">Longitude *</label>
+              <input class="form-control" type="number" step="0.0001" id="new-station-lon" required value="80.1700" />
+            </div>
+          </div>
+
+          <div style="font-size: 12px; font-weight: 700; color: var(--navy); margin-top: 4px;">Initial Station Fleet Allocation:</div>
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
+            <div>
+              <label style="font-size: 11px;">ALS Ambulances</label>
+              <input class="form-control" type="number" id="new-station-als" value="4" min="0" />
+            </div>
+            <div>
+              <label style="font-size: 11px;">BLS Ambulances</label>
+              <input class="form-control" type="number" id="new-station-bls" value="8" min="0" />
+            </div>
+            <div>
+              <label style="font-size: 11px;">Fire Tenders</label>
+              <input class="form-control" type="number" id="new-station-fire" value="4" min="0" />
+            </div>
+            <div>
+              <label style="font-size: 11px;">NDRF Squads</label>
+              <input class="form-control" type="number" id="new-station-ndrf" value="3" min="0" />
+            </div>
+            <div>
+              <label style="font-size: 11px;">Rescue Boats</label>
+              <input class="form-control" type="number" id="new-station-boats" value="4" min="0" />
+            </div>
+            <div>
+              <label style="font-size: 11px;">Rapid ERVs</label>
+              <input class="form-control" type="number" id="new-station-ervs" value="6" min="0" />
+            </div>
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button type="button" onclick="closeCreateStationModal()" class="btn-close-modal">Cancel</button>
+          <button type="submit" class="btn btn-confirm" style="background: var(--navy); color: #fff; font-weight: 800; padding: 10px 18px; border-radius: var(--radius-md); border: none; cursor: pointer;">
+            🏢 Commission Depot
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============ SCRIPTS ============ -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/auth-sync.js"></script>
+  <script src="js/translations.js"></script>
+
+  <script>
+    // ====================================================================
+    // AUTH CHECK — Admin Control Session
+    // ====================================================================
+    const AUTHORIZED_ADMIN_EMAIL = 'admin@rapidresponse.org';
+    let currentAdmin = null;
+
+    function updateAdminNavDisplay(admin) {
+      const el = document.getElementById('nav-admin-email');
+      if (!el || !admin) return;
+      el.innerHTML = `<span style="background: #dc2626; color: #fff; padding: 3px 8px; border-radius: 4px; font-weight: 800; font-size: 11px; margin-right: 6px; letter-spacing: 0.5px;">COMMAND ADMIN</span> ${admin.email || AUTHORIZED_ADMIN_EMAIL}`;
+    }
+
+    const savedAdminStr = localStorage.getItem('currentUser');
+    if (savedAdminStr) {
+      try {
+        const parsed = JSON.parse(savedAdminStr);
+        const parsedEmail = (parsed && parsed.email ? String(parsed.email).trim().toLowerCase() : '');
+        if (parsed && parsed.role === 'admin' && parsedEmail === AUTHORIZED_ADMIN_EMAIL) {
+          currentAdmin = parsed;
+          updateAdminNavDisplay(parsed);
+        } else if (parsed && parsed.role === 'admin') {
+          localStorage.removeItem('currentUser');
+          localStorage.removeItem('userRole');
+        }
+      } catch (e) {}
+    }
+
+    if (!currentAdmin) {
+      window.location.href = 'login-admin.html';
+    }
+
+    if (window.auth && window.auth.onAuthStateChanged) {
+      window.auth.onAuthStateChanged((user) => {
+        if (user) {
+          const userEmail = (user.email || '').trim().toLowerCase();
+          if (userEmail === AUTHORIZED_ADMIN_EMAIL) {
+            currentAdmin = {
+              uid: user.uid,
+              email: AUTHORIZED_ADMIN_EMAIL,
+              role: 'admin',
+              displayName: user.displayName || 'Command Admin'
+            };
+            updateAdminNavDisplay(currentAdmin);
+          }
+        }
+      });
+    }
+
+    function logout() {
+      if (typeof window.universalLogout === 'function') {
+        window.universalLogout();
+      } else if (typeof window.logout === 'function') {
+        window.logout();
+      } else {
+        localStorage.removeItem('currentUser');
+        localStorage.removeItem('userRole');
+        window.location.href = 'index.html';
+      }
+    }
+
+    // ====================================================================
+    // TOAST
+    // ====================================================================
+    function showToast(message, type = 'success') {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.className = 'toast ' + type + ' show';
+      setTimeout(() => toast.classList.remove('show'), 4000);
+    }
+
+    function playEmergencyAlertChime() {
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + 0.35);
+        gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.35);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.4);
+      } catch (e) {}
+    }
+
+    // ====================================================================
+    // DATA STORE & SYNCHRONIZATION
+    // ====================================================================
+    let incidents = [];
+    let sosAlerts = [];
+    let governmentStations = [];
+    let responseTeams = [];
+
+    function isCivilianReportClient(item) {
+      if (!item || item.isSimulated || item.isTest) return false;
+      if (!item.reportedRole) return true;
+      const role = String(item.reportedRole).trim().toLowerCase();
+      return role === 'civilian' || role === 'user';
+    }
+
+    async function loadAllData() {
+      try {
+        const [incList, sosList, govData, teamList] = await Promise.all([
+          rapidSync.fetchIncidents(),
+          rapidSync.fetchSOS(),
+          rapidSync.fetchGovStations(),
+          rapidSync.fetchTeams()
+        ]);
+        incidents = (incList || []).filter(isCivilianReportClient);
+        sosAlerts = sosList;
+        responseTeams = teamList || [];
+        if (govData && govData.stations) {
+          governmentStations = govData.stations;
+          renderGovernmentFleet(govData);
+        }
+        renderTeams();
+        renderDashboard();
+        updateAdvancedAnalytics();
+        renderSOSFeed();
+
+        if (typeof navigator !== 'undefined' && !navigator.onLine && typeof window.triggerOfflineAlert === 'function') {
+          const criticalOpen = incidents.filter(i => i && i.status !== 'Resolved' && i.severity === 'Critical');
+          criticalOpen.forEach((inc) => {
+            window.triggerOfflineAlert({
+              id: `offline-admin-crit-${inc.id}`,
+              dedupe: true,
+              title: `Offline Critical Incident: ${inc.title}`,
+              message: `${inc.category || 'Emergency'} · ${inc.affected || 1} affected · ${inc.location || 'Sector cached locally'}.`,
+              level: 'critical',
+              sound: true,
+              notifyOS: true,
+              ttlMs: 0,
+              url: '/dashboard-admin.html'
+            });
+          });
+        }
+
+        if (!tacticalMap) {
+          initTacticalMap();
+        }
+        updateTacticalMap();
+      } catch (err) {
+        console.warn('Sync load fallback:', err);
+      }
+    }
+
+    loadAllData();
+    setInterval(loadAllData, 4500);
+
+    // ====================================================================
+    // REAL-TIME EVENT BUS (SSE Listeners)
+    // ====================================================================
+    rapidSync.on('SOS_ACTIVATED', (alert) => {
+      playEmergencyAlertChime();
+      if (!sosAlerts.some(a => String(a.id) === String(alert.id))) {
+        sosAlerts.unshift(alert);
+      }
+      renderSOSFeed();
+      updateTacticalMap();
+      showToast(`🚨 INCOMING SOS ALERT from ${alert.email}!`, 'error');
+      speakText(`Incoming SOS emergency from civilian. Immediate dispatch required.`, 'en');
+    });
+
+    rapidSync.on('SOS_RESOLVED', (data) => {
+      sosAlerts = sosAlerts.map(a => String(a.id) === String(data.id) ? { ...a, active: false } : a);
+      renderSOSFeed();
+      updateTacticalMap();
+      if (activeStreamSosId && String(activeStreamSosId) === String(data.id)) {
+        const pktBadge = document.getElementById('stream-packet-badge');
+        if (pktBadge) {
+          pktBadge.textContent = 'SOS Resolved';
+          pktBadge.style.color = '#fca5a5';
+          pktBadge.style.borderColor = '#fca5a5';
+        }
+      }
+    });
+
+    rapidSync.on('SOS_DEACTIVATED', (data) => {
+      sosAlerts = sosAlerts.map(a => String(a.id) === String(data.id) ? { ...a, active: false } : a);
+      renderSOSFeed();
+      updateTacticalMap();
+    });
+
+    rapidSync.on('INCIDENT_CREATED', (inc) => {
+      if (!isCivilianReportClient(inc)) return;
+      playEmergencyAlertChime();
+      if (!incidents.some(i => String(i.id) === String(inc.id))) {
+        incidents.unshift(inc);
+        renderDashboard();
+        showToast(`📢 Civilian incident reported: "${inc.title}" (${inc.severity})`, 'warning');
+      }
+    });
+
+    rapidSync.on('INCIDENT_UPDATED', (inc) => {
+      if (!isCivilianReportClient(inc)) return;
+      const idx = incidents.findIndex(i => String(i.id) === String(inc.id));
+      if (idx !== -1) {
+        incidents[idx] = inc;
+        renderDashboard();
+      }
+    });
+
+    rapidSync.on('INCIDENT_DELETED', (data) => {
+      incidents = incidents.filter(i => String(i.id) !== String(data.id));
+      renderDashboard();
+    });
+
+    rapidSync.on('GOVERNMENT_DISPATCH_UPDATED', (data) => {
+      loadAllData();
+    });
+
+    rapidSync.on('TEAM_CREATED', () => loadAllData());
+    rapidSync.on('TEAM_UPDATED', () => loadAllData());
+    rapidSync.on('TEAM_DELETED', () => loadAllData());
+    rapidSync.on('TEAM_ASSIGNED', (data) => {
+      loadAllData();
+      if (data && data.team) {
+        showToast(`🚑 Dispatched ${data.team.name} to "${data.incident.title}"`, 'success');
+      }
+    });
+    rapidSync.on('TEAM_RELEASED', () => loadAllData());
+
+    // Real-Time Dispatched Team Movement & Route Tracking
+    rapidSync.on('TEAM_MOVEMENT_UPDATED', (data) => {
+      if (data && data.team) {
+        const idx = responseTeams.findIndex(t => t.id === data.team.id);
+        if (idx !== -1) {
+          responseTeams[idx] = { ...responseTeams[idx], ...data.team };
+        } else {
+          responseTeams.push(data.team);
+        }
+        updateTacticalMap();
+      }
+    });
+
+    // Handle incoming video frame from civilian during live streaming
+    rapidSync.on('SOS_FRAME_UPDATE', (data) => {
+      if (activeStreamSosId && data && String(activeStreamSosId) === String(data.sosId)) {
+        updateActiveStreamUI(data);
+      }
+    });
+
+    // Real-time SOS GPS coordinates update
+    rapidSync.on('SOS_LOCATION_UPDATED', (data) => {
+      if (!data || !data.sosId) return;
+      applyIncomingSosCoords(data.sosId, data);
+    });
+
+    // ====================================================================
+    // GOVERNMENT PLATFORM & FLEET RENDERER
+    // ====================================================================
+    function renderGovernmentFleet(govData) {
+      const summary = govData.fleetSummary;
+      if (summary) {
+        document.getElementById('gov-amb-count').textContent = `${summary.ambulances.available} / ${summary.ambulances.total}`;
+        document.getElementById('gov-fire-count').textContent = `${summary.fireTenders.available} / ${summary.fireTenders.total}`;
+        document.getElementById('gov-ndrf-count').textContent = `${summary.ndrfTeams.available} / ${summary.ndrfTeams.total}`;
+        document.getElementById('gov-boat-count').textContent = `${summary.rescueBoats.available} / ${summary.rescueBoats.total}`;
+        document.getElementById('gov-erv-count').textContent = `${summary.ervVehicles.available} / ${summary.ervVehicles.total}`;
+      }
+
+      const container = document.getElementById('gov-stations-container');
+      const stations = govData.stations || [];
+
+      container.innerHTML = stations.map(s => `
+        <div class="gov-station-card">
+          <div class="station-header">
+            <div>
+              <div class="station-name">🏢 ${s.name}</div>
+              <div class="station-zone">📍 ${s.zone} (${s.distanceKm} km away)</div>
+            </div>
+            <span style="font-size: 11px; font-weight: 700; color: var(--success); background: #ecfdf5; padding: 2px 8px; border-radius: var(--radius-full);">● Active</span>
+          </div>
+          <div class="fleet-grid">
+            <div class="fleet-item">
+              <div class="fleet-num" style="color: var(--info);">${s.ambulances.als + s.ambulances.bls}</div>
+              <div class="fleet-label">Ambulances</div>
+            </div>
+            <div class="fleet-item">
+              <div class="fleet-num" style="color: var(--danger);">${s.fireTenders.water + s.fireTenders.foam + s.fireTenders.ladder}</div>
+              <div class="fleet-label">Fire Tenders</div>
+            </div>
+            <div class="fleet-item">
+              <div class="fleet-num" style="color: var(--warning);">${s.ndrfTeams.total}</div>
+              <div class="fleet-label">NDRF Squads</div>
+            </div>
+            <div class="fleet-item">
+              <div class="fleet-num" style="color: var(--navy-mid);">${s.ervVehicles.total}</div>
+              <div class="fleet-label">ERVs</div>
+            </div>
+            <div class="fleet-item">
+              <div class="fleet-num" style="color: var(--success);">${s.rescueBoats.total}</div>
+              <div class="fleet-label">Boats</div>
+            </div>
+            <div class="fleet-item">
+              <div class="fleet-num" style="color: #7c3aed;">${s.medicalSquads.total}</div>
+              <div class="fleet-label">Medics</div>
+            </div>
+          </div>
+          <div style="font-size: 11px; color: var(--text-muted); display: flex; justify-content: space-between;">
+            <span>Deployed: ${s.ambulances.deployed + s.fireTenders.deployed + s.ndrfTeams.deployed} units</span>
+            <span>📞 ${s.contact}</span>
+          </div>
+        </div>
+      `).join('') || '<div style="padding: 20px; text-align: center;">No stations available.</div>';
+    }
+
+    async function executeSmartGroupDispatch() {
+      const area = document.getElementById('dispatch-area-select').value;
+      const severity = document.getElementById('dispatch-severity-select').value;
+      const affected = document.getElementById('dispatch-affected-input').value;
+
+      try {
+        const res = await rapidSync.groupDispatchGovFleet({
+          area,
+          severity,
+          affectedCount: affected
+        });
+
+        const alertBox = document.getElementById('dispatch-status-alert');
+        alertBox.classList.remove('hidden');
+        alertBox.innerHTML = `
+          <strong>✅ Strike Force Dispatched to ${area}!</strong><br>
+          <span style="font-size: 12px;">Grouped Units: ${res.dispatchOrder.groupedFleet.alsAmbulances} ALS Ambulances, ${res.dispatchOrder.groupedFleet.blsAmbulances} BLS, ${res.dispatchOrder.groupedFleet.fireTenders} Fire Tenders, ${res.dispatchOrder.groupedFleet.ndrfTeams} NDRF Teams.</span><br>
+          <span style="font-size: 12px; color: #86efac; font-weight: 700;">🌱 Fleet Conservation: Saved ${res.dispatchOrder.conservationPercent}% vehicle trips &amp; fuel!</span>
+        `;
+
+        speakText(`Grouped strike force deployed to ${area}. Conserved ${res.dispatchOrder.conservationPercent} percent fleet fuel.`, 'en');
+        showToast(`Dispatched grouped strike force! Conserved ${res.dispatchOrder.conservationPercent}% resources.`, 'success');
+        loadAllData();
+      } catch (err) {
+        showToast('Dispatch error: ' + err.message, 'error');
+      }
+    }
+
+    async function resetFleetCapacity() {
+      if (confirm('Reset all government station fleets to full capacity?')) {
+        await rapidSync.resetGovFleet();
+        showToast('Station fleets replenished to 100% capacity.', 'success');
+        loadAllData();
+      }
+    }
+
+    // ====================================================================
+    // LIVE SOS FEED RENDERER (With Live Stream View Button)
+    // ====================================================================
+    function renderSOSFeed() {
+      const body = document.getElementById('live-feed-body');
+      const countEl = document.getElementById('sos-count');
+      const banner = document.getElementById('active-emergency-banner');
+      const bannerDetails = document.getElementById('banner-sos-details');
+
+      const activeAlerts = sosAlerts.filter(a => a.active);
+      countEl.textContent = `${activeAlerts.length} active`;
+
+      if (activeAlerts.length === 0) {
+        banner.classList.add('hidden');
+        body.innerHTML = '<div class="live-feed-empty" id="no-sos-msg">No active SOS alerts. All is calm.</div>';
+        return;
+      }
+
+      const topAlert = activeAlerts[0];
+      banner.classList.remove('hidden');
+      bannerDetails.textContent = `Target: ${topAlert.email} | Location: ${topAlert.latitude ? `${topAlert.latitude}, ${topAlert.longitude}` : 'GPS Pending'} | Time: ${topAlert.displayTime || 'Just now'}`;
+      if (window.PuyalGpsAccuracy) {
+        window.PuyalGpsAccuracy.updateGpsAccuracyBadge(
+          'banner-sos-accuracy-badge',
+          topAlert.latitude ? (topAlert.accuracy ?? 8) : null,
+          { theme: 'dark', compact: true }
+        );
+      }
+
+      if (typeof navigator !== 'undefined' && !navigator.onLine && typeof window.triggerOfflineAlert === 'function') {
+        activeAlerts.forEach((a) => {
+          window.triggerOfflineAlert({
+            id: `offline-admin-sos-${a.id}`,
+            dedupe: true,
+            title: `Offline Active SOS: ${a.email || 'Civilian Distress'}`,
+            message: `Cached SOS beacon at ${a.latitude ? `${Number(a.latitude).toFixed(4)}, ${Number(a.longitude).toFixed(4)}` : 'GPS Pending'} — ready for immediate command action.`,
+            level: 'critical',
+            sound: true,
+            notifyOS: true,
+            ttlMs: 0,
+            url: '/dashboard-admin.html'
+          });
+        });
+      }
+
+      let html = '';
+      activeAlerts.forEach((d) => {
+        const time = d.displayTime || new Date(d.timestamp).toLocaleTimeString();
+        const accBadgeHtml = window.PuyalGpsAccuracy
+          ? window.PuyalGpsAccuracy.renderGpsAccuracyBadgeHtml(d.latitude ? (d.accuracy ?? 8) : null, { theme: 'light' })
+          : '';
+        html += `
+          <div class="live-sos-item" style="border-left: 4px solid var(--danger);">
+            <div class="sos-user-info">
+              <span class="sos-user-name">🚨 ${d.email || 'Civilian Distress Call'}</span>
+              <span class="sos-time">${time}</span>
+            </div>
+            <div class="sos-location sos-location-row">
+              <span>📍 ${d.latitude ? `${d.latitude}, ${d.longitude}` : 'GPS Coordinates Pending...'}</span>
+              ${accBadgeHtml}
+            </div>
+            <div style="font-size: 11px; color: var(--success); margin-top: 4px; font-weight: 700;">
+              ● Live Camera Video &amp; Mic Audio Feed Active
+            </div>
+            <div style="display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap;">
+              <button class="btn" style="background: linear-gradient(135deg, #dc2626, #b91c1c); color: #fff; padding: 7px 14px; font-size: 12px; font-weight: 800; border: none; border-radius: var(--radius-sm); cursor: pointer; display: flex; align-items: center; gap: 6px;" onclick="openLiveStreamForSOS('${String(d.id).replace(/'/g, '')}')">
+                📹 Watch Live Camera &amp; Mic Stream
+              </button>
+              <button class="btn btn-confirm" style="padding: 7px 14px; font-size: 12px;" onclick="resolveSOSAlert('${String(d.id).replace(/'/g, '')}')">
+                ✅ Dispatch &amp; Resolve
+              </button>
+              ${d.latitude ? `<a href="https://www.google.com/maps?q=${d.latitude},${d.longitude}" target="_blank" class="btn" style="background: var(--info); color: #fff; padding: 7px 14px; font-size: 12px; text-decoration: none;">🗺️ Satellite Map</a>` : ''}
+            </div>
+          </div>
+        `;
+      });
+      body.innerHTML = html;
+    }
+
+    async function resolveTopSOS() {
+      const activeAlerts = sosAlerts.filter(a => a.active);
+      if (activeAlerts.length > 0) {
+        await resolveSOSAlert(activeAlerts[0].id);
+      }
+    }
+
+    async function resolveSOSAlert(id) {
+      try {
+        await rapidSync.resolveSOS(id);
+        sosAlerts = sosAlerts.map(a => a.id === id ? { ...a, active: false } : a);
+        renderSOSFeed();
+        showToast('SOS alert marked resolved. Dispatch confirmed.', 'success');
+        speakText('Emergency SOS resolved. Dispatch confirmed.', 'en');
+      } catch (err) {
+        showToast('Error resolving SOS: ' + err.message, 'error');
+      }
+    }
+
+    // ====================================================================
+    // LIVE STREAM RECEIVER MODAL (REAL-TIME WS CAMERA & PCM AUDIO PLAYBACK)
+    // ====================================================================
+    let activeStreamSosId = null;
+    let streamPollInterval = null;
+    let streamTimerInterval = null;
+    let streamSeconds = 0;
+    let adminStreamWs = null;
+    let adminWsReconnectTimer = null;
+    let adminWsPingInterval = null;
+    let adminWsLatencyMs = null;
+    let adminAudioMonitorActive = true;
+    let adminAudioGainValue = 1.2;
+    let adminAudioCtx = null;
+    let adminHighpassNode = null;
+    let adminLowpassNode = null;
+    let adminCompressorNode = null;
+    let adminGainNode = null;
+    let adminNextAudioTime = 0;
+    let lastAdminAudioSeq = 0;
+    let lastAdminAudioSosId = null;
+    let lastAdminAudioSampleRate = 24000;
+    let pendingAdminPcmQueue = [];
+    let adminStreamPacketCount = 0;
+    let adminFrameTimestamps = [];
+    let adminWaveHistory = new Array(28).fill(8);
+    let activeFrameObjectUrl = null;
+    let lastAdminVizTs = 0;
+    let lastAdminBadgeTs = 0;
+    let lastAdminFrameRes = '';
+    let decodingBitmapInFlight = false;
+    let pendingBitmapPayload = null;
+
+    function revokeActiveFrameUrl(urlToRevoke) {
+      if (urlToRevoke && typeof urlToRevoke === 'string' && urlToRevoke.startsWith('blob:')) {
+        try { URL.revokeObjectURL(urlToRevoke); } catch (e) {}
+      }
+    }
+
+    function applyIncomingSosCoords(sosId, coords) {
+      if (!coords || coords.latitude === undefined || coords.longitude === undefined) return;
+      const lat = parseFloat(coords.latitude);
+      const lon = parseFloat(coords.longitude);
+      if (isNaN(lat) || isNaN(lon)) return;
+      const acc = coords.accuracy !== undefined ? parseFloat(coords.accuracy) : 10;
+      const speed = coords.speed !== undefined && coords.speed !== null ? parseFloat(coords.speed) : null;
+
+      let updatedAlert = false;
+      sosAlerts = sosAlerts.map(a => {
+        if (String(a.id) === String(sosId)) {
+          updatedAlert = true;
+          return { ...a, latitude: lat, longitude: lon, accuracy: acc, speed };
+        }
+        return a;
+      });
+
+      if (updatedAlert) {
+        renderSOSFeed();
+        updateTacticalMap();
+      }
+
+      if (String(activeStreamSosId) === String(sosId)) {
+        const speedStr = speed && speed > 0.4 ? ` · ${(speed * 3.6).toFixed(1)} km/h` : '';
+        const coordsEl = document.getElementById('stream-coords');
+        const mapLink = document.getElementById('stream-map-link');
+        if (coordsEl) {
+          coordsEl.textContent = `${lat.toFixed(6)}, ${lon.toFixed(6)}${speedStr}`;
+        }
+        if (window.PuyalGpsAccuracy) {
+          window.PuyalGpsAccuracy.updateGpsAccuracyBadge('stream-accuracy-badge', acc, { theme: 'dark' });
+        }
+        if (mapLink) {
+          mapLink.href = `https://www.google.com/maps?q=${lat},${lon}`;
+        }
+      }
+    }
+
+    function initAdminAudioPlayback() {
+      try {
+        if (!adminAudioCtx || adminAudioCtx.state === 'closed') {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (!AudioCtx) return;
+          adminAudioCtx = new AudioCtx({ latencyHint: 'interactive' });
+
+          adminHighpassNode = adminAudioCtx.createBiquadFilter();
+          adminHighpassNode.type = 'highpass';
+          adminHighpassNode.frequency.value = 75;
+          adminHighpassNode.Q.value = 0.7;
+
+          adminLowpassNode = adminAudioCtx.createBiquadFilter();
+          adminLowpassNode.type = 'lowpass';
+          adminLowpassNode.frequency.value = 11500;
+          adminLowpassNode.Q.value = 0.7;
+
+          adminCompressorNode = adminAudioCtx.createDynamicsCompressor();
+          adminCompressorNode.threshold.value = -20;
+          adminCompressorNode.knee.value = 16;
+          adminCompressorNode.ratio.value = 5;
+          adminCompressorNode.attack.value = 0.003;
+          adminCompressorNode.release.value = 0.1;
+
+          adminGainNode = adminAudioCtx.createGain();
+          adminGainNode.gain.value = adminAudioMonitorActive ? adminAudioGainValue : 0.0;
+
+          adminHighpassNode.connect(adminLowpassNode);
+          adminLowpassNode.connect(adminCompressorNode);
+          adminCompressorNode.connect(adminGainNode);
+          adminGainNode.connect(adminAudioCtx.destination);
+          adminNextAudioTime = adminAudioCtx.currentTime;
+        }
+        if (adminAudioCtx.state === 'suspended') {
+          adminAudioCtx.resume().then(() => {
+            updateAudioMonitorButtonUI();
+            flushPendingAdminPcmQueue();
+          }).catch(() => {
+            updateAudioMonitorButtonUI();
+          });
+        }
+      } catch (e) {
+        console.warn('Admin AudioContext init warning:', e);
+      }
+    }
+
+    function flushPendingAdminPcmQueue() {
+      if (!adminAudioCtx || adminAudioCtx.state !== 'running' || pendingAdminPcmQueue.length === 0) return;
+      const queued = pendingAdminPcmQueue.splice(0, pendingAdminPcmQueue.length);
+      queued.forEach(item => {
+        if (item.int16) {
+          playDecodedInt16Samples(item.int16, item.sampleRate);
+        } else if (item.base64Pcm) {
+          playDecodedPcmChunk(item.base64Pcm, item.sampleRate);
+        }
+      });
+    }
+
+    function setAdminAudioGain(percentVal) {
+      const pct = Math.max(0, Math.min(200, Number(percentVal) || 0));
+      adminAudioGainValue = pct / 100;
+      const valLabel = document.getElementById('admin-audio-gain-val');
+      if (valLabel) valLabel.textContent = `${pct}%`;
+
+      if (pct === 0 && adminAudioMonitorActive) {
+        adminAudioMonitorActive = false;
+      } else if (pct > 0 && !adminAudioMonitorActive) {
+        adminAudioMonitorActive = true;
+      }
+
+      initAdminAudioPlayback();
+      if (adminGainNode && adminAudioCtx) {
+        adminGainNode.gain.setTargetAtTime(adminAudioMonitorActive ? adminAudioGainValue : 0.0, adminAudioCtx.currentTime, 0.02);
+      }
+      updateAudioMonitorButtonUI();
+    }
+
+    function updateAudioMonitorButtonUI() {
+      const btn = document.getElementById('btn-toggle-audio-monitor');
+      if (!btn) return;
+      const needsResume = adminAudioMonitorActive && adminAudioCtx && adminAudioCtx.state === 'suspended';
+      if (needsResume) {
+        btn.textContent = '🔇 Tap to Enable Audio';
+        btn.style.background = '#d97706';
+      } else if (adminAudioMonitorActive) {
+        btn.textContent = '🔊 Audio: LIVE';
+        btn.style.background = 'var(--success)';
+      } else {
+        btn.textContent = '🔇 Audio: MUTED';
+        btn.style.background = 'rgba(255,255,255,0.15)';
+      }
+    }
+
+    function toggleAdminAudioMonitor() {
+      // If context was suspended by browser autoplay policy, clicking enables/resumes without accidentally muting
+      if (adminAudioMonitorActive && adminAudioCtx && adminAudioCtx.state === 'suspended') {
+        initAdminAudioPlayback();
+        updateAudioMonitorButtonUI();
+        showToast('Resuming live civilian microphone audio...', 'info');
+        return;
+      }
+      adminAudioMonitorActive = !adminAudioMonitorActive;
+      initAdminAudioPlayback();
+      if (adminGainNode && adminAudioCtx) {
+        adminGainNode.gain.setTargetAtTime(adminAudioMonitorActive ? adminAudioGainValue : 0.0, adminAudioCtx.currentTime, 0.02);
+      }
+      updateAudioMonitorButtonUI();
+      showToast(adminAudioMonitorActive ? 'Live civilian microphone audio enabled.' : 'Live audio monitor muted.', adminAudioMonitorActive ? 'success' : 'info');
+    }
+
+    function base64ToInt16(base64Pcm) {
+      const binary = atob(base64Pcm);
+      const len = binary.length;
+      const bytes = new Uint8Array(len);
+      for (let i = 0; i < len; i++) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+      return new Int16Array(bytes.buffer);
+    }
+
+    function playDecodedInt16Samples(int16, sampleRate = 24000) {
+      if (!int16 || int16.length === 0 || !adminAudioCtx || !adminHighpassNode || adminAudioCtx.state !== 'running') return;
+      try {
+        lastAdminAudioSampleRate = sampleRate || 24000;
+        const audioBuf = adminAudioCtx.createBuffer(1, int16.length, lastAdminAudioSampleRate);
+        const channelData = audioBuf.getChannelData(0);
+        for (let i = 0; i < int16.length; i++) {
+          channelData[i] = int16[i] / 32768.0;
+        }
+
+        const now = adminAudioCtx.currentTime;
+        // Maintain ultra-tight 6ms-55ms jitter buffer & apply 1.5ms micro-ramp on discontiguous resync to eliminate clicks
+        const isResync = adminNextAudioTime < now || (adminNextAudioTime - now) > 0.055;
+        if (isResync) {
+          adminNextAudioTime = now + 0.006;
+          const rampSamples = Math.min(Math.floor(lastAdminAudioSampleRate * 0.0015), Math.floor(int16.length / 4));
+          for (let i = 0; i < rampSamples; i++) {
+            channelData[i] *= i / rampSamples;
+          }
+        }
+
+        const source = adminAudioCtx.createBufferSource();
+        source.buffer = audioBuf;
+        source.connect(adminHighpassNode);
+        source.start(adminNextAudioTime);
+        adminNextAudioTime += audioBuf.duration;
+      } catch (e) {
+        console.warn('PCM audio playback warning:', e);
+      }
+    }
+
+    function playDecodedPcmChunk(base64Pcm, sampleRate = 24000) {
+      if (!base64Pcm) return;
+      try {
+        const int16 = base64ToInt16(base64Pcm);
+        playDecodedInt16Samples(int16, sampleRate);
+      } catch (e) {
+        console.warn('PCM audio chunk decode warning:', e);
+      }
+    }
+
+    function enqueueInt16AudioChunk(int16, sampleRate = 24000, seq = 0) {
+      if (!int16 || int16.length === 0 || !activeStreamSosId) return;
+      lastAdminAudioSampleRate = sampleRate || 24000;
+      if (lastAdminAudioSosId !== activeStreamSosId) {
+        lastAdminAudioSosId = activeStreamSosId;
+        lastAdminAudioSeq = 0;
+      }
+      if (seq && lastAdminAudioSeq && seq <= lastAdminAudioSeq && (lastAdminAudioSeq - seq) < 10) return;
+      if (seq) lastAdminAudioSeq = seq;
+
+      initAdminAudioPlayback();
+      if (!adminAudioCtx || !adminHighpassNode) return;
+      if (adminAudioCtx.state !== 'running') {
+        pendingAdminPcmQueue.push({ int16: new Int16Array(int16), sampleRate: lastAdminAudioSampleRate });
+        if (pendingAdminPcmQueue.length > 6) pendingAdminPcmQueue.shift();
+        updateAudioMonitorButtonUI();
+        return;
+      }
+
+      playDecodedInt16Samples(int16, lastAdminAudioSampleRate);
+    }
+
+    function enqueuePcmAudioChunk(base64Pcm, sampleRate = 24000, seq = 0) {
+      if (!base64Pcm || !activeStreamSosId) return;
+      try {
+        const int16 = base64ToInt16(base64Pcm);
+        enqueueInt16AudioChunk(int16, sampleRate, seq);
+      } catch (e) {}
+    }
+
+    function throttledUpdateAudioVisualizer(level, hasRealAudio) {
+      const now = Date.now();
+      if (now - lastAdminVizTs < 40) return;
+      lastAdminVizTs = now;
+      updateAudioVisualizer(level, hasRealAudio);
+    }
+
+    function updateAudioVisualizer(level, hasRealAudio) {
+      const clamped = Math.min(100, Math.max(4, level || 20));
+      const labelEl = document.getElementById('admin-audio-source-label');
+      const dbEl = document.getElementById('audio-db-level');
+
+      if (labelEl) {
+        const khz = Math.round((lastAdminAudioSampleRate || 24000) / 1000);
+        labelEl.textContent = hasRealAudio ? `🎙️ LIVE HD MIC (${khz}kHz):` : '📡 TELEMETRY AUDIO:';
+      }
+      if (dbEl) {
+        dbEl.textContent = hasRealAudio
+          ? (adminAudioMonitorActive ? `${Math.round(clamped)}% · Live Audio` : `${Math.round(clamped)}% · Muted`)
+          : `${Math.round(clamped)}% · Signal`;
+      }
+
+      for (let i = 1; i <= 8; i++) {
+        const wave = document.getElementById(`wave-${i}`);
+        if (wave) {
+          const h = Math.round((Math.sin(i * 0.9 + Date.now() / 110) + 1) * (clamped / 2.6) + 5);
+          wave.style.height = `${h}px`;
+        }
+      }
+
+      // Update live scrolling waveform bars on canvas
+      adminWaveHistory.shift();
+      adminWaveHistory.push(clamped);
+      const canvas = document.getElementById('admin-live-audio-canvas');
+      if (canvas) {
+        const ctx = canvas.getContext('2d');
+        const cw = canvas.width;
+        const ch = canvas.height;
+        ctx.clearRect(0, 0, cw, ch);
+        const barW = Math.floor(cw / adminWaveHistory.length);
+        for (let i = 0; i < adminWaveHistory.length; i++) {
+          const val = adminWaveHistory[i];
+          const barH = Math.max(3, Math.round((val / 100) * (ch - 4)));
+          const y = Math.floor((ch - barH) / 2);
+          ctx.fillStyle = hasRealAudio
+            ? (adminAudioMonitorActive ? '#4ade80' : '#94a3b8')
+            : '#38bdf8';
+          ctx.fillRect(i * barW + 1, y, Math.max(2, barW - 2), barH);
+        }
+      }
+    }
+
+    function connectAdminStreamWs(sosId) {
+      if (!activeStreamSosId || String(activeStreamSosId) !== String(sosId)) return;
+      if (adminStreamWs && (adminStreamWs.readyState === WebSocket.OPEN || adminStreamWs.readyState === WebSocket.CONNECTING)) {
+        return;
+      }
+
+      try {
+        const wsUrl = rapidSync.getSosWebSocketUrl('viewer', sosId);
+        const ws = new WebSocket(wsUrl);
+        ws.binaryType = 'arraybuffer';
+        adminStreamWs = ws;
+
+        ws.onopen = () => {
+          if (String(activeStreamSosId) !== String(sosId)) {
+            ws.close();
+            return;
+          }
+          ws.send(JSON.stringify({ type: 'SUBSCRIBE', role: 'viewer', sosId: String(sosId) }));
+          ws.send(JSON.stringify({ type: 'PING', ts: Date.now() }));
+          clearInterval(adminWsPingInterval);
+          adminWsPingInterval = setInterval(() => {
+            if (ws.readyState === WebSocket.OPEN) {
+              ws.send(JSON.stringify({ type: 'PING', ts: Date.now() }));
+            }
+          }, 3000);
+        };
+
+        ws.onmessage = (evt) => {
+          if (String(activeStreamSosId) !== String(sosId)) return;
+
+          // Zero-copy fast binary path: 0x01 JPEG Video Frame / 0x02 Int16 PCM Audio
+          if (evt.data instanceof ArrayBuffer) {
+            const buf = evt.data;
+            if (buf.byteLength <= 8) return;
+            const view = new DataView(buf);
+            const pktType = view.getUint8(0);
+            const seq = view.getUint32(1, true);
+            const audioLevel = view.getUint8(5);
+
+            if (pktType === 0x01) {
+              const flags = view.getUint8(6);
+              const hasRealAudio = (flags & 0x01) === 0x01;
+              const isWebP = (flags & 0x02) === 0x02;
+              const imgBlob = new Blob([new Uint8Array(buf, 8)], { type: isWebP ? 'image/webp' : 'image/jpeg' });
+              renderBinaryVideoFrame(sosId, imgBlob, audioLevel, hasRealAudio, seq);
+            } else if (pktType === 0x02) {
+              const sampleRate = view.getUint16(6, true) || 24000;
+              const int16 = new Int16Array(buf, 8, Math.floor((buf.byteLength - 8) / 2));
+              enqueueInt16AudioChunk(int16, sampleRate, seq);
+              throttledUpdateAudioVisualizer(audioLevel, true);
+            }
+            return;
+          }
+
+          try {
+            const msg = JSON.parse(evt.data);
+            if (msg.type === 'PONG' && msg.clientTs) {
+              adminWsLatencyMs = Math.max(1, Date.now() - msg.clientTs);
+            } else if (msg.type === 'SOS_FRAME_UPDATE') {
+              updateActiveStreamUI(msg);
+              if (Array.isArray(msg.recentAudioChunks)) {
+                msg.recentAudioChunks.forEach(c => {
+                  enqueuePcmAudioChunk(c.audioPcmBase64, c.sampleRate || 16000, c.seq || 0);
+                });
+              }
+              if (msg.audioPcmBase64) {
+                enqueuePcmAudioChunk(msg.audioPcmBase64, msg.sampleRate || 16000, msg.seq || 0);
+              }
+            } else if (msg.type === 'SOS_AUDIO_CHUNK') {
+              throttledUpdateAudioVisualizer(msg.audioLevel, true);
+              if (msg.audioPcmBase64) {
+                enqueuePcmAudioChunk(msg.audioPcmBase64, msg.sampleRate || 16000, msg.seq || 0);
+              }
+            } else if (msg.type === 'SOS_LOCATION_UPDATE') {
+              if (msg.coords) {
+                applyIncomingSosCoords(msg.sosId || sosId, msg.coords);
+              }
+            } else if (msg.type === 'SOS_ENDED') {
+              const pktBadge = document.getElementById('stream-packet-badge');
+              if (pktBadge) {
+                pktBadge.textContent = 'Broadcast Ended';
+                pktBadge.style.color = '#fca5a5';
+                pktBadge.style.borderColor = '#fca5a5';
+              }
+            }
+          } catch (e) {}
+        };
+
+        ws.onclose = () => {
+          if (adminStreamWs === ws) adminStreamWs = null;
+          clearInterval(adminWsPingInterval);
+          if (String(activeStreamSosId) === String(sosId)) {
+            clearTimeout(adminWsReconnectTimer);
+            adminWsReconnectTimer = setTimeout(() => connectAdminStreamWs(sosId), 900);
+          }
+        };
+
+        ws.onerror = () => {};
+      } catch (e) {
+        console.warn('Admin WS stream error:', e);
+      }
+    }
+
+    function openLiveStreamForSOS(sosId) {
+      const match = (sosAlerts || []).find(a => String(a.id) === String(sosId));
+      return openLiveStreamModal(
+        sosId,
+        match ? match.email : 'Civilian Device',
+        match ? match.latitude : '',
+        match ? match.longitude : '',
+        match ? match.accuracy : null
+      );
+    }
+
+    async function openLiveStreamModal(sosId, email, lat, lon, accuracy = null) {
+      // Tear down any existing stream subscription & timers cleanly when switching SOS feeds
+      clearTimeout(adminWsReconnectTimer);
+      clearInterval(adminWsPingInterval);
+      if (streamPollInterval) clearInterval(streamPollInterval);
+      if (streamTimerInterval) clearInterval(streamTimerInterval);
+      if (adminStreamWs) {
+        try {
+          adminStreamWs.onclose = null;
+          adminStreamWs.close();
+        } catch (e) {}
+        adminStreamWs = null;
+      }
+
+      activeStreamSosId = String(sosId);
+      streamSeconds = 0;
+      adminStreamPacketCount = 0;
+      adminFrameTimestamps = [];
+      adminWsLatencyMs = null;
+      lastAdminAudioSeq = 0;
+      lastAdminAudioSosId = activeStreamSosId;
+      pendingAdminPcmQueue = [];
+      adminAudioMonitorActive = true;
+      adminWaveHistory = new Array(28).fill(8);
+      lastAdminVizTs = 0;
+      lastAdminBadgeTs = 0;
+      lastAdminFrameRes = '';
+      decodingBitmapInFlight = false;
+      pendingBitmapPayload = null;
+      if (activeFrameObjectUrl) {
+        revokeActiveFrameUrl(activeFrameObjectUrl);
+        activeFrameObjectUrl = null;
+      }
+
+      document.getElementById('live-stream-modal').classList.remove('hidden');
+      document.getElementById('stream-user-email').textContent = email || 'Civilian Device';
+      document.getElementById('stream-timer').textContent = '00:00';
+      document.getElementById('stream-coords').textContent = lat && lon ? `${lat}, ${lon}` : 'Detecting GPS...';
+      if (window.PuyalGpsAccuracy) {
+        window.PuyalGpsAccuracy.updateGpsAccuracyBadge(
+          'stream-accuracy-badge',
+          lat && lon ? (accuracy ?? 8) : null,
+          { theme: 'dark' }
+        );
+      }
+      document.getElementById('stream-map-link').href = lat && lon ? `https://www.google.com/maps?q=${lat},${lon}` : '#';
+      const streamCanvas = document.getElementById('admin-live-stream-canvas');
+      if (streamCanvas) streamCanvas.style.display = 'none';
+      const streamImg = document.getElementById('admin-live-stream-img');
+      streamImg.src = '';
+      streamImg.style.display = 'none';
+      document.getElementById('stream-waiting-indicator').style.display = 'block';
+      const pktBadge = document.getElementById('stream-packet-badge');
+      pktBadge.textContent = 'Connecting WS...';
+      pktBadge.style.color = '#38bdf8';
+      pktBadge.style.borderColor = '#38bdf8';
+      document.getElementById('admin-audio-source-label').textContent = '🎙️ LIVE HD AUDIO FEED:';
+      document.getElementById('audio-db-level').textContent = 'Listening...';
+
+      // Cancel any ongoing speech synthesis so it never talks over the live civilian microphone
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+
+      // Initialize & resume AudioContext synchronously inside user click handler
+      initAdminAudioPlayback();
+      updateAudioMonitorButtonUI();
+
+      // Connect real-time WebSocket stream viewer
+      connectAdminStreamWs(sosId);
+
+      // Start duration timer
+      if (streamTimerInterval) clearInterval(streamTimerInterval);
+      streamTimerInterval = setInterval(() => {
+        streamSeconds++;
+        const mins = String(Math.floor(streamSeconds / 60)).padStart(2, '0');
+        const secs = String(streamSeconds % 60).padStart(2, '0');
+        document.getElementById('stream-timer').textContent = `${mins}:${secs}`;
+      }, 1000);
+
+      // Fetch initial REST snapshot immediately (including any recent buffered audio chunks)
+      try {
+        const feed = await rapidSync.fetchSOSLiveFeed(sosId);
+        if (feed.stream) {
+          updateActiveStreamUI(feed.stream);
+          if (Array.isArray(feed.stream.recentAudioChunks)) {
+            feed.stream.recentAudioChunks.forEach(c => {
+              enqueuePcmAudioChunk(c.audioPcmBase64, c.sampleRate || 24000, c.seq || 0);
+            });
+          }
+        }
+      } catch (e) {}
+
+      // Fallback REST poll when WS isn't OPEN
+      if (streamPollInterval) clearInterval(streamPollInterval);
+      streamPollInterval = setInterval(async () => {
+        if (!activeStreamSosId) return;
+        if (adminStreamWs && adminStreamWs.readyState === WebSocket.OPEN) return;
+        try {
+          const feed = await rapidSync.fetchSOSLiveFeed(activeStreamSosId);
+          if (feed.stream) {
+            updateActiveStreamUI(feed.stream);
+            if (Array.isArray(feed.stream.recentAudioChunks)) {
+              feed.stream.recentAudioChunks.forEach(c => {
+                enqueuePcmAudioChunk(c.audioPcmBase64, c.sampleRate || 24000, c.seq || 0);
+              });
+            }
+          }
+        } catch (e) {}
+      }, 1200);
+
+      showToast(`📹 Live HD stream connected: ${email || 'Civilian Device'}`, 'info');
+    }
+
+    function recordStreamFpsAndBadge(seq) {
+      const now = Date.now();
+      adminFrameTimestamps.push(now);
+      adminFrameTimestamps = adminFrameTimestamps.filter(t => now - t <= 1000);
+      const currentFps = adminFrameTimestamps.length;
+
+      adminStreamPacketCount++;
+      if (!lastAdminBadgeTs || now - lastAdminBadgeTs >= 120) {
+        lastAdminBadgeTs = now;
+        const pktBadge = document.getElementById('stream-packet-badge');
+        if (pktBadge) {
+          const resStr = lastAdminFrameRes ? ` · ${lastAdminFrameRes}` : '';
+          const rttStr = adminWsLatencyMs !== null ? ` · ${adminWsLatencyMs}ms` : '';
+          pktBadge.textContent = `${currentFps} FPS${resStr}${rttStr} · #${seq || adminStreamPacketCount}`;
+          pktBadge.style.color = '#86efac';
+          pktBadge.style.borderColor = '#86efac';
+        }
+      }
+    }
+
+    async function renderBinaryVideoFrame(sosId, imgBlob, audioLevel, hasRealAudio, seq) {
+      if (typeof createImageBitmap !== 'function') {
+        const objUrl = URL.createObjectURL(imgBlob);
+        updateActiveStreamUI({ sosId, lastFrame: objUrl, isBlobUrl: true, audioLevel, hasRealAudio, seq });
+        return;
+      }
+
+      // Drop stale intermediate frames if a decode is already in flight so display stays zero-lag
+      if (decodingBitmapInFlight) {
+        pendingBitmapPayload = { sosId, imgBlob, audioLevel, hasRealAudio, seq };
+        return;
+      }
+
+      decodingBitmapInFlight = true;
+      try {
+        const bitmap = await createImageBitmap(imgBlob);
+        if (String(activeStreamSosId) === String(sosId)) {
+          const canvas = document.getElementById('admin-live-stream-canvas');
+          const img = document.getElementById('admin-live-stream-img');
+          const indicator = document.getElementById('stream-waiting-indicator');
+          if (canvas) {
+            if (canvas.width !== bitmap.width || canvas.height !== bitmap.height) {
+              canvas.width = bitmap.width;
+              canvas.height = bitmap.height;
+            }
+            lastAdminFrameRes = `${bitmap.width}×${bitmap.height}`;
+            const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
+            if (ctx) ctx.drawImage(bitmap, 0, 0);
+            canvas.style.display = 'block';
+          }
+          if (img) img.style.display = 'none';
+          if (indicator) indicator.style.display = 'none';
+          recordStreamFpsAndBadge(seq);
+          throttledUpdateAudioVisualizer(audioLevel, Boolean(hasRealAudio));
+        }
+        try { bitmap.close(); } catch (e) {}
+      } catch (err) {
+        const objUrl = URL.createObjectURL(imgBlob);
+        updateActiveStreamUI({ sosId, lastFrame: objUrl, isBlobUrl: true, audioLevel, hasRealAudio, seq });
+      } finally {
+        decodingBitmapInFlight = false;
+        if (pendingBitmapPayload && String(activeStreamSosId) === String(pendingBitmapPayload.sosId)) {
+          const next = pendingBitmapPayload;
+          pendingBitmapPayload = null;
+          renderBinaryVideoFrame(next.sosId, next.imgBlob, next.audioLevel, next.hasRealAudio, next.seq);
+        } else {
+          pendingBitmapPayload = null;
+        }
+      }
+    }
+
+    function updateActiveStreamUI(data) {
+      const img = document.getElementById('admin-live-stream-img');
+      const canvas = document.getElementById('admin-live-stream-canvas');
+      const indicator = document.getElementById('stream-waiting-indicator');
+
+      if (data.lastFrame) {
+        const prevUrl = activeFrameObjectUrl;
+        activeFrameObjectUrl = data.isBlobUrl ? data.lastFrame : null;
+        img.onload = () => {
+          if (img.naturalWidth && img.naturalHeight) {
+            lastAdminFrameRes = `${img.naturalWidth}×${img.naturalHeight}`;
+          }
+          if (prevUrl && prevUrl !== activeFrameObjectUrl) {
+            revokeActiveFrameUrl(prevUrl);
+          }
+        };
+        img.src = data.lastFrame;
+        img.style.display = 'block';
+        if (canvas) canvas.style.display = 'none';
+        indicator.style.display = 'none';
+        recordStreamFpsAndBadge(data.seq);
+      }
+
+      throttledUpdateAudioVisualizer(data.audioLevel, Boolean(data.hasRealAudio));
+
+      if (data.coords && data.coords.latitude && data.coords.longitude) {
+        applyIncomingSosCoords(data.sosId || activeStreamSosId, data.coords);
+      }
+    }
+
+    function closeLiveStreamModal() {
+      activeStreamSosId = null;
+      adminStreamPacketCount = 0;
+      adminFrameTimestamps = [];
+      adminWsLatencyMs = null;
+      lastAdminAudioSeq = 0;
+      lastAdminVizTs = 0;
+      lastAdminBadgeTs = 0;
+      lastAdminFrameRes = '';
+      decodingBitmapInFlight = false;
+      pendingBitmapPayload = null;
+      clearTimeout(adminWsReconnectTimer);
+      clearInterval(adminWsPingInterval);
+
+      if (activeFrameObjectUrl) {
+        revokeActiveFrameUrl(activeFrameObjectUrl);
+        activeFrameObjectUrl = null;
+      }
+
+      if (adminStreamWs) {
+        try { adminStreamWs.close(); } catch (e) {}
+        adminStreamWs = null;
+      }
+      if (adminAudioCtx) {
+        try { adminAudioCtx.close(); } catch (e) {}
+        adminAudioCtx = null;
+        adminHighpassNode = null;
+        adminLowpassNode = null;
+        adminCompressorNode = null;
+        adminGainNode = null;
+        adminNextAudioTime = 0;
+      }
+
+      const pktBadge = document.getElementById('stream-packet-badge');
+      if (pktBadge) {
+        pktBadge.textContent = 'Syncing WS...';
+        pktBadge.style.color = '#38bdf8';
+        pktBadge.style.borderColor = '#38bdf8';
+      }
+      if (streamPollInterval) clearInterval(streamPollInterval);
+      if (streamTimerInterval) clearInterval(streamTimerInterval);
+      pendingAdminPcmQueue = [];
+      lastAdminAudioSosId = null;
+      document.getElementById('live-stream-modal').classList.add('hidden');
+    }
+
+    window.openLiveStreamForSOS = openLiveStreamForSOS;
+    window.openLiveStreamModal = openLiveStreamModal;
+
+    async function resolveCurrentStreamSOS() {
+      if (activeStreamSosId) {
+        await resolveSOSAlert(activeStreamSosId);
+        closeLiveStreamModal();
+      }
+    }
+
+    // ====================================================================
+    // UPDATE INCIDENT STATUS
+    // ====================================================================
+    async function updateStatus(id, newStatus) {
+      try {
+        await rapidSync.updateIncident(id, newStatus);
+        const item = incidents.find(i => String(i.id) === String(id));
+        if (item) item.status = newStatus;
+        renderDashboard();
+        showToast('Incident updated to: ' + newStatus, 'success');
+        speakText(`Incident status marked ${newStatus}`, 'en');
+      } catch (e) {
+        showToast('Failed to update incident: ' + e.message, 'error');
+      }
+    }
+
+    // ====================================================================
+    // DELETE INCIDENT
+    // ====================================================================
+    async function deleteIncident(id) {
+      if (confirm('Delete this incident report permanently?')) {
+        try {
+          await rapidSync.deleteIncident(id);
+          incidents = incidents.filter(i => String(i.id) !== String(id));
+          renderDashboard();
+          showToast('Incident removed from active tracking.', 'warning');
+        } catch (e) {
+          showToast('Failed to delete: ' + e.message, 'error');
+        }
+      }
+    }
+
+    // ====================================================================
+    // VIEW DETAILS MODAL
+    // ====================================================================
+    function viewDetails(id) {
+      const item = incidents.find(i => String(i.id) === String(id));
+      if (!item) return;
+
+      document.getElementById('modal-title').innerText = item.title;
+      const sourceIcon = item.source === 'voice' ? '🎙️' : item.source === 'sos' ? '🚨' : '📝';
+
+      document.getElementById('modal-body').innerHTML = `
+        <p><strong>Category:</strong> ${item.category}</p>
+        <p><strong>Threat Severity:</strong> <span class="sev-badge sev-${item.severity}">${item.severity} (Score: ${item.severityScore || 50}/100)</span></p>
+        <p><strong>Status:</strong> ${item.status}</p>
+        <p><strong>Location:</strong> ${item.location}</p>
+        <p><strong>People Affected:</strong> ${item.affected}</p>
+        <p><strong>Contact:</strong> ${item.contact}</p>
+        <p><strong>Reported By:</strong> ${item.reportedBy || 'Unknown'}</p>
+        <p><strong>Reported At:</strong> ${item.timestamp}</p>
+        <p><strong>Source:</strong> ${sourceIcon} ${item.source || 'form'}</p>
+        <div class="modal-desc">
+          <strong>Description:</strong><br>${item.description}
+          <div style="margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap;">
+            <button class="btn" style="background: var(--info); color: #fff; padding: 5px 11px; font-size: 11px; border: none; border-radius: var(--radius-sm); cursor: pointer;" onclick="speakText('${item.description.replace(/'/g, "\\'")}', 'en')">
+              🔊 Read Aloud (TTS)
+            </button>
+            <button type="button" class="btn" style="background: #0f172a; color: #38bdf8; padding: 5px 11px; font-size: 11px; font-weight: 700; border: 1px solid #334155; border-radius: var(--radius-sm); cursor: pointer;" onclick="openAdminIncidentQR('${item.id}')">
+              📱 Responder QR Code
+            </button>
+          </div>
+        </div>
+      `;
+      document.getElementById('detail-modal').classList.remove('hidden');
+    }
+
+    function closeModal() {
+      document.getElementById('detail-modal').classList.add('hidden');
+    }
+
+    function openAdminIncidentQR(id) {
+      const item = incidents.find(i => String(i.id) === String(id));
+      if (!item || typeof window.showIncidentQRModal !== 'function') return;
+      const assignedTeam = responseTeams.find(t =>
+        String(t.assignedIncidentId) === String(item.id) ||
+        (item.assignedTeam && String(t.id) === String(item.assignedTeam.id))
+      );
+      window.showIncidentQRModal({
+        ...item,
+        assignedTeamName: assignedTeam ? assignedTeam.name : item.assignedTeamName
+      });
+    }
+
+    // ====================================================================
+    // EMERGENCY RESPONSE TEAMS MANAGEMENT & AI ALLOCATION
+    // ====================================================================
+    function renderTeams() {
+      const catFilter = document.getElementById('filter-team-cat').value;
+      const statFilter = document.getElementById('filter-team-status').value;
+
+      // Update KPI Counters
+      const totalTeams = responseTeams.length;
+      const availTeams = responseTeams.filter(t => t.status === 'Available').length;
+      const dispTeams = responseTeams.filter(t => t.status === 'Dispatched').length;
+      const totalPersonnel = responseTeams.reduce((sum, t) => sum + (Number(t.personnel) || 0), 0);
+
+      document.getElementById('kpi-total-teams').textContent = totalTeams;
+      document.getElementById('kpi-avail-teams').textContent = availTeams;
+      document.getElementById('kpi-disp-teams').textContent = dispTeams;
+      document.getElementById('kpi-personnel-teams').textContent = totalPersonnel;
+
+      // Filter
+      const filteredTeams = responseTeams.filter(t => {
+        const catMatch = catFilter === 'All' || t.category === catFilter;
+        const statMatch = statFilter === 'All' || t.status === statFilter;
+        return catMatch && statMatch;
+      });
+
+      const container = document.getElementById('teams-container');
+      if (!container) return;
+
+      if (filteredTeams.length === 0) {
+        container.innerHTML = `
+          <div style="padding: 32px; text-align: center; color: var(--text-faint); grid-column: 1/-1;">
+            No response teams match current filter criteria.
+          </div>
+        `;
+        return;
+      }
+
+      const categoryIcons = {
+        'Fire': '🚒',
+        'Medical Emergency': '🚑',
+        'Structural Collapse': '🏗️',
+        'Flood': '🚤',
+        'Road Accident': '🚨',
+        'HAZMAT': '☣️'
+      };
+
+      container.innerHTML = filteredTeams.map(team => {
+        const icon = categoryIcons[team.category] || '🛡️';
+        const isDispatched = team.status === 'Dispatched';
+        const isAvailable = team.status === 'Available';
+        const isMaintenance = team.status === 'Maintenance';
+
+        const statusClass = isAvailable ? 'status-avail' :
+                            isDispatched ? 'status-dispatched' :
+                            isMaintenance ? 'status-maint' : 'status-onscene';
+
+        // Find assigned incident title if available
+        let assignedIncidentTitle = null;
+        if (team.assignedIncidentId) {
+          const inc = incidents.find(i => String(i.id) === String(team.assignedIncidentId));
+          assignedIncidentTitle = inc ? inc.title : `Incident #${team.assignedIncidentId}`;
+        }
+
+        const vehiclesList = team.vehicles && team.vehicles.length
+          ? team.vehicles.join(', ')
+          : 'Rapid Deployment Units';
+
+        return `
+          <div class="team-card ${isDispatched ? 'team-dispatched' : ''}">
+            <div class="team-header">
+              <div class="team-identity">
+                <span style="font-size: 22px;">${icon}</span>
+                <div>
+                  <div class="team-name">${team.name}</div>
+                  <div class="team-id">${team.id} &bull; ${team.category}</div>
+                </div>
+              </div>
+              <span class="team-status-pill ${statusClass}">● ${team.status}</span>
+            </div>
+
+            <div class="team-meta-row">
+              <div class="team-meta-item">
+                <div class="team-meta-val">🏢 ${team.stationName || 'Regional Depot'}</div>
+                <div class="team-meta-lbl">Assigned Station Base</div>
+              </div>
+              <div class="team-meta-item">
+                <div class="team-meta-val">📍 ${Number(team.latitude).toFixed(4)}, ${Number(team.longitude).toFixed(4)}</div>
+                <div class="team-meta-lbl">Base Coordinates</div>
+              </div>
+            </div>
+
+            <div class="team-meta-row" style="margin-top: 8px;">
+              <div class="team-meta-item">
+                <div class="team-meta-val">👥 ${team.personnelCount || team.personnel || 8} Responders</div>
+                <div class="team-meta-lbl">Specialized Crew</div>
+              </div>
+              <div class="team-meta-item">
+                <div class="team-meta-val">📞 ${team.contact || 'Dispatch Line'}</div>
+                <div class="team-meta-lbl">Comms Radio / Phone</div>
+              </div>
+            </div>
+
+            <div style="font-size: 11px; color: var(--text-secondary); margin-top: 8px; line-height: 1.4;">
+              <strong>Vehicles:</strong> ${vehiclesList}
+            </div>
+
+            ${isDispatched ? `
+              <div style="margin-top: 10px; padding: 8px 10px; background: #fffbeb; border: 1px solid #fde68a; border-radius: var(--radius-sm); font-size: 11px; color: #92400e;">
+                <strong>🚨 Active Mission:</strong> Deployed to <em>${assignedIncidentTitle || 'Disaster Site'}</em>
+              </div>
+            ` : ''}
+
+            <div class="team-actions">
+              ${isAvailable ? `
+                <button type="button" class="btn-assign-nearest" onclick="assignTeamToNearestIncident('${team.id}')">
+                  ⚡ Assign to Nearest Disaster
+                </button>
+              ` : isDispatched ? `
+                <button type="button" class="btn-assign-nearest" style="background: #059669;" onclick="releaseTeamFromDuty('${team.id}')">
+                  ✅ Mission Resolved (Release Team)
+                </button>
+              ` : `
+                <button type="button" class="btn-assign-nearest" style="background: var(--navy-mid);" onclick="toggleTeamReadiness('${team.id}')">
+                  🔄 Set to Available
+                </button>
+              `}
+              <button type="button" onclick="deleteTeam('${team.id}')" style="background: none; border: none; color: var(--danger); font-size: 11px; cursor: pointer; text-decoration: underline; padding: 4px;">
+                Remove
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function toggleTeamReadiness(teamId) {
+      try {
+        await rapidSync.updateTeam(teamId, { status: 'Available' });
+        showToast('Team status reset to Available.', 'success');
+        await loadAllData();
+      } catch (err) {
+        showToast('Failed to update team: ' + err.message, 'error');
+      }
+    }
+
+    async function deleteTeam(teamId) {
+      if (confirm(`Decommission emergency response team ${teamId}?`)) {
+        try {
+          await rapidSync.deleteTeam(teamId);
+          showToast(`Team ${teamId} decommissioned.`, 'warning');
+          await loadAllData();
+        } catch (err) {
+          showToast('Failed to remove team: ' + err.message, 'error');
+        }
+      }
+    }
+
+    // ====================================================================
+    // AI SMART TEAM RECOMMENDATION & ONE-CLICK DISPATCH
+    // ====================================================================
+    let currentAssignIncidentId = null;
+
+    async function openTeamAssignmentModal(incidentId) {
+      currentAssignIncidentId = incidentId;
+      const incident = incidents.find(i => String(i.id) === String(incidentId));
+      if (!incident) {
+        showToast('Incident not found', 'error');
+        return;
+      }
+
+      document.getElementById('assign-modal-inc-title').innerText = `AI Match for: "${incident.title}"`;
+      document.getElementById('assign-modal-inc-meta').innerText =
+        `Severity: ${incident.severity} (${incident.severityScore || 50}/100) | Category: ${incident.category} | Affected: ${incident.affected} people`;
+      document.getElementById('assign-incident-details').innerText =
+        `🚨 ${incident.title} • Priority Score: ${incident.priorityScore || 50}`;
+      document.getElementById('assign-incident-coords').innerText =
+        `📍 Coords: ${incident.location}`;
+      document.getElementById('assign-incident-desc').innerText =
+        incident.description || 'No additional details provided.';
+
+      const listContainer = document.getElementById('assign-recommended-teams-list');
+      listContainer.innerHTML = `
+        <div style="text-align: center; padding: 24px; color: var(--text-faint);">
+          <div style="font-size: 24px; margin-bottom: 6px;">🤖</div>
+          Running AI Haversine distance calculations and category expertise match...
+        </div>
+      `;
+
+      document.getElementById('team-assignment-modal').classList.remove('hidden');
+
+      try {
+        const result = await rapidSync.fetchRecommendedTeams(incidentId);
+        const ranked = result.recommendedTeams || [];
+
+        if (ranked.length === 0) {
+          listContainer.innerHTML = `
+            <div style="text-align: center; padding: 24px; color: var(--text-faint);">
+              No response teams currently available in system. Register a new team below.
+            </div>
+          `;
+          return;
+        }
+
+        listContainer.innerHTML = ranked.map(rec => {
+          const isRank1 = rec.rank === 1;
+          const isCurrentlyAssigned = rec.isCurrentlyAssigned;
+          const rankBadge = isRank1 ? '🥇 Rank #1 (Best Fit)' :
+                            rec.rank === 2 ? '🥈 Rank #2 (High Fit)' :
+                            rec.rank === 3 ? '🥉 Rank #3 (Viable Unit)' : `#${rec.rank}`;
+
+          const rankClass = isRank1 ? 'rank-1' : '';
+
+          return `
+            <div class="rec-team-item ${rankClass}">
+              <div class="rec-team-head">
+                <div>
+                  <span class="rec-rank-badge ${isRank1 ? 'best-match' : ''}">${rankBadge}</span>
+                  <div class="rec-team-name">${rec.name}</div>
+                  <div style="font-size: 11px; color: var(--text-muted); margin-top: 1px;">
+                    Category: <strong>${rec.category}</strong> &bull; Station: <strong>${rec.stationName}</strong>
+                  </div>
+                </div>
+                <div style="text-align: right;">
+                  <span class="rec-distance">📍 ${rec.distanceKm} km away</span>
+                  <div style="font-size: 12px; font-weight: 800; color: ${(rec.suitabilityScore ?? rec.matchScore ?? 0) >= 75 ? '#059669' : '#d97706'}; margin-top: 3px;">
+                    Suitability: ${rec.suitabilityScore ?? rec.matchScore ?? 0}/100
+                  </div>
+                </div>
+              </div>
+
+              <div class="rec-reason">
+                💡 <strong>AI Dispatch Match Analysis:</strong> ${rec.reason || rec.matchReason || 'Matched by proximity and availability'}
+              </div>
+
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; font-size: 11px; color: var(--text-secondary);">
+                <span>👥 ${rec.personnelCount || rec.personnel || 8} crew &bull; Readiness: <strong>${rec.status}</strong></span>
+                <div>
+                  ${isCurrentlyAssigned ? `
+                    <span style="color: #059669; font-weight: 800; font-size: 12px;">
+                      ● Currently Deployed Here
+                    </span>
+                  ` : `
+                    <button type="button" class="btn-dispatch-now" onclick="dispatchTeamToIncident('${incidentId}', '${rec.teamId || rec.id}')">
+                      ⚡ One-Click Dispatch Team
+                    </button>
+                  `}
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+      } catch (err) {
+        listContainer.innerHTML = `
+          <div style="padding: 16px; color: var(--danger); text-align: center;">
+            Failed to compute team recommendations: ${err.message}
+          </div>
+        `;
+      }
+    }
+
+    function closeTeamAssignmentModal() {
+      document.getElementById('team-assignment-modal').classList.add('hidden');
+      currentAssignIncidentId = null;
+    }
+
+    async function dispatchTeamToIncident(incidentId, teamId) {
+      try {
+        const res = await rapidSync.assignTeamToIncident(incidentId, teamId);
+        showToast(`🚑 Dispatched ${res.team ? res.team.name : 'Team'} to incident!`, 'success');
+        speakText(`Emergency team dispatched to disaster location.`, 'en');
+        closeTeamAssignmentModal();
+        await loadAllData();
+      } catch (err) {
+        showToast('Dispatch failed: ' + err.message, 'error');
+      }
+    }
+
+    async function releaseTeamFromDuty(teamId) {
+      try {
+        await rapidSync.releaseTeam(teamId);
+        showToast('Team released and reset to Available.', 'success');
+        speakText('Emergency team mission marked complete.', 'en');
+        await loadAllData();
+      } catch (err) {
+        showToast('Release failed: ' + err.message, 'error');
+      }
+    }
+
+    async function assignTeamToNearestIncident(teamId) {
+      try {
+        const res = await rapidSync.fetchNearestIncidentForTeam(teamId);
+        if (!res || !res.nearestIncident) {
+          showToast('No pending unassigned incidents found in the area.', 'warning');
+          return;
+        }
+
+        const inc = res.nearestIncident;
+        const dist = res.distanceKm;
+        const msg = `Nearest unassigned emergency is "${inc.title}" (${inc.severity}, ${inc.affected} affected) located ${dist} km away.\n\nProceed with immediate dispatch?`;
+
+        if (confirm(msg)) {
+          await dispatchTeamToIncident(inc.id, teamId);
+        }
+      } catch (err) {
+        showToast('Could not find nearest incident: ' + err.message, 'error');
+      }
+    }
+
+    // ====================================================================
+    // CREATE TEAM & STATION MODALS
+    // ====================================================================
+    function onTeamCategoryChange(category) {
+      const expertiseEl = document.getElementById('new-team-expertise');
+      const vehiclesEl = document.getElementById('new-team-vehicles');
+      const defaults = {
+        'Fire': { exp: 'Thermal Fire Suppression & Smoke Extraction', veh: 'Heavy Water Tender, Foam Cannon Unit' },
+        'Medical Emergency': { exp: 'Advanced Life Support & Trauma Stabilization', veh: 'ALS Cardiac Ambulance, MedEvac Van' },
+        'Structural Collapse': { exp: 'Heavy Debris Extraction & K9 Search', veh: 'Heavy Rescue Crane, Acoustic Listening Van' },
+        'Flood': { exp: 'Swift-Water Rescue & Coastal Evacuation', veh: 'Inflatable Rescue Boat, Amphibious Carrier' },
+        'Road Accident': { exp: 'Highway Extrication & Rapid Triage', veh: 'Hydraulic Cutter ERV, Trauma Support Unit' },
+        'Natural Disaster': { exp: 'Cyclone Relief & Multi-Hazard Response', veh: 'All-Terrain Command Truck, Mobile Generator' },
+        'Other': { exp: 'HAZMAT Containment & Chemical Decontamination', veh: 'HAZMAT Containment Truck, Decon Unit' }
+      };
+      const preset = defaults[category] || { exp: `${category} Emergency Response`, veh: 'Rapid Response Vehicle' };
+      if (expertiseEl && !expertiseEl.value.trim()) expertiseEl.placeholder = preset.exp;
+      if (vehiclesEl && !vehiclesEl.value.trim()) vehiclesEl.placeholder = preset.veh;
+    }
+
+    function onStationSelectionChange(stationId) {
+      const stationSelect = document.getElementById('new-team-station');
+      if (!stationSelect) return;
+      const opt = stationSelect.selectedOptions && stationSelect.selectedOptions[0];
+      if (opt) {
+        const lat = opt.getAttribute('data-lat');
+        const lon = opt.getAttribute('data-lon');
+        if (lat) document.getElementById('new-team-lat').value = lat;
+        if (lon) document.getElementById('new-team-lon').value = lon;
+      }
+    }
+
+    function openCreateTeamModal() {
+      // Populate stations dropdown
+      const stationSelect = document.getElementById('new-team-station');
+      if (stationSelect && governmentStations.length > 0) {
+        stationSelect.innerHTML = governmentStations.map(s => {
+          const stnId = s.stationId || s.id || '';
+          return `
+            <option value="${stnId}" data-lat="${s.latitude || 13.0604}" data-lon="${s.longitude || 80.2496}" data-name="${s.name}">
+              ${s.name} (${s.zone})
+            </option>
+          `;
+        }).join('');
+
+        // Pre-fill coords from first station
+        const first = governmentStations[0];
+        document.getElementById('new-team-lat').value = first.latitude || 13.0604;
+        document.getElementById('new-team-lon').value = first.longitude || 80.2496;
+      }
+      const catEl = document.getElementById('new-team-category');
+      if (catEl) onTeamCategoryChange(catEl.value);
+      document.getElementById('create-team-modal').classList.remove('hidden');
+    }
+
+    function closeCreateTeamModal() {
+      document.getElementById('create-team-modal').classList.add('hidden');
+    }
+
+    async function submitCreateTeam(event) {
+      event.preventDefault();
+      const stationSelect = document.getElementById('new-team-station');
+      const selectedOption = stationSelect ? stationSelect.selectedOptions[0] : null;
+      const crewSize = parseInt(document.getElementById('new-team-personnel').value, 10) || 8;
+      const expertiseVal = document.getElementById('new-team-expertise')?.value.trim();
+
+      const payload = {
+        name: document.getElementById('new-team-name').value.trim(),
+        category: document.getElementById('new-team-category').value,
+        expertise: expertiseVal || undefined,
+        stationId: stationSelect ? stationSelect.value : 'STN-CEN-01',
+        stationName: selectedOption ? selectedOption.getAttribute('data-name') : 'Emergency Depot',
+        latitude: parseFloat(document.getElementById('new-team-lat').value) || 13.0604,
+        longitude: parseFloat(document.getElementById('new-team-lon').value) || 80.2496,
+        personnelCount: crewSize,
+        personnel: crewSize,
+        status: document.getElementById('new-team-status').value || 'Available',
+        vehicles: document.getElementById('new-team-vehicles').value
+          .split(',')
+          .map(v => v.trim())
+          .filter(Boolean),
+        contact: document.getElementById('new-team-contact').value.trim() || '+91 44 2859 3911'
+      };
+
+      try {
+        await rapidSync.createTeam(payload);
+        showToast(`Team "${payload.name}" successfully commissioned!`, 'success');
+        closeCreateTeamModal();
+        document.getElementById('create-team-form').reset();
+        await loadAllData();
+      } catch (err) {
+        showToast('Failed to create team: ' + err.message, 'error');
+      }
+    }
+
+    function openCreateStationModal() {
+      document.getElementById('create-station-modal').classList.remove('hidden');
+    }
+
+    function closeCreateStationModal() {
+      document.getElementById('create-station-modal').classList.add('hidden');
+    }
+
+    async function submitCreateStation(event) {
+      event.preventDefault();
+      const payload = {
+        name: document.getElementById('new-station-name').value.trim(),
+        zone: document.getElementById('new-station-zone').value.trim(),
+        contact: document.getElementById('new-station-contact').value.trim(),
+        address: document.getElementById('new-station-address').value.trim(),
+        latitude: parseFloat(document.getElementById('new-station-lat').value) || 12.9900,
+        longitude: parseFloat(document.getElementById('new-station-lon').value) || 80.1700,
+        distanceKm: 4.5,
+        ambulances: {
+          als: parseInt(document.getElementById('new-station-als').value, 10) || 4,
+          bls: parseInt(document.getElementById('new-station-bls').value, 10) || 8,
+          deployed: 0
+        },
+        fireTenders: {
+          water: parseInt(document.getElementById('new-station-fire').value, 10) || 4,
+          foam: 2,
+          ladder: 1,
+          deployed: 0
+        },
+        ndrfTeams: {
+          total: parseInt(document.getElementById('new-station-ndrf').value, 10) || 3,
+          deployed: 0
+        },
+        rescueBoats: {
+          total: parseInt(document.getElementById('new-station-boats').value, 10) || 4,
+          deployed: 0
+        },
+        ervVehicles: {
+          total: parseInt(document.getElementById('new-station-ervs').value, 10) || 6,
+          deployed: 0
+        },
+        medicalSquads: {
+          total: 6,
+          deployed: 0
+        }
+      };
+
+      try {
+        await rapidSync.createStation(payload);
+        showToast(`Depot "${payload.name}" commissioned!`, 'success');
+        closeCreateStationModal();
+        document.getElementById('create-station-form').reset();
+        await loadAllData();
+      } catch (err) {
+        showToast('Failed to create station: ' + err.message, 'error');
+      }
+    }
+
+    // ====================================================================
+    // RENDER DASHBOARD (KPI, SEVERITY METER & TABLE WITH AI PRIORITY RANK)
+    // ====================================================================
+    function renderDashboard() {
+      const sevFilter = document.getElementById('filter-severity').value;
+      const statFilter = document.getElementById('filter-status').value;
+      const srcFilter = document.getElementById('filter-source').value;
+      const sortFilter = document.getElementById('filter-sort').value;
+      const civilianCategoryOnly = Boolean(document.getElementById('filter-civilian-category')?.checked);
+
+      document.getElementById('stat-total').innerText = incidents.length;
+      const criticalCount = incidents.filter(i => i.severity === 'Critical').length;
+      document.getElementById('stat-critical').innerText = criticalCount;
+      document.getElementById('stat-pending').innerText = incidents.filter(i => i.status !== 'Resolved').length;
+      document.getElementById('stat-resolved').innerText = incidents.filter(i => i.status === 'Resolved').length;
+
+      // Update Regional Threat Gauge
+      const threatScore = Math.min(100, Math.max(20, criticalCount * 30 + incidents.length * 10));
+      const gaugeBar = document.getElementById('admin-threat-gauge-bar');
+      const gaugeBadge = document.getElementById('admin-threat-gauge-badge');
+
+      gaugeBar.style.width = threatScore + '%';
+      if (threatScore >= 81) {
+        gaugeBar.className = 'meter-fill meter-critical';
+        gaugeBadge.className = 'severity-score-badge meter-critical';
+        gaugeBadge.textContent = `Status: Critical Threat (${threatScore}/100)`;
+      } else if (threatScore >= 56) {
+        gaugeBar.className = 'meter-fill meter-high';
+        gaugeBadge.className = 'severity-score-badge meter-high';
+        gaugeBadge.textContent = `Status: High Threat (${threatScore}/100)`;
+      } else if (threatScore >= 26) {
+        gaugeBar.className = 'meter-fill meter-medium';
+        gaugeBadge.className = 'severity-score-badge meter-medium';
+        gaugeBadge.textContent = `Status: Moderate Risk (${threatScore}/100)`;
+      } else {
+        gaugeBar.className = 'meter-fill meter-low';
+        gaugeBadge.className = 'severity-score-badge meter-low';
+        gaugeBadge.textContent = `Status: Low Risk (${threatScore}/100)`;
+      }
+
+      const catCounts = {};
+      incidents.forEach(i => catCounts[i.category] = (catCounts[i.category] || 0) + 1);
+      document.getElementById('category-stats').innerHTML = Object.entries(catCounts)
+        .sort((a, b) => b[1] - a[1])
+        .map(([cat, count]) => `<span class="cat-pill">${cat}: <strong>${count}</strong></span>`)
+        .join('') || '<span style="font-size:12px;color:var(--text-faint);">No data yet</span>';
+
+      // Clone and sort incidents
+      const sorted = [...incidents];
+      if (sortFilter === 'priority') {
+        sorted.sort((a, b) => (b.priorityScore || 50) - (a.priorityScore || 50));
+      } else if (sortFilter === 'affected') {
+        sorted.sort((a, b) => (parseInt(b.affected, 10) || 0) - (parseInt(a.affected, 10) || 0));
+      } else if (sortFilter === 'severity') {
+        const weight = { Critical: 4, High: 3, Medium: 2, Low: 1 };
+        sorted.sort((a, b) => (weight[b.severity] || 0) - (weight[a.severity] || 0));
+      } else if (sortFilter === 'newest') {
+        sorted.sort((a, b) => (Number(b.id) || 0) - (Number(a.id) || 0));
+      }
+
+      const filtered = sorted.filter(i =>
+        (sevFilter === 'All' || i.severity === sevFilter) &&
+        (statFilter === 'All' || i.status === statFilter) &&
+        (srcFilter === 'All' || i.source === srcFilter) &&
+        (!civilianCategoryOnly || String(i.category || '').trim().toLowerCase() === 'civilian')
+      );
+
+      const sourceIcons = { voice: '🎙️', sos: '🚨', form: '📝' };
+
+      const tableEl = document.getElementById('incident-table');
+      if (filtered.length === 0) {
+        const emptyMsg = civilianCategoryOnly
+          ? 'No reports marked with the "civilian" category match the active filters.'
+          : (incidents.length === 0
+              ? 'No civilian emergency reports yet. Incoming civilian Form, Voice, and SOS reports will appear here automatically.'
+              : 'No reported incidents match the active filters.');
+        tableEl.innerHTML = `
+          <tr>
+            <td colspan="7" style="text-align: center; padding: 28px 16px; color: var(--text-faint); font-size: 13px;">
+              ${emptyMsg}
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tableEl.innerHTML = filtered.map((item, idx) => {
+        const rank = item.priorityRank || (idx + 1);
+        const pScore = item.priorityScore || 50;
+        const rankClass = rank === 1 ? 'rank-top' :
+                          rank === 2 || rank === 3 ? 'rank-high' :
+                          rank <= 5 ? 'rank-mid' : 'rank-low';
+
+        // Check if an emergency team is assigned
+        const assignedTeam = responseTeams.find(t =>
+          String(t.assignedIncidentId) === String(item.id) ||
+          (item.assignedTeam && String(t.id) === String(item.assignedTeam.id))
+        );
+
+        return `
+          <tr class="${item.severity === 'Critical' ? 'row-critical' : ''}">
+            <td>
+              <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px; flex-wrap: wrap;">
+                <span class="priority-rank-badge ${rankClass}">#${rank} Priority</span>
+                <span style="font-size: 11px; font-weight: 700; color: var(--navy-soft);">Score: ${pScore}</span>
+                <span style="font-size: 13px;" title="Reported via ${item.source || 'form'}">${sourceIcons[item.source] || '📝'}</span>
+              </div>
+              <div class="inc-title">${item.title}</div>
+              <div class="inc-time">${item.timestamp}</div>
+            </td>
+            <td>
+              <span style="font-weight: 600; font-size: 13px;">${item.category}</span>
+            </td>
+            <td>
+              <span class="sev-badge sev-${item.severity}">${item.severity}</span>
+              <div style="font-size: 10px; color: var(--text-muted); margin-top: 3px;">
+                Threat: ${item.severityScore || 50}/100
+              </div>
+            </td>
+            <td>
+              <div style="font-weight: 600;">${item.location}</div>
+              <div class="inc-time" style="color: var(--danger); font-weight: 700;">
+                👥 ${item.affected} affected
+              </div>
+            </td>
+            <td>
+              ${assignedTeam ? `
+                <div style="display: flex; flex-direction: column; gap: 2px;">
+                  <span style="font-size: 12px; font-weight: 800; color: #059669;">🚑 ${assignedTeam.name}</span>
+                  <span style="font-size: 11px; color: var(--text-muted);">${assignedTeam.category} &bull; ${assignedTeam.personnel || 8} crew</span>
+                  <button type="button" onclick="releaseTeamFromDuty('${assignedTeam.id}')" style="background: none; border: 1px solid var(--border); border-radius: 4px; padding: 2px 6px; font-size: 10px; color: var(--navy-soft); cursor: pointer; margin-top: 2px; align-self: flex-start;">
+                    Release Team
+                  </button>
+                </div>
+              ` : `
+                <button type="button" onclick="openTeamAssignmentModal('${item.id}')" class="btn" style="background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; padding: 5px 10px; font-size: 11px; font-weight: 700; border-radius: var(--radius-sm); cursor: pointer;">
+                  ⚡ Assign Team
+                </button>
+              `}
+            </td>
+            <td>
+              <select onchange="updateStatus('${item.id}', this.value)" class="status-select">
+                <option ${item.status === 'Reported' ? 'selected' : ''}>Reported</option>
+                <option ${item.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
+                <option ${item.status === 'Resolved' ? 'selected' : ''}>Resolved</option>
+              </select>
+            </td>
+            <td class="actions-cell" style="text-align: right; white-space: nowrap;">
+              <button onclick="openAdminIncidentQR('${item.id}')" class="btn-link" style="color: #7c3aed; font-weight: 700; margin-right: 6px;" title="Generate Scannable QR Code for Field Responders">📱 QR</button>
+              <button onclick="focusIncidentOnMap('${item.id}')" class="btn-link" style="color: #2563eb; font-weight: 700; margin-right: 6px;" title="Focus on GIS Map & 2km Zone">🗺️ Map</button>
+              <button onclick="openTeamAssignmentModal('${item.id}')" class="btn-link" style="color: #047857; font-weight: 700; margin-right: 6px;">⚡ Match</button>
+              <button onclick="viewDetails('${item.id}')" class="btn-link btn-view">View</button>
+              <button onclick="deleteIncident('${item.id}')" class="btn-link btn-del">Delete</button>
+            </td>
+          </tr>
+        `;
+      }).join('') || `<tr><td colspan="7" style="padding:32px;text-align:center;color:var(--text-faint);">No matching incidents found.</td></tr>`;
+    }
+
+    // ====================================================================
+    // ADVANCED OPERATIONS ANALYTICS ENGINE
+    // ====================================================================
+    function updateAdvancedAnalytics() {
+      const total = incidents.length;
+      const critical = incidents.filter(i => i.severity === 'Critical').length;
+      const availTeams = responseTeams.filter(t => t.status === 'Available').length;
+      const busyTeams = responseTeams.filter(t => t.status === 'Dispatched' || t.status === 'On Scene').length;
+      const assigned = incidents.filter(i => i.status !== 'Resolved' && (i.assignedTeam || responseTeams.some(t => String(t.assignedIncidentId) === String(i.id)))).length;
+      const resolved = incidents.filter(i => i.status === 'Resolved').length;
+
+      // Update 6 KPI Cards
+      const elTotal = document.getElementById('stat-total-incidents');
+      if (elTotal) elTotal.textContent = total;
+      const elCrit = document.getElementById('stat-critical-incidents');
+      if (elCrit) elCrit.textContent = critical;
+      const elAvail = document.getElementById('stat-avail-teams-kpi');
+      if (elAvail) elAvail.textContent = availTeams;
+      const elBusy = document.getElementById('stat-busy-teams-kpi');
+      if (elBusy) elBusy.textContent = busyTeams;
+      const elAssigned = document.getElementById('stat-assigned-incidents-kpi');
+      if (elAssigned) elAssigned.textContent = assigned;
+      const elResolved = document.getElementById('stat-resolved-incidents-kpi');
+      if (elResolved) elResolved.textContent = resolved;
+
+      // Backward compatibility IDs
+      if (document.getElementById('stat-total')) document.getElementById('stat-total').textContent = total;
+      if (document.getElementById('stat-critical')) document.getElementById('stat-critical').textContent = critical;
+      if (document.getElementById('stat-pending')) document.getElementById('stat-pending').textContent = total - resolved;
+      if (document.getElementById('stat-resolved')) document.getElementById('stat-resolved').textContent = resolved;
+
+      // Incident Distribution by Category
+      const catCounts = {
+        'Flood': 0,
+        'Fire': 0,
+        'Medical Emergency': 0,
+        'Road Accident': 0,
+        'Structural Collapse': 0,
+        'SOS Emergency': 0
+      };
+
+      incidents.forEach(inc => {
+        const cat = inc.category || 'Other';
+        catCounts[cat] = (catCounts[cat] || 0) + 1;
+      });
+
+      const catColors = {
+        'Flood': '#0284c7',
+        'Fire': '#dc2626',
+        'Medical Emergency': '#059669',
+        'Road Accident': '#d97706',
+        'Structural Collapse': '#7c3aed',
+        'SOS Emergency': '#e11d48'
+      };
+
+      const catIcons = {
+        'Flood': '🌊',
+        'Fire': '🔥',
+        'Medical Emergency': '🩹',
+        'Road Accident': '🚗',
+        'Structural Collapse': '🏚️',
+        'SOS Emergency': '🚨'
+      };
+
+      const sortedCats = Object.entries(catCounts)
+        .sort((a, b) => b[1] - a[1]);
+
+      const container = document.getElementById('cat-distribution-bars');
+      if (container) {
+        container.innerHTML = sortedCats.map(([cat, count]) => {
+          const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+          const color = catColors[cat] || '#64748b';
+          const icon = catIcons[cat] || '⚠️';
+          return `
+            <div class="dist-bar-item">
+              <div class="dist-bar-header">
+                <span>${icon} ${cat}</span>
+                <span><strong>${count}</strong> (${pct}%)</span>
+              </div>
+              <div class="dist-bar-track">
+                <div class="dist-bar-fill" style="width: ${Math.max(count > 0 ? 5 : 0, pct)}%; background: ${color};"></div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      // Fleet Readiness & Affected Lives
+      const totalTeams = responseTeams.length;
+      const readinessPct = totalTeams > 0 ? Math.round((availTeams / totalTeams) * 100) : 100;
+      const readinessEl = document.getElementById('analytics-fleet-readiness');
+      if (readinessEl) readinessEl.textContent = `${readinessPct}%`;
+
+      const affectedLives = incidents.reduce((sum, i) => sum + (parseInt(i.affected, 10) || 0), 0);
+      const livesEl = document.getElementById('analytics-affected-lives');
+      if (livesEl) livesEl.textContent = affectedLives;
+    }
+
+    // ====================================================================
+    // OPEN-SOURCE TACTICAL LEAFLET & OPENSTREETMAP GIS ENGINE
+    // ====================================================================
+    let tacticalMap = null;
+    let googleTacticalMap = null;
+    let usingGoogleMaps = false;
+    let mapLayers = {
+      disasters: null,
+      teams: null,
+      stations: null,
+      sos: null,
+      perimeters: null,
+      routes: null
+    };
+    let currentMapFilter = 'all';
+    let showPerimeterCircles = true;
+
+    let tacticalViewportCacheTimer = null;
+
+    function initLeafletTacticalInstance(centerCoords = [13.0604, 80.2496], zoomLevel = 12) {
+      if (tacticalMap || typeof L === 'undefined') return tacticalMap;
+      const mapEl = document.getElementById('tactical-map');
+      if (!mapEl) return null;
+
+      tacticalMap = L.map('tactical-map', {
+        center: centerCoords,
+        zoom: zoomLevel,
+        minZoom: 3,
+        maxZoom: 19,
+        scrollWheelZoom: true
+      });
+
+      const tileUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+      const tileOpts = {
+        maxZoom: 19,
+        layerCacheId: 'osm',
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors'
+      };
+      const osmTileLayer = typeof window.createCachedLeafletTileLayer === 'function'
+        ? window.createCachedLeafletTileLayer(tileUrl, tileOpts).addTo(tacticalMap)
+        : L.tileLayer(tileUrl, tileOpts).addTo(tacticalMap);
+
+      if (window.attachOfflineMapFallback) {
+        window.attachOfflineMapFallback(tacticalMap, osmTileLayer);
+      }
+
+      const badgeEl = document.getElementById('map-engine-badge');
+      if (badgeEl) {
+        const isOffline = typeof navigator !== 'undefined' && navigator.onLine === false;
+        badgeEl.textContent = isOffline
+          ? 'OFFLINE LEAFLET GIS • INDEXEDDB TILE CACHE'
+          : 'LEAFLET GIS • INDEXEDDB OFFLINE CACHE';
+        badgeEl.style.background = isOffline ? '#fef3c7' : '#ecfdf5';
+        badgeEl.style.color = isOffline ? '#92400e' : '#065f46';
+        badgeEl.style.borderColor = isOffline ? '#fde68a' : '#a7f3d0';
+      }
+      const attrEl = document.getElementById('map-engine-attribution');
+      if (attrEl) {
+        attrEl.innerHTML = 'OpenStreetMap &bull; Leaflet IndexedDB Cache';
+      }
+
+      mapLayers.disasters = L.layerGroup().addTo(tacticalMap);
+      mapLayers.perimeters = L.layerGroup().addTo(tacticalMap);
+      mapLayers.teams = L.layerGroup().addTo(tacticalMap);
+      mapLayers.stations = L.layerGroup().addTo(tacticalMap);
+      mapLayers.sos = L.layerGroup().addTo(tacticalMap);
+      mapLayers.routes = L.layerGroup().addTo(tacticalMap);
+
+      // Continuously cache navigated viewport neighborhoods into IndexedDB while online
+      tacticalMap.on('moveend zoomend', () => {
+        if (typeof navigator !== 'undefined' && navigator.onLine === false) return;
+        if (!window.PuyalTileCache || !tacticalMap) return;
+        if (tacticalViewportCacheTimer) clearTimeout(tacticalViewportCacheTimer);
+        tacticalViewportCacheTimer = setTimeout(() => {
+          if (!tacticalMap || (typeof navigator !== 'undefined' && navigator.onLine === false)) return;
+          const c = tacticalMap.getCenter();
+          const z = Math.min(16, Math.max(10, Math.round(tacticalMap.getZoom() || 12)));
+          const zooms = Array.from(new Set([Math.max(10, z - 1), z, Math.min(16, z + 1)]));
+          window.PuyalTileCache.prefetchCenterTiles(c.lat, c.lng, {
+            zooms,
+            radiusByZoom: { [z]: 1 },
+            maxTiles: 20
+          }).catch(() => {});
+        }, 700);
+      });
+
+      setTimeout(() => {
+        if (tacticalMap) tacticalMap.invalidateSize();
+        prefetchTacticalOfflineTiles(false);
+      }, 450);
+
+      return tacticalMap;
+    }
+
+    async function switchTacticalMapToOfflineLeaflet() {
+      if (!usingGoogleMaps || tacticalMap || typeof L === 'undefined') return;
+      const mapEl = document.getElementById('tactical-map');
+      if (!mapEl) return;
+
+      let centerCoords = [13.0604, 80.2496];
+      let zoomLevel = 12;
+      try {
+        if (googleTacticalMap && googleTacticalMap.map) {
+          const c = googleTacticalMap.map.getCenter();
+          if (c) centerCoords = [c.lat(), c.lng()];
+          const z = googleTacticalMap.map.getZoom();
+          if (typeof z === 'number' && !isNaN(z)) zoomLevel = z;
+        }
+        if (googleTacticalMap && typeof googleTacticalMap.clearLayers === 'function') {
+          googleTacticalMap.clearLayers();
+        }
+      } catch (e) {}
+
+      usingGoogleMaps = false;
+      googleTacticalMap = null;
+      mapEl.innerHTML = '';
+
+      initLeafletTacticalInstance(centerCoords, zoomLevel);
+      updateTacticalMap();
+      if (typeof showToast === 'function') {
+        showToast('📴 Offline Map Mode: Switched #tactical-map to IndexedDB-cached Leaflet GIS.', 'warning');
+      }
+    }
+
+    window.addEventListener('offline', () => {
+      switchTacticalMapToOfflineLeaflet();
+    });
+
+    window.addEventListener('online', () => {
+      const badgeEl = document.getElementById('map-engine-badge');
+      if (badgeEl && !usingGoogleMaps && tacticalMap) {
+        badgeEl.textContent = 'LEAFLET GIS • INDEXEDDB OFFLINE CACHE';
+        badgeEl.style.background = '#ecfdf5';
+        badgeEl.style.color = '#065f46';
+        badgeEl.style.borderColor = '#a7f3d0';
+      }
+      if (tacticalMap) {
+        prefetchTacticalOfflineTiles(false);
+      }
+    });
+
+    async function initTacticalMap() {
+      if (tacticalMap || googleTacticalMap) return;
+      const mapEl = document.getElementById('tactical-map');
+      if (!mapEl) return;
+
+      // Try Google Maps Platform when online (Dynamic Library Import, AdvancedMarkerElement, Routes API)
+      if (window.TacticalGoogleMap && (typeof navigator === 'undefined' || navigator.onLine !== false)) {
+        googleTacticalMap = new window.TacticalGoogleMap('tactical-map', {
+          center: { lat: 13.0604, lng: 80.2496 },
+          zoom: 12,
+          gestureHandling: 'cooperative'
+        });
+        const gmpSuccess = await googleTacticalMap.init();
+        if (gmpSuccess) {
+          usingGoogleMaps = true;
+          const badgeEl = document.getElementById('map-engine-badge');
+          if (badgeEl) {
+            badgeEl.textContent = 'GOOGLE MAPS PLATFORM • ADVANCED MARKERS & ROUTES';
+            badgeEl.style.background = '#e0f2fe';
+            badgeEl.style.color = '#0369a1';
+            badgeEl.style.borderColor = '#bae6fd';
+          }
+          const attrEl = document.getElementById('map-engine-attribution');
+          if (attrEl) attrEl.innerHTML = 'Google Maps Platform &bull; Advanced Markers &bull; Live Telemetry';
+          updateTacticalMap();
+          // Pre-warm Leaflet OSM tiles in IndexedDB in background so disconnected reloads/switches stay navigable
+          prefetchTacticalOfflineTiles(false);
+          return;
+        }
+        googleTacticalMap = null;
+      }
+
+      // Seamless fallback to Leaflet GIS with IndexedDB Base Tile Cache
+      if (initLeafletTacticalInstance([13.0604, 80.2496], 12)) {
+        updateTacticalMap();
+      }
+    }
+
+    async function updateTacticalTileCacheBadge() {
+      const countEl = document.getElementById('tactical-tile-cache-count');
+      if (!countEl || !window.PuyalTileCache) return;
+      try {
+        const stats = await window.PuyalTileCache.getStats();
+        countEl.textContent = stats && stats.count > 0 ? `(${stats.count})` : '';
+      } catch (e) {}
+    }
+
+    window.addEventListener('puyal-tile-cache-updated', (ev) => {
+      const countEl = document.getElementById('tactical-tile-cache-count');
+      if (countEl && ev && ev.detail) {
+        countEl.textContent = ev.detail.count > 0 ? `(${ev.detail.count})` : '';
+      }
+    });
+
+    async function prefetchTacticalOfflineTiles(manual = false) {
+      if (!window.PuyalTileCache) return;
+      await updateTacticalTileCacheBadge();
+      if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+        if (manual && typeof showToast === 'function') {
+          const stats = await window.PuyalTileCache.getStats();
+          showToast(`📴 Offline: Serving ${stats.count} cached Leaflet base tiles from IndexedDB.`, 'info');
+        }
+        return;
+      }
+      const btn = document.getElementById('btn-cache-tactical-tiles');
+      if (manual && btn) btn.disabled = true;
+      try {
+        let lat = 13.0604;
+        let lon = 80.2496;
+        if (tacticalMap && typeof tacticalMap.getCenter === 'function') {
+          const c = tacticalMap.getCenter();
+          lat = c.lat;
+          lon = c.lng;
+        } else if (usingGoogleMaps && googleTacticalMap && googleTacticalMap.map && typeof googleTacticalMap.map.getCenter === 'function') {
+          const c = googleTacticalMap.map.getCenter();
+          if (c) {
+            lat = c.lat();
+            lon = c.lng();
+          }
+        }
+        const res = await window.PuyalTileCache.prefetchCenterTiles(lat, lon, {
+          zooms: manual ? [11, 12, 13, 14] : [11, 12, 13],
+          radiusByZoom: manual ? { 11: 1, 12: 2, 13: 2, 14: 1 } : { 11: 1, 12: 1, 13: 1 },
+          maxTiles: manual ? 64 : 28
+        });
+
+        // Also cache tiles around current top emergency location if distant from map center
+        if (typeof resolveCurrentEmergencyLocation === 'function') {
+          const anchor = resolveCurrentEmergencyLocation();
+          if (anchor && (Math.abs(anchor.lat - lat) > 0.015 || Math.abs(anchor.lon - lon) > 0.015)) {
+            await window.PuyalTileCache.prefetchCenterTiles(anchor.lat, anchor.lon, {
+              zooms: [12, 13, 14],
+              radiusByZoom: { 12: 1, 13: 1, 14: 1 },
+              maxTiles: 24
+            });
+          }
+        }
+
+        await updateTacticalTileCacheBadge();
+        if (manual && typeof showToast === 'function') {
+          const latest = await window.PuyalTileCache.getStats();
+          showToast(`💾 Offline Map Ready: ${latest.count || res.totalCached || 0} base map tiles stored in IndexedDB (+${res.fetched} new).`, 'success');
+        }
+      } catch (e) {
+        if (manual && typeof showToast === 'function') {
+          showToast('Unable to prefetch map tiles right now.', 'warning');
+        }
+      } finally {
+        if (manual && btn) btn.disabled = false;
+      }
+    }
+
+    function extractItemCoords(item) {
+      if (!item) return { lat: 13.0604, lon: 80.2496 };
+
+      // 1. Direct coords object
+      if (item.coords && typeof item.coords === 'object') {
+        const lat = parseFloat(item.coords.lat || item.coords.latitude);
+        const lon = parseFloat(item.coords.lon || item.coords.longitude || item.coords.lng);
+        if (!isNaN(lat) && !isNaN(lon)) return { lat, lon };
+      }
+
+      // 2. Direct top-level fields
+      if (item.latitude !== undefined && item.longitude !== undefined && item.latitude !== null && item.longitude !== null) {
+        const lat = parseFloat(item.latitude);
+        const lon = parseFloat(item.longitude);
+        if (!isNaN(lat) && !isNaN(lon)) return { lat, lon };
+      }
+
+      // 3. String location regex match
+      const locStr = String(item.location || '');
+      const match = locStr.match(/(-?\d+\.\d+)\s*[, ]\s*(-?\d+\.\d+)/);
+      if (match) {
+        const lat = parseFloat(match[1]);
+        const lon = parseFloat(match[2]);
+        if (!isNaN(lat) && !isNaN(lon)) return { lat, lon };
+      }
+
+      // 4. Regional landmark mapping
+      const lower = locStr.toLowerCase();
+      if (lower.includes('bridge') || lower.includes('river') || lower.includes('coast') || lower.includes('marina')) {
+        return { lat: 13.0450, lon: 80.2824 };
+      }
+      if (lower.includes('gt road') || lower.includes('north') || lower.includes('industrial') || lower.includes('port')) {
+        return { lat: 13.1200, lon: 80.2800 };
+      }
+      if (lower.includes('nh-48') || lower.includes('highway') || lower.includes('expressway') || lower.includes('south') || lower.includes('guindy')) {
+        return { lat: 12.9800, lon: 80.2100 };
+      }
+      if (lower.includes('airport') || lower.includes('terminal') || lower.includes('meenambakkam')) {
+        return { lat: 12.9900, lon: 80.1700 };
+      }
+      if (lower.includes('bangalore') || lower.includes('bengaluru')) {
+        return { lat: 12.9716, lon: 77.5946 };
+      }
+
+      // 5. Default Central Command Base Coordinates
+      return { lat: 13.0604, lon: 80.2496 };
+    }
+
+    function calcDistanceKm(lat1, lon1, lat2, lon2) {
+      const R = 6371;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return Math.round(R * c * 10) / 10;
+    }
+
+    function updateTacticalMap() {
+      // Populate Incident Focus Dropdown regardless of active map provider
+      const selector = document.getElementById('map-incident-selector');
+      if (selector) {
+        const curVal = selector.value;
+        selector.innerHTML = '<option value="">🎯 Focus 2km Incident...</option>' +
+          incidents.map(inc => `<option value="${inc.id}" ${String(curVal) === String(inc.id) ? 'selected' : ''}>
+            #${inc.priorityRank || 1} ${inc.title.slice(0, 24)}... (${inc.severity})
+          </option>`).join('');
+      }
+
+      // If Google Maps Platform is active, render via AdvancedMarkerElement & Routes API
+      if (usingGoogleMaps && googleTacticalMap) {
+        googleTacticalMap.clearLayers();
+        googleTacticalMap.activeFilter = currentMapFilter;
+        googleTacticalMap.showPerimeterCircles = showPerimeterCircles;
+        incidents.forEach(inc => googleTacticalMap.addDisasterPin(inc));
+        governmentStations.forEach(stn => googleTacticalMap.addStationPin(stn));
+        responseTeams.forEach(team => googleTacticalMap.addTeamPin(team));
+        sosAlerts.filter(s => s.active).forEach(s => googleTacticalMap.addSosBeacon(s));
+        return;
+      }
+
+      if (!tacticalMap || typeof L === 'undefined') return;
+
+      mapLayers.disasters.clearLayers();
+      mapLayers.perimeters.clearLayers();
+      mapLayers.teams.clearLayers();
+      mapLayers.stations.clearLayers();
+      mapLayers.sos.clearLayers();
+      mapLayers.routes.clearLayers();
+
+      const catIcons = {
+        'Fire': '🔥',
+        'Flood': '🌊',
+        'Medical Emergency': '🩹',
+        'Road Accident': '🚗',
+        'Structural Collapse': '🏚️',
+        'SOS Emergency': '🚨'
+      };
+
+      const vehIcons = {
+        'Fire': '🚒',
+        'Medical Emergency': '🚑',
+        'Structural Collapse': '🏗️',
+        'Flood': '🚤',
+        'Road Accident': '🚨',
+        'HAZMAT': '☣️'
+      };
+
+      // 1. Disaster Pins & 2km Perimeters
+      incidents.forEach(inc => {
+        const coords = extractItemCoords(inc);
+        const icon = catIcons[inc.category] || '⚠️';
+        const sevClass = (inc.severity || 'medium').toLowerCase();
+
+        const disasterIcon = L.divIcon({
+          className: 'custom-map-icon',
+          html: `<div class="map-pin-disaster pin-${sevClass}">${icon}</div>`,
+          iconSize: [42, 42],
+          iconAnchor: [21, 21],
+          popupAnchor: [0, -22]
+        });
+
+        const popupContent = `
+          <div style="font-family: var(--font); min-width: 220px; padding: 4px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+              <span class="sev-badge sev-${inc.severity}">${inc.severity} Threat</span>
+              <span style="font-size: 11px; font-weight: 700; color: #dc2626;">#${inc.priorityRank || 1} Priority</span>
+            </div>
+            <strong style="font-size: 14px; color: var(--navy);">${inc.title}</strong>
+            <div style="font-size: 12px; color: var(--text-secondary); margin: 6px 0;">
+              <div>📍 <strong>Location:</strong> ${inc.location}</div>
+              <div>👥 <strong>Casualties/Affected:</strong> ${inc.affected} people</div>
+              <div>🏷️ <strong>Category:</strong> ${inc.category}</div>
+              <div>⏱️ <strong>Reported:</strong> ${inc.timestamp}</div>
+            </div>
+            <div style="display: flex; gap: 6px; margin-top: 10px;">
+              <button onclick="openTeamAssignmentModal('${inc.id}')" style="background:#059669; color:#fff; border:none; padding:6px 10px; border-radius:4px; font-size:11px; font-weight:700; cursor:pointer; flex:1;">
+                ⚡ Match Team
+              </button>
+              <button onclick="focusIncidentOnMap('${inc.id}')" style="background:#2563eb; color:#fff; border:none; padding:6px 10px; border-radius:4px; font-size:11px; font-weight:700; cursor:pointer; flex:1;">
+                🎯 2km Zone
+              </button>
+            </div>
+          </div>
+        `;
+
+        const marker = L.marker([coords.lat, coords.lon], { icon: disasterIcon })
+          .bindPopup(popupContent);
+        mapLayers.disasters.addLayer(marker);
+
+        // 2 km Tactical Buffer Circle
+        if (showPerimeterCircles) {
+          const circleColor = inc.severity === 'Critical' ? '#dc2626' :
+                              inc.severity === 'High' ? '#d97706' : '#2563eb';
+          const circle = L.circle([coords.lat, coords.lon], {
+            radius: 2000,
+            color: circleColor,
+            fillColor: circleColor,
+            fillOpacity: 0.1,
+            weight: 1.5,
+            dashArray: '5, 5'
+          }).bindTooltip(`⭕ 2 km Response Perimeter &bull; ${inc.title}`, { sticky: true });
+          mapLayers.perimeters.addLayer(circle);
+        }
+      });
+
+      // 2. Station Depots
+      governmentStations.forEach(stn => {
+        const lat = stn.latitude || 13.0604;
+        const lon = stn.longitude || 80.2496;
+
+        const stationIcon = L.divIcon({
+          className: 'custom-map-icon',
+          html: `<div class="map-pin-station">🏢</div>`,
+          iconSize: [40, 40],
+          iconAnchor: [20, 20],
+          popupAnchor: [0, -22]
+        });
+
+        const popupContent = `
+          <div style="font-family: var(--font); min-width: 200px; padding: 4px;">
+            <span style="font-size: 11px; font-weight: 800; background: #0f172a; color: #38bdf8; padding: 2px 6px; border-radius: 4px;">COMMAND DEPOT</span>
+            <div style="font-size: 14px; font-weight: 800; color: var(--navy); margin-top: 4px;">${stn.name}</div>
+            <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">
+              <div>📍 <strong>Zone:</strong> ${stn.zone}</div>
+              <div>📞 <strong>Phone:</strong> ${stn.contact}</div>
+              <div style="margin-top: 4px; font-size: 11px;">
+                🚑 ALS: <strong>${stn.ambulances?.als || 0}</strong> &bull;
+                🚒 Fire: <strong>${stn.fireTenders?.water || 0}</strong> &bull;
+                🛡️ NDRF: <strong>${stn.ndrfTeams?.total || 0}</strong>
+              </div>
+            </div>
+          </div>
+        `;
+
+        const marker = L.marker([lat, lon], { icon: stationIcon }).bindPopup(popupContent);
+        mapLayers.stations.addLayer(marker);
+      });
+
+      // 3. Response Teams / Emergency Vehicles
+      responseTeams.forEach(team => {
+        const lat = team.latitude || 13.0604;
+        const lon = team.longitude || 80.2496;
+        const vIcon = vehIcons[team.category] || '🚐';
+        const isAvail = team.status === 'Available';
+        const isDisp = team.status === 'Dispatched';
+        const statusClass = isAvail ? 'veh-avail' : isDisp ? 'veh-dispatched' : 'veh-onscene';
+
+        // Animated Beacon for Live Dispatched Emergency Vehicles
+        const beaconHtml = isDisp ? `
+          <div class="map-vehicle-beacon" title="🚑 ${team.name} — EN ROUTE (${team.progress || 35}%)">
+            <div class="beacon-ring"></div>
+            <div class="vehicle-core">
+              ${vIcon}
+            </div>
+          </div>
+        ` : `<div class="map-pin-vehicle ${statusClass}" title="${team.name}">${vIcon}</div>`;
+
+        const vehicleMarkerIcon = L.divIcon({
+          className: 'custom-map-icon',
+          html: beaconHtml,
+          iconSize: isDisp ? [44, 44] : [38, 38],
+          iconAnchor: isDisp ? [22, 22] : [19, 19],
+          popupAnchor: [0, -22]
+        });
+
+        const progressPercent = team.progress || 35;
+        const speedKmh = team.speedKmh || 52;
+
+        const popupContent = `
+          <div style="font-family: var(--font); min-width: 220px; padding: 4px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+              <span class="team-status-pill ${isAvail ? 'status-avail' : 'status-dispatched'}">● ${team.status}</span>
+              <span style="font-size: 11px; font-weight: 700; color: var(--text-muted);">${team.id}</span>
+            </div>
+            <div style="font-size: 14px; font-weight: 800; color: var(--navy);">${team.name}</div>
+            <div style="font-size: 12px; color: var(--text-secondary); margin: 4px 0;">
+              <div>🛡️ <strong>Expertise:</strong> ${team.category}</div>
+              <div>🏢 <strong>Depot:</strong> ${team.stationName || 'Command Center'}</div>
+              <div>👥 <strong>Crew:</strong> ${team.personnel || 8} Responders</div>
+              <div>📞 <strong>Radio:</strong> ${team.contact}</div>
+              ${isDisp ? `
+                <div style="background: #fffbeb; border: 1px solid #fde68a; padding: 6px; border-radius: 4px; margin-top: 6px;">
+                  <div style="color: #b45309; font-weight: 800; font-size: 11px;">⚡ LIVE EN ROUTE NAVIGATION</div>
+                  <div style="font-size: 11px; color: #92400e;">Speed: ~${speedKmh} km/h &bull; Route: ${progressPercent}% completed</div>
+                  <div style="font-size: 11px; color: #dc2626; font-weight: 700; margin-top: 2px;">Remaining: ${team.remainingDistKm || 1.4} km (ETA ~${team.etaMinutes || 3}m)</div>
+                </div>
+              ` : ''}
+            </div>
+            <div style="margin-top: 8px;">
+              ${isAvail ? `
+                <button onclick="assignTeamToNearestIncident('${team.id}')" style="width:100%; background:#059669; color:#fff; border:none; padding:6px 10px; border-radius:4px; font-size:11px; font-weight:700; cursor:pointer;">
+                  ⚡ Assign to Nearest Incident
+                </button>
+              ` : isDisp ? `
+                <button onclick="releaseTeamFromDuty('${team.id}')" style="width:100%; background:#dc2626; color:#fff; border:none; padding:6px 10px; border-radius:4px; font-size:11px; font-weight:700; cursor:pointer;">
+                  ✅ Mark Resolved (Release)
+                </button>
+              ` : ''}
+            </div>
+          </div>
+        `;
+
+        const marker = L.marker([lat, lon], { icon: vehicleMarkerIcon }).bindPopup(popupContent);
+        mapLayers.teams.addLayer(marker);
+
+        // 4. Draw Active Dispatch Routes (Full Real-Time Waypoint Navigation)
+        if (isDisp && team.assignedIncidentId) {
+          const targetInc = incidents.find(i => String(i.id) === String(team.assignedIncidentId));
+          if (targetInc) {
+            const incCoords = extractItemCoords(targetInc);
+            const distKm = team.remainingDistKm !== undefined ? team.remainingDistKm : calcDistanceKm(lat, lon, incCoords.lat, incCoords.lon);
+            const etaMins = team.etaMinutes !== undefined ? team.etaMinutes : Math.max(1, Math.round(distKm * 1.8));
+
+            const originLat = team.originLatitude || 13.0610;
+            const originLon = team.originLongitude || 80.2490;
+
+            // Segment 1: Traveled Route (Depot Station to Vehicle) in solid emergency emerald
+            const traveledPolyline = L.polyline([[originLat, originLon], [lat, lon]], {
+              color: '#10b981',
+              weight: 5,
+              opacity: 0.85
+            }).bindTooltip(`🛣️ Cleared Navigation Route (${progressPercent}% covered)`);
+            mapLayers.routes.addLayer(traveledPolyline);
+
+            // Segment 2: Active Ahead Way (Vehicle to Target Incident) with animated pulsing dash
+            const aheadPolyline = L.polyline([[lat, lon], [incCoords.lat, incCoords.lon]], {
+              color: '#dc2626',
+              weight: 5,
+              opacity: 0.95,
+              className: 'route-pulse-dash',
+              dashArray: '10, 10'
+            }).bindTooltip(`🚑 En Route Way: ${team.name} ➔ ${targetInc.title}<br>Remaining: ${distKm} km · Speed: ${speedKmh} km/h · ETA: ~${etaMins} mins`, { sticky: true });
+            mapLayers.routes.addLayer(aheadPolyline);
+
+            // Live Floating Route Telemetry Badge
+            const midLat = (lat + incCoords.lat) / 2;
+            const midLon = (lon + incCoords.lon) / 2;
+            const routeBadgeIcon = L.divIcon({
+              className: 'custom-map-icon',
+              html: `<div class="map-route-badge">🚑 ${distKm} km to site · ETA ${etaMins}m (${progressPercent}%)</div>`,
+              iconSize: [160, 26],
+              iconAnchor: [80, 13]
+            });
+            const badgeMarker = L.marker([midLat, midLon], { icon: routeBadgeIcon, interactive: false });
+            mapLayers.routes.addLayer(badgeMarker);
+          }
+        }
+      });
+
+      // 5. Civilian Live SOS Beacons
+      sosAlerts.filter(a => a.active).forEach(alert => {
+        const lat = alert.latitude || 13.0827;
+        const lon = alert.longitude || 80.2707;
+
+        const sosIcon = L.divIcon({
+          className: 'custom-map-icon',
+          html: `<div class="map-pin-civilian">🚨</div>`,
+          iconSize: [44, 44],
+          iconAnchor: [22, 22],
+          popupAnchor: [0, -22]
+        });
+
+        const popupContent = `
+          <div style="font-family: var(--font); min-width: 200px; padding: 4px;">
+            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+              <span class="live-dot"></span>
+              <strong style="color: #dc2626; font-size: 13px;">ACTIVE CIVILIAN SOS</strong>
+            </div>
+            <div style="font-size: 12px; color: var(--navy); font-weight: 700;">${alert.email}</div>
+            <div style="font-size: 11px; color: var(--text-secondary); margin: 4px 0;">
+              📍 Coordinates: ${lat.toFixed(4)}, ${lon.toFixed(4)}<br>
+              ⏱️ Initiated: ${alert.timestamp}
+            </div>
+            <button onclick="openLiveStreamForSOS('${alert.id}')" style="width:100%; background:#dc2626; color:#fff; border:none; padding:6px 10px; border-radius:4px; font-size:11px; font-weight:800; cursor:pointer; margin-top:6px;">
+              📹 Open Civilian Camera &amp; Audio Stream
+            </button>
+          </div>
+        `;
+
+        const marker = L.marker([lat, lon], { icon: sosIcon }).bindPopup(popupContent);
+        mapLayers.sos.addLayer(marker);
+      });
+
+      applyMapFilter(currentMapFilter);
+    }
+
+    function applyMapFilter(filterType) {
+      currentMapFilter = filterType;
+      if (usingGoogleMaps && googleTacticalMap) {
+        googleTacticalMap.setFilter(filterType);
+        return;
+      }
+      if (!tacticalMap) return;
+
+      const layers = ['disasters', 'teams', 'stations', 'sos', 'perimeters', 'routes'];
+      layers.forEach(l => {
+        if (mapLayers[l] && tacticalMap.hasLayer(mapLayers[l])) {
+          tacticalMap.removeLayer(mapLayers[l]);
+        }
+      });
+
+      if (filterType === 'all') {
+        tacticalMap.addLayer(mapLayers.disasters);
+        tacticalMap.addLayer(mapLayers.teams);
+        tacticalMap.addLayer(mapLayers.stations);
+        tacticalMap.addLayer(mapLayers.sos);
+        tacticalMap.addLayer(mapLayers.routes);
+        if (showPerimeterCircles) tacticalMap.addLayer(mapLayers.perimeters);
+      } else if (filterType === 'disasters') {
+        tacticalMap.addLayer(mapLayers.disasters);
+        if (showPerimeterCircles) tacticalMap.addLayer(mapLayers.perimeters);
+        tacticalMap.addLayer(mapLayers.routes);
+      } else if (filterType === 'vehicles') {
+        tacticalMap.addLayer(mapLayers.teams);
+        tacticalMap.addLayer(mapLayers.routes);
+      } else if (filterType === 'stations') {
+        tacticalMap.addLayer(mapLayers.stations);
+      } else if (filterType === 'sos') {
+        tacticalMap.addLayer(mapLayers.sos);
+      }
+    }
+
+    function setMapFilter(filterType) {
+      const btns = ['all', 'disasters', 'vehicles', 'stations', 'sos'];
+      btns.forEach(b => {
+        const btnEl = document.getElementById('btn-map-' + b);
+        if (btnEl) btnEl.classList.toggle('active', b === filterType);
+      });
+      applyMapFilter(filterType);
+    }
+
+    function togglePerimeterCircles() {
+      showPerimeterCircles = !showPerimeterCircles;
+      const btn = document.getElementById('btn-map-2km');
+      if (btn) {
+        btn.classList.toggle('active', showPerimeterCircles);
+        btn.textContent = showPerimeterCircles ? '⭕ 2 km Perimeters: ON' : '⭕ 2 km Perimeters: OFF';
+      }
+      if (usingGoogleMaps && googleTacticalMap) {
+        googleTacticalMap.setShowPerimeters(showPerimeterCircles);
+        return;
+      }
+      if (!showPerimeterCircles) {
+        if (tacticalMap && mapLayers.perimeters && tacticalMap.hasLayer(mapLayers.perimeters)) {
+          tacticalMap.removeLayer(mapLayers.perimeters);
+        }
+      } else {
+        if (tacticalMap && mapLayers.perimeters && !tacticalMap.hasLayer(mapLayers.perimeters)) {
+          tacticalMap.addLayer(mapLayers.perimeters);
+        }
+      }
+    }
+
+    function resolveCurrentEmergencyLocation() {
+      // 1. Prioritize active live SOS beacon
+      const activeSos = Array.isArray(sosAlerts)
+        ? sosAlerts.find(s => s && s.active)
+        : null;
+      if (activeSos) {
+        const sosCoords = extractItemCoords(activeSos);
+        return {
+          lat: sosCoords.lat,
+          lon: sosCoords.lon,
+          zoom: 14,
+          label: `Active SOS (${activeSos.userEmail || activeSos.email || 'Civilian'})`
+        };
+      }
+
+      // 2. Otherwise focus highest-severity unresolved incident
+      const sevRank = { Critical: 4, High: 3, Medium: 2, Low: 1 };
+      const openIncidents = Array.isArray(incidents)
+        ? incidents.filter(i => i && i.status !== 'Resolved')
+        : [];
+      const candidateList = openIncidents.length > 0
+        ? openIncidents
+        : (Array.isArray(incidents) ? incidents : []);
+
+      if (candidateList.length > 0) {
+        const sorted = [...candidateList].sort((a, b) => {
+          const scoreDiff = (sevRank[b.severity] || 0) - (sevRank[a.severity] || 0);
+          if (scoreDiff !== 0) return scoreDiff;
+          return Number(b.priorityScore || 0) - Number(a.priorityScore || 0);
+        });
+        const topIncident = sorted[0];
+        const incCoords = extractItemCoords(topIncident);
+        return {
+          lat: incCoords.lat,
+          lon: incCoords.lon,
+          zoom: 14,
+          label: topIncident.title || topIncident.category || 'Current Emergency'
+        };
+      }
+
+      // 3. Fallback to cached GPS or regional command center coordinates
+      const cached = typeof window.getCurrentOrCachedCoords === 'function'
+        ? window.getCurrentOrCachedCoords()
+        : null;
+      if (cached && cached.latitude && cached.longitude) {
+        return {
+          lat: parseFloat(cached.latitude),
+          lon: parseFloat(cached.longitude),
+          zoom: 12,
+          label: 'Command Operations Sector'
+        };
+      }
+
+      return { lat: 13.0604, lon: 80.2496, zoom: 12, label: 'Command Operations Sector' };
+    }
+
+    function centerTacticalMapOnEmergency() {
+      const target = resolveCurrentEmergencyLocation();
+      if (usingGoogleMaps && googleTacticalMap) {
+        googleTacticalMap.flyTo(target.lat, target.lon, target.zoom);
+      } else if (tacticalMap) {
+        tacticalMap.flyTo([target.lat, target.lon], target.zoom, { duration: 1.0 });
+      }
+      if (typeof showToast === 'function') {
+        showToast(`🎯 Map centered on: ${target.label}`, 'info');
+      }
+    }
+
+    function recenterTacticalMap() {
+      centerTacticalMapOnEmergency();
+    }
+
+    function focusIncidentFromDropdown(incidentId) {
+      if (incidentId) {
+        focusIncidentOnMap(incidentId);
+      }
+    }
+
+    function focusIncidentOnMap(incidentId) {
+      const inc = incidents.find(i => String(i.id) === String(incidentId));
+      if (!inc) return;
+
+      const coords = extractItemCoords(inc);
+      if (usingGoogleMaps && googleTacticalMap) {
+        googleTacticalMap.flyTo(coords.lat, coords.lon, 14);
+      } else if (tacticalMap) {
+        tacticalMap.flyTo([coords.lat, coords.lon], 14, { duration: 1.2 });
+      }
+
+      // Highlight perimeter circle
+      if (!showPerimeterCircles) {
+        togglePerimeterCircles();
+      }
+
+      // Scroll smoothly to map
+      const mapContainer = document.querySelector('.tactical-map-section');
+      if (mapContainer) {
+        mapContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+
+      showToast(`🎯 Centered on 2km zone for "${inc.title}"`, 'success');
+    }
+
+    async function triggerDemoDispatchSimulation() {
+      try {
+        showToast('🚀 Starting live emergency dispatch simulation...', 'info');
+        const res = await fetch('/api/demo/simulate-dispatch', { method: 'POST' });
+        const data = await res.json();
+        if (data.success && data.team) {
+          const idx = responseTeams.findIndex(t => t.id === data.team.id);
+          if (idx !== -1) responseTeams[idx] = data.team;
+          else responseTeams.push(data.team);
+          updateTacticalMap();
+          renderTeams();
+          if (usingGoogleMaps && googleTacticalMap && data.team.latitude && data.team.longitude) {
+            googleTacticalMap.flyTo(data.team.latitude, data.team.longitude, 14);
+          } else if (tacticalMap && data.team.latitude && data.team.longitude) {
+            tacticalMap.flyTo([data.team.latitude, data.team.longitude], 14, { duration: 1.2 });
+          }
+          showToast(`🚑 Dispatched ${data.team.name}! En route telemetry active.`, 'success');
+          speakText(`Live emergency dispatch simulation initialized for ${data.team.name}`, 'en');
+        } else {
+          showToast(data.error || 'No civilian reports available to dispatch to yet.', 'warning');
+        }
+      } catch (e) {
+        showToast('Failed to start dispatch simulation: ' + e.message, 'error');
+      }
+    }
+
+    // Dynamic re-render on language change
+    window.addEventListener('languageChanged', () => {
+      if (typeof renderDashboard === 'function') renderDashboard();
+      if (typeof renderTeams === 'function') renderTeams();
+      if (typeof updateAdvancedAnalytics === 'function') updateAdvancedAnalytics();
+      if (typeof updateTacticalMap === 'function') updateTacticalMap();
+    });
+
+    if (window.rapidSync) {
+      rapidSync.on('OFFLINE_SYNCED', (info) => {
+        const count = info && info.syncedCount ? info.syncedCount : 1;
+        if (typeof showToast === 'function') showToast(`✅ Reconnected! Synced ${count} queued offline action(s).`, 'success');
+        loadAllData();
+      });
+    }
+
+    // ====================================================================
+    // GOOGLE MAPS GROUNDING — COMMAND FACILITY LOOKUP (Gemini 4 Hydrogen)
+    // ====================================================================
+    function escapeAdminMapsHtml(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function renderAdminMapsGroundingOutput(container, data, fromCache) {
+      if (!container) return;
+      const summaryHtml = escapeAdminMapsHtml(data.text || 'Verified Google Maps facilities')
+        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+        .replace(/\n/g, '<br>');
+
+      const places = Array.isArray(data.places) ? data.places : [];
+      const placesHtml = places.length > 0
+        ? `<div style="margin-top: 10px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px;">
+            ${places.map((p) => `
+              <a href="${escapeAdminMapsHtml(p.uri)}" target="_blank" rel="noopener noreferrer"
+                 style="display: block; background: #f8fafc; border: 1px solid #bae6fd; border-left: 4px solid #0284c7; border-radius: 8px; padding: 9px 11px; text-decoration: none; color: #0f172a;">
+                <div style="font-size: 12px; font-weight: 800; color: #0369a1;">📍 ${escapeAdminMapsHtml(p.title)} ↗</div>
+                ${Array.isArray(p.reviewSnippets) && p.reviewSnippets[0]
+                  ? `<div style="font-size: 11px; color: #475569; margin-top: 4px; line-height: 1.35;">“${escapeAdminMapsHtml(p.reviewSnippets[0])}”</div>`
+                  : '<div style="font-size: 11px; color: #64748b; margin-top: 3px;">Open facility in Google Maps</div>'}
+              </a>
+            `).join('')}
+          </div>`
+        : '';
+
+      const coordsText = data.coordinates
+        ? `${Number(data.coordinates.latitude).toFixed(4)}, ${Number(data.coordinates.longitude).toFixed(4)}`
+        : 'Command Sector';
+
+      container.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 8px;">
+          <span style="font-size: 11px; font-weight: 800; color: #0369a1;">
+            🗺️ Grounded via Google Maps (${escapeAdminMapsHtml(data.model || 'gemini-4-hydrogen')}) &bull; Sector GPS: ${coordsText}
+          </span>
+          ${fromCache ? '<span style="font-size: 10px; font-weight: 800; background: #fef3c7; color: #92400e; padding: 2px 6px; border-radius: 4px;">OFFLINE CACHED</span>' : ''}
+        </div>
+        <div style="font-size: 12px; line-height: 1.55; color: #1e293b;">${summaryHtml}</div>
+        ${placesHtml}
+        <div style="font-size: 10px; color: #64748b; margin-top: 8px;">Source: Google Maps Grounding · Click any facility card to launch Google Maps</div>
+      `;
+    }
+
+    async function searchAdminMapsGrounding(customQuery) {
+      const inputEl = document.getElementById('admin-maps-query');
+      const resultsEl = document.getElementById('admin-maps-grounding-results');
+      if (customQuery && inputEl) inputEl.value = customQuery;
+      const query = (inputEl ? inputEl.value : customQuery || '').trim() || 'nearest emergency trauma hospitals and disaster relief shelters';
+      if (!resultsEl) return;
+
+      const anchor = resolveCurrentEmergencyLocation();
+      const lat = anchor ? anchor.lat : 13.0604;
+      const lon = anchor ? anchor.lon : 80.2496;
+
+      if (typeof navigator !== 'undefined' && !navigator.onLine) {
+        try {
+          const cachedRaw = localStorage.getItem('puyal_maps_grounding_admin_cache');
+          if (cachedRaw) {
+            renderAdminMapsGroundingOutput(resultsEl, JSON.parse(cachedRaw), true);
+            return;
+          }
+        } catch (e) {}
+        resultsEl.innerHTML = `<div style="color: #92400e; font-weight: 700;">📴 Offline Mode: Live Google Maps Grounding requires connectivity, and no prior lookup is cached. Cached Command Station Depots remain visible below on the Tactical Map.</div>`;
+        return;
+      }
+
+      resultsEl.innerHTML = `<div style="color: #0369a1; font-weight: 700;">⏳ Querying Google Maps Grounding via Gemini 4 Hydrogen near ${Number(lat).toFixed(4)}, ${Number(lon).toFixed(4)}...</div>`;
+
+      try {
+        const res = await fetch('/api/gemini/maps-grounding', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            query,
+            latitude: lat,
+            longitude: lon,
+            role: 'admin'
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || 'Maps Grounding query failed');
+        }
+        try {
+          localStorage.setItem('puyal_maps_grounding_admin_cache', JSON.stringify(data));
+        } catch (e) {}
+        renderAdminMapsGroundingOutput(resultsEl, data, false);
+      } catch (err) {
+        resultsEl.innerHTML = `<div style="color: #dc2626; font-weight: 700;">⚠️ ${escapeAdminMapsHtml(err.message)}</div>`;
+      }
+    }
+  </script>
+
+  <!-- Offline QR Generator & Incident Dispatch Card -->
+  <script src="js/qrcode.min.js"></script>
+  <script src="js/incident-qr.js"></script>
+  <!-- Google Maps Platform Manager & Gemini AI Assistant Suite -->
+  <script src="js/google-maps-manager.js"></script>
+  <script src="js/gemini-assistant.js"></script>
+  <script src="js/pwa-offline.js"></script>
+</body>
+</html>
+

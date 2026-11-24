@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PUYAL — Admin Control Login</title>
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="PUYAL" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <link rel="alternate icon" href="favicon.ico" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    .password-input-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .password-input-wrap input {
+      width: 100%;
+      padding-right: 44px;
+    }
+    .password-toggle-btn {
+      position: absolute;
+      right: 10px;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 4px 6px;
+      font-size: 13px;
+      font-weight: 600;
+      border-radius: var(--radius-sm);
+    }
+    .password-toggle-btn:hover {
+      color: var(--navy);
+      background: var(--subtle);
+    }
+    .admin-security-note {
+      margin-top: 16px;
+      padding: 10px 12px;
+      border-radius: var(--radius-md);
+      background: var(--subtle);
+      border: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.45;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="login-page">
+    <div class="login-card">
+      <div class="logo">
+        <span class="sos-tag">SOS</span>
+        <h1>PUYAL</h1>
+      </div>
+      <span class="role-badge admin-badge">Admin Command Center</span>
+      <p class="login-subtitle">Restricted portal — authorized administrator authentication required</p>
+
+      <div id="login-error" class="login-error"></div>
+      <div id="login-success" class="toast success" style="position: static; margin-bottom: 16px; display: none;"></div>
+
+      <!-- Admin Password Auth Form -->
+      <form class="login-form" id="admin-login-form" autocomplete="off">
+        <div class="form-group">
+          <label for="email">Admin Email Address</label>
+          <input type="email" id="email" placeholder="admin@rapidresponse.org" required autocomplete="username" value="" />
+        </div>
+        <div class="form-group" id="pwd-group">
+          <label for="password">Admin Password</label>
+          <div class="password-input-wrap">
+            <input type="password" id="password" placeholder="Enter admin password" required autocomplete="current-password" value="" />
+            <button type="button" class="password-toggle-btn" id="toggle-password-visibility" aria-label="Show password">
+              Show
+            </button>
+          </div>
+        </div>
+        <button type="submit" class="btn-login admin-btn" id="btn-submit">
+          Sign In as Admin
+        </button>
+      </form>
+
+      <div class="admin-security-note">
+        Access is restricted strictly to the authorized command administrator account.
+      </div>
+
+      <a href="index.html" class="back-link">← Back to role selection</a>
+    </div>
+  </div>
+
+  <!-- Firebase Compatibility SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/auth-sync.js"></script>
+
+  <script>
+    window._currentRole = 'admin';
+    const AUTHORIZED_ADMIN_EMAIL = 'admin@rapidresponse.org';
+
+    // Check if authorized admin is already signed in
+    const existing = localStorage.getItem('currentUser');
+    if (existing) {
+      try {
+        const u = JSON.parse(existing);
+        const existingEmail = (u && u.email ? String(u.email).trim().toLowerCase() : '');
+        if (u && u.role === 'admin' && existingEmail === AUTHORIZED_ADMIN_EMAIL) {
+          window.location.href = 'dashboard-admin.html';
+        } else if (u && u.role === 'admin') {
+          localStorage.removeItem('currentUser');
+          localStorage.removeItem('userRole');
+        }
+      } catch (e) {}
+    }
+
+    function showError(msg) {
+      const el = document.getElementById('login-error');
+      el.textContent = msg;
+      el.style.display = 'block';
+    }
+
+    // Optional show/hide toggle for user-typed password
+    const toggleBtn = document.getElementById('toggle-password-visibility');
+    const pwdInput = document.getElementById('password');
+    if (toggleBtn && pwdInput) {
+      toggleBtn.addEventListener('click', () => {
+        const isHidden = pwdInput.type === 'password';
+        pwdInput.type = isHidden ? 'text' : 'password';
+        toggleBtn.textContent = isHidden ? 'Hide' : 'Show';
+        toggleBtn.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+      });
+    }
+
+    // Admin Form Submission
+    document.getElementById('admin-login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const btn = document.getElementById('btn-submit');
+
+      document.getElementById('login-error').style.display = 'none';
+
+      if (email.toLowerCase() !== AUTHORIZED_ADMIN_EMAIL) {
+        showError('Access denied. Only the authorized administrator can log into the Admin Portal.');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Verifying...';
+
+      try {
+        await universalLogin(email, password, 'admin');
+        window.location.href = 'dashboard-admin.html';
+      } catch (err) {
+        console.error('Admin sign-in error:', err);
+        showError(err.message || 'Authentication failed. Please verify admin credentials.');
+        btn.disabled = false;
+        btn.textContent = 'Sign In as Admin';
+      }
+    });
+  </script>
+  <script src="js/pwa-offline.js"></script>
+</body>
+</html>

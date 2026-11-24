@@ -1,0 +1,2038 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PUYAL — Emergency Response &amp; Disaster Command</title>
+  <meta name="description" content="PUYAL emergency response &amp; disaster management platform with incident reporting, SOS live streaming, and offline command coordination." />
+  <meta property="og:title" content="PUYAL — Emergency Response &amp; Disaster Command" />
+  <meta property="og:description" content="PUYAL emergency response &amp; disaster management platform with incident reporting, SOS live streaming, and offline command coordination." />
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="PUYAL" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <link rel="alternate icon" href="favicon.ico" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+  <!-- ============================================================
+       ROLE SELECTION — LANDING PAGE WITH BHASHINI MULTILINGUAL HUB
+       MeitY NLTM Digital India Language Interface Integration
+       ============================================================ -->
+  <div class="role-selection">
+    <div class="role-container">
+
+      <!-- Bhashini Multilingual Service Bar -->
+      <div class="role-bhashini-header" role="region" aria-label="Bhashini Language Selection">
+        <div class="role-bhashini-top-row">
+          <div class="bhashini-badge">
+            <span class="tricolor-dot" aria-hidden="true"></span>
+            <span data-i18n="role.bhashini_badge">Bhashini AI Multilingual Service</span>
+            <span style="color: #94a3b8; font-weight: 500; font-size: 11px;" data-i18n="role.bhashini_sub">• MeitY Digital India Indic Translation Engine</span>
+          </div>
+          <div class="bhashini-telemetry-pill" id="bhashini-telemetry">
+            <span class="bhashini-live-dot" aria-hidden="true"></span>
+            <span id="bhashini-status-text">ULCA IndicTrans-2 Live</span>
+          </div>
+        </div>
+
+        <!-- Geolocation Local Language Recommendation Badge -->
+        <div class="bhashini-geo-rec-row" id="bhashini-geo-rec-row" hidden>
+          <button
+            type="button"
+            class="bhashini-area-rec-badge"
+            id="bhashini-area-rec-badge"
+            onclick="applyRecommendedAreaLanguage()"
+            aria-label="Recommended for your area"
+            aria-pressed="false"
+            title="Apply local language suggested for your geographic area"
+          >
+            <span class="bhashini-area-rec-left">
+              <span class="bhashini-area-rec-pin" aria-hidden="true">📍</span>
+              <span class="bhashini-area-rec-label">Recommended for your area:</span>
+              <span class="bhashini-area-rec-lang" id="bhashini-area-rec-lang">English (English)</span>
+              <span class="bhashini-area-rec-region" id="bhashini-area-rec-region"></span>
+            </span>
+            <span class="bhashini-area-rec-cta" id="bhashini-area-rec-cta">Apply</span>
+          </button>
+        </div>
+
+        <div class="role-bhashini-controls">
+          <!-- Custom Searchable Dropdown with Search Filter Input Above List -->
+          <div class="bhashini-select-wrapper" id="bhashini-dropdown-wrapper">
+            <!-- Hidden native select kept in sync for accessibility & programmatic compatibility -->
+            <select id="role-bhashini-select" class="role-bhashini-select sr-only-select" onchange="onRoleLanguageChange(this.value)" aria-label="Select Emergency Language (Native)">
+              <option value="en">English (English)</option>
+              <option value="ta">தமிழ் (Tamil)</option>
+              <option value="hi">हिन्दी (Hindi)</option>
+              <option value="te">తెలుగు (Telugu)</option>
+              <option value="ml">മലയാളം (Malayalam)</option>
+              <option value="kn">ಕನ್ನಡ (Kannada)</option>
+              <option value="bn">বাংলা (Bengali)</option>
+              <option value="mr">मराठी (Marathi)</option>
+              <option value="gu">ગુજરાતી (Gujarati)</option>
+              <option value="pa">ਪੰਜਾਬੀ (Punjabi)</option>
+              <option value="or">ଓଡ଼ିଆ (Odia)</option>
+              <option value="es">Español (Spanish)</option>
+            </select>
+
+            <!-- Dropdown Trigger Button -->
+            <button
+              type="button"
+              class="bhashini-dropdown-btn"
+              id="bhashini-dropdown-btn"
+              aria-haspopup="listbox"
+              aria-expanded="false"
+              aria-controls="bhashini-dropdown-menu"
+              aria-label="Select Language dropdown (Shortcut: Ctrl+L)"
+              title="Select Language (Shortcut: Ctrl+L or Alt+L)"
+            >
+              <span class="bhashini-voice-control-hint" aria-hidden="true">
+                <span class="bhashini-voice-control-dot"></span>
+                <span>Enable Voice Control</span>
+              </span>
+              <span class="bhashini-btn-label-group">
+                <span class="bhashini-btn-badge" id="bhashini-btn-badge">EN</span>
+                <span id="bhashini-btn-label">English (English)</span>
+              </span>
+              <kbd class="bhashini-kbd-badge" id="bhashini-shortcut-badge" aria-label="Keyboard shortcut Ctrl plus L">Ctrl+L</kbd>
+              <span class="bhashini-dropdown-chevron" aria-hidden="true">▼</span>
+            </button>
+
+            <!-- Dropdown Menu with Search Filter Input Field Above the List -->
+            <div class="bhashini-dropdown-menu" id="bhashini-dropdown-menu" role="region" aria-label="Language options with search filter">
+              <!-- Search & Auto-Detect Header Row -->
+              <div class="bhashini-search-header-row">
+                <span class="bhashini-search-label">Select Language</span>
+                <button
+                  type="button"
+                  class="bhashini-detect-btn"
+                  id="btn-auto-detect-lang"
+                  onclick="detectAndApplyBrowserLanguage(true)"
+                  title="Detect and select your browser's preferred language"
+                >
+                  🧭 Auto-Detect
+                </button>
+              </div>
+
+              <!-- Search Filter Input Field Above List -->
+              <div class="bhashini-search-box">
+                <span class="bhashini-search-icon" aria-hidden="true">🔍</span>
+                <input
+                  type="text"
+                  id="bhashini-lang-search"
+                  class="bhashini-search-input"
+                  placeholder="Search language (e.g. Tamil, हिन्दी, English)..."
+                  autocomplete="off"
+                  spellcheck="false"
+                  aria-label="Filter languages by name or native script"
+                />
+                <button
+                  type="button"
+                  id="bhashini-search-clear"
+                  class="bhashini-search-clear"
+                  title="Clear search filter"
+                  aria-label="Clear search filter"
+                  style="display: none;"
+                >✕</button>
+                <button
+                  type="button"
+                  id="bhashini-mic-btn"
+                  class="bhashini-search-mic"
+                  title="Voice search: Speak your language name (e.g. 'Tamil', 'Hindi', 'Telugu')"
+                  aria-label="Speak language name to filter and select"
+                  onclick="toggleLanguageVoiceSearch()"
+                >🎤</button>
+              </div>
+
+              <!-- Voice Recognition Status Banner -->
+              <div class="bhashini-voice-status" id="bhashini-voice-status" aria-live="polite">
+                <span class="bhashini-voice-wave-dot"></span>
+                <span id="bhashini-voice-status-text">Listening... Speak language name now</span>
+              </div>
+
+              <!-- Recent Languages Section (Top 3 selected languages for fast access) -->
+              <div class="bhashini-recent-section" id="bhashini-recent-section">
+                <div class="bhashini-section-header">
+                  <span class="bhashini-section-title">🕒 Recent Languages</span>
+                  <button
+                    type="button"
+                    id="btn-clear-recent-langs"
+                    class="bhashini-clear-history-btn"
+                    onclick="clearRecentLanguagesHistory(event)"
+                    title="Clear recent language history"
+                    aria-label="Clear recent language history"
+                  >
+                    Clear History
+                  </button>
+                </div>
+                <div class="bhashini-recent-chips" id="bhashini-recent-chips" role="group" aria-label="Recent languages">
+                  <!-- Rendered dynamically -->
+                </div>
+                <div
+                  class="bhashini-recent-note"
+                  title="Your recent language selections are saved locally in your browser for quick future access."
+                >
+                  <span aria-hidden="true">💾</span>
+                  <span>Saved locally in your browser for quick access</span>
+                </div>
+              </div>
+
+              <!-- All Languages Section Header -->
+              <div class="bhashini-all-header" id="bhashini-all-header">
+                <span class="bhashini-section-title">🌐 All Supported Languages</span>
+              </div>
+
+              <!-- Filtered Languages List -->
+              <ul class="bhashini-options-list" id="bhashini-options-list" role="listbox" aria-label="Available Languages">
+                <!-- Rendered dynamically by script -->
+              </ul>
+
+              <!-- Bhashini Voice Guidance Footer Action -->
+              <div class="bhashini-dropdown-footer">
+                <button
+                  type="button"
+                  id="btn-bhashini-voice-guidance"
+                  class="bhashini-voice-guidance-btn"
+                  onclick="playBhashiniDropdownVoiceGuidance(event)"
+                  title="Read aloud the selected language name and instructions using Bhashini TTS"
+                  aria-label="Bhashini Voice Guidance: Read aloud selected language and instructions"
+                >
+                  <span class="bhashini-guidance-left">
+                    <span id="bhashini-guidance-icon" aria-hidden="true">🔊</span>
+                    <span class="bhashini-guidance-text-group">
+                      <span class="bhashini-guidance-title" id="bhashini-guidance-title">Bhashini Voice Guidance</span>
+                      <span class="bhashini-guidance-sub" id="bhashini-guidance-sub">Read aloud English &amp; instructions</span>
+                    </span>
+                  </span>
+                  <span style="display: inline-flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                    <canvas id="dropdown-tts-wave" class="tts-mini-wave-canvas hidden" width="52" height="20" aria-hidden="true"></canvas>
+                    <span class="bhashini-guidance-badge" id="bhashini-guidance-badge">EN TTS</span>
+                  </span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <button type="button" class="btn-bhashini-action" id="btn-role-translate" onclick="triggerBhashiniRoleTranslate()" title="Translate whole landing page using Bhashini AI">
+            <span id="bhashini-translate-icon">⚡</span>
+            <span data-i18n="role.translate_btn">Translate with Bhashini</span>
+          </button>
+
+          <button type="button" class="btn-bhashini-voice" id="btn-role-voice" onclick="playRoleGuidanceAudio()" title="Listen to spoken instructions in your language">
+            <span id="bhashini-voice-icon">🔊</span>
+            <span data-i18n="role.bhashini_listen">Listen (Bhashini AI TTS)</span>
+          </button>
+
+          <button type="button" class="btn-bhashini-tutorial" id="btn-audio-tutorial" onclick="toggleAudioTutorial()" title="Play spoken audio tutorial explaining how to navigate the Bhashini language selection UI">
+            <span id="bhashini-tutorial-icon">🎧</span>
+            <span id="bhashini-tutorial-text" data-i18n="role.bhashini_tutorial">Play Audio Tutorial</span>
+          </button>
+        </div>
+
+        <!-- Real-Time Voice Guidance Audio Waveform Visualizer -->
+        <div class="tts-waveform-panel" id="tts-waveform-panel" role="region" aria-label="Voice Guidance Audio Visualizer" aria-live="polite">
+          <div class="tts-wave-info">
+            <div class="tts-wave-title" id="tts-wave-title">Bhashini Voice Guidance</div>
+            <div class="tts-wave-meta">
+              <span id="tts-wave-lang">English (EN)</span>
+              <span aria-hidden="true">·</span>
+              <span id="tts-wave-state">Speaking</span>
+            </div>
+          </div>
+          <div class="tts-wave-canvas-wrap">
+            <canvas id="tts-waveform-canvas" class="tts-waveform-canvas" width="320" height="36" aria-label="Real-time audio waveform visualization"></canvas>
+          </div>
+          <div class="tts-wave-controls">
+            <span class="tts-wave-timer" id="tts-wave-timer">00:00</span>
+            <button type="button" class="tts-wave-stop-btn" id="btn-tts-wave-stop" onclick="stopAllVoiceGuidance()" aria-label="Stop voice guidance playback">
+              Stop
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Language Selection Hierarchy Breadcrumb Indicator -->
+      <nav class="role-language-breadcrumb" aria-label="Current language selection hierarchy">
+        <span class="breadcrumb-item"><span class="breadcrumb-icon" aria-hidden="true">🌐</span> Portal</span>
+        <span class="breadcrumb-separator" aria-hidden="true">&gt;</span>
+        <span class="breadcrumb-item breadcrumb-clickable" onclick="toggleBhashiniDropdown(true)" title="Click to change language">Language</span>
+        <span class="breadcrumb-separator" aria-hidden="true">&gt;</span>
+        <span class="breadcrumb-item breadcrumb-current" id="breadcrumb-selected-lang">
+          <span class="breadcrumb-badge" id="breadcrumb-lang-badge">EN</span>
+          <span id="breadcrumb-lang-text">English (English)</span>
+        </span>
+      </nav>
+
+      <!-- Hero Header -->
+      <div class="hero-logo">
+        <span class="sos-tag">SOS</span>
+        <h1 data-i18n="role.brand">PUYAL</h1>
+      </div>
+      <p class="hero-subtitle" data-i18n="role.subtitle">Emergency Response &amp; Disaster Management Platform</p>
+
+      <!-- Primary Role Options -->
+      <div class="role-cards">
+        <!-- User / Civilian Card (Direct Access to Civilian Emergency Portal) -->
+        <a href="dashboard-user.html" class="role-card user-role" id="link-civilian-role">
+          <span class="role-icon" aria-hidden="true">🆘</span>
+          <div class="role-name" data-i18n="role.user_title">Report Emergency</div>
+          <div class="role-desc" data-i18n="role.user_desc">Open Civilian Emergency Portal for SOS live streaming, voice &amp; reports</div>
+        </a>
+
+        <!-- Admin / Tactical Command Card -->
+        <a href="login-admin.html" class="role-card admin-role" id="link-admin-role">
+          <span class="role-icon" aria-hidden="true">🛡️</span>
+          <div class="role-name" data-i18n="role.admin_title">Admin Control</div>
+          <div class="role-desc" data-i18n="role.admin_desc">Manage incidents, view live SOS feeds, coordinate response</div>
+        </a>
+      </div>
+
+      <!-- Direct Civilian Emergency Portal & SOS Live Streaming Options -->
+      <div class="civilian-direct-bar" role="navigation" aria-label="Direct Civilian Emergency Portal Access">
+        <div class="civilian-direct-title">Direct Access — Civilian Emergency Portal Options</div>
+        <div class="civilian-direct-links">
+          <a href="dashboard-user.html?action=sos" id="link-direct-sos" class="civilian-quick-link sos-quick">
+            🚨 SOS Emergency Live Stream
+          </a>
+          <a href="dashboard-user.html?action=voice" id="link-direct-voice" class="civilian-quick-link">
+            🎙️ Bhashini Voice Report
+          </a>
+          <a href="dashboard-user.html?action=report" id="link-direct-report" class="civilian-quick-link">
+            📝 Report Incident
+          </a>
+          <a href="dashboard-user.html?action=track" id="link-direct-track" class="civilian-quick-link">
+            🚑 Live Responder Map
+          </a>
+          <a href="tactical-3d.html?role=user" id="link-direct-3d" class="civilian-quick-link">
+            🧊 3D Sector Twin
+          </a>
+          <a href="voice-studio.html" id="link-direct-voice-studio" class="civilian-quick-link" style="background: rgba(2, 132, 199, 0.22); border-color: rgba(56, 189, 248, 0.55); color: #e0f2fe;">
+            🤖 Voice AI, Hardware &amp; APK Studio
+          </a>
+          <a href="login-user.html?switch=1" id="link-civilian-demo" class="civilian-quick-link">
+            👤 Civilian Sign In / Demo
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast" id="toast"></div>
+
+  <!-- Translation & Auth Sync Scripts -->
+  <script src="js/translations.js"></script>
+  <script src="js/auth-sync.js"></script>
+
+  <script>
+    // Supported Bhashini Indic & International Languages (with distinct badge/waveform color identities)
+    const BHASHINI_LANGUAGES = [
+      { code: 'en', name: 'English', native: 'English', badge: 'EN', color: '#38bdf8', colorLight: '#7dd3fc', bgTint: 'rgba(56, 189, 248, 0.16)', borderTint: 'rgba(56, 189, 248, 0.4)' },
+      { code: 'ta', name: 'Tamil', native: 'தமிழ்', badge: 'TA', color: '#22c55e', colorLight: '#86efac', bgTint: 'rgba(34, 197, 94, 0.18)', borderTint: 'rgba(34, 197, 94, 0.45)' },
+      { code: 'hi', name: 'Hindi', native: 'हिन्दी', badge: 'HI', color: '#f59e0b', colorLight: '#fcd34d', bgTint: 'rgba(245, 158, 11, 0.18)', borderTint: 'rgba(245, 158, 11, 0.45)' },
+      { code: 'te', name: 'Telugu', native: 'తెలుగు', badge: 'TE', color: '#14b8a6', colorLight: '#5eead4', bgTint: 'rgba(20, 184, 166, 0.18)', borderTint: 'rgba(20, 184, 166, 0.45)' },
+      { code: 'ml', name: 'Malayalam', native: 'മലയാളം', badge: 'ML', color: '#4ade80', colorLight: '#bbf7d0', bgTint: 'rgba(74, 222, 128, 0.18)', borderTint: 'rgba(74, 222, 128, 0.45)' },
+      { code: 'kn', name: 'Kannada', native: 'ಕನ್ನಡ', badge: 'KN', color: '#fb7185', colorLight: '#fecdd3', bgTint: 'rgba(251, 113, 133, 0.18)', borderTint: 'rgba(251, 113, 133, 0.45)' },
+      { code: 'bn', name: 'Bengali', native: 'বাংলা', badge: 'BN', color: '#818cf8', colorLight: '#c7d2fe', bgTint: 'rgba(129, 140, 248, 0.18)', borderTint: 'rgba(129, 140, 248, 0.45)' },
+      { code: 'mr', name: 'Marathi', native: 'मराठी', badge: 'MR', color: '#fb923c', colorLight: '#fed7aa', bgTint: 'rgba(251, 146, 60, 0.18)', borderTint: 'rgba(251, 146, 60, 0.45)' },
+      { code: 'gu', name: 'Gujarati', native: 'ગુજરાતી', badge: 'GU', color: '#60a5fa', colorLight: '#bfdbfe', bgTint: 'rgba(96, 165, 250, 0.18)', borderTint: 'rgba(96, 165, 250, 0.45)' },
+      { code: 'pa', name: 'Punjabi', native: 'ਪੰਜਾਬੀ', badge: 'PA', color: '#facc15', colorLight: '#fef08a', bgTint: 'rgba(250, 204, 21, 0.18)', borderTint: 'rgba(250, 204, 21, 0.45)' },
+      { code: 'or', name: 'Odia', native: 'ଓଡ଼ିଆ', badge: 'OR', color: '#e879f9', colorLight: '#f5d0fe', bgTint: 'rgba(232, 121, 249, 0.18)', borderTint: 'rgba(232, 121, 249, 0.45)' },
+      { code: 'es', name: 'Spanish', native: 'Español', badge: 'ES', color: '#f87171', colorLight: '#fecaca', bgTint: 'rgba(248, 113, 113, 0.18)', borderTint: 'rgba(248, 113, 113, 0.45)' }
+    ];
+
+    const SELECTED_LANG_STORAGE_KEY = 'currentSelectedLang';
+    let currentSelectedLang = 'en';
+    let recommendedAreaInfo = null;
+
+    function saveCurrentSelectedLang(langCode) {
+      if (!langCode || !BHASHINI_LANGUAGES.some(l => l.code === langCode)) return;
+      currentSelectedLang = langCode;
+      try {
+        localStorage.setItem(SELECTED_LANG_STORAGE_KEY, langCode);
+        localStorage.setItem('rapid_language', langCode);
+        localStorage.setItem('bhashini_language', langCode);
+      } catch (e) {
+        console.warn('Error saving selected language:', e);
+      }
+    }
+
+    function readSavedSelectedLang() {
+      try {
+        const direct = localStorage.getItem(SELECTED_LANG_STORAGE_KEY);
+        if (direct && BHASHINI_LANGUAGES.some(l => l.code === direct)) return direct;
+        const legacy = localStorage.getItem('rapid_language') || localStorage.getItem('bhashini_language');
+        if (legacy && BHASHINI_LANGUAGES.some(l => l.code === legacy)) return legacy;
+      } catch (e) {}
+      return null;
+    }
+    let focusedOptionIndex = -1;
+
+    // Toast helper
+    function showToast(message, type = 'info') {
+      const toast = document.getElementById('toast');
+      if (!toast) return;
+      toast.textContent = message;
+      toast.className = 'toast ' + type + ' show';
+      clearTimeout(toast._hideTimer);
+      toast._hideTimer = setTimeout(() => {
+        toast.className = 'toast';
+      }, 3500);
+    }
+
+    // Retrieve the last 3 selected languages from localStorage
+    function getRecentLanguages() {
+      try {
+        const stored = localStorage.getItem('rapid_recent_languages');
+        if (stored !== null) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed)) {
+            return parsed
+              .filter(code => BHASHINI_LANGUAGES.some(l => l.code === code))
+              .slice(0, 3);
+          }
+        }
+      } catch (e) {
+        console.warn('Error reading recent languages:', e);
+      }
+      // Initial default recent languages only when nothing has been stored yet
+      const current = currentSelectedLang || 'en';
+      const defaults = [current, 'ta', 'hi'];
+      return [...new Set(defaults)].slice(0, 3);
+    }
+
+    // Clear recent languages history explicitly
+    function clearRecentLanguagesHistory(event) {
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      try {
+        localStorage.setItem('rapid_recent_languages', JSON.stringify([]));
+      } catch (e) {
+        console.warn('Error clearing recent languages:', e);
+      }
+      renderRecentLanguages();
+      showToast('Recent language history cleared.', 'info');
+    }
+
+    // Add a language to the recent list (max 3, unique, most recent first)
+    function addRecentLanguage(langCode) {
+      if (!langCode || !BHASHINI_LANGUAGES.some(l => l.code === langCode)) return;
+      try {
+        const recents = getRecentLanguages();
+        const updated = [langCode, ...recents.filter(c => c !== langCode)].slice(0, 3);
+        localStorage.setItem('rapid_recent_languages', JSON.stringify(updated));
+        renderRecentLanguages();
+      } catch (e) {
+        console.warn('Error saving recent language:', e);
+      }
+    }
+
+    // Render the recent languages chips section & toggle Clear History button visibility
+    function renderRecentLanguages() {
+      const container = document.getElementById('bhashini-recent-chips');
+      const clearBtn = document.getElementById('btn-clear-recent-langs');
+      if (!container) return;
+
+      const recentCodes = getRecentLanguages();
+
+      if (clearBtn) {
+        clearBtn.style.display = recentCodes.length > 0 ? 'inline-flex' : 'none';
+      }
+
+      if (recentCodes.length === 0) {
+        container.innerHTML = '<span class="bhashini-recent-empty">No recent languages yet</span>';
+        return;
+      }
+
+      container.innerHTML = recentCodes.map(code => {
+        const langObj = BHASHINI_LANGUAGES.find(l => l.code === code);
+        if (!langObj) return '';
+        const isSelected = code === currentSelectedLang;
+        return `
+          <button
+            type="button"
+            class="bhashini-recent-chip ${isSelected ? 'active' : ''}"
+            onclick="selectBhashiniLanguage('${langObj.code}')"
+            title="Fast switch to ${langObj.name} (${langObj.native})"
+            aria-label="Select recent language: ${langObj.name}"
+          >
+            <span class="bhashini-chip-badge" style="${isSelected ? `color: ${langObj.color}; background: ${langObj.bgTint}; border-color: ${langObj.borderTint};` : ''}">${langObj.badge}</span>
+            <span class="bhashini-recent-native">${langObj.native}</span>
+            <span class="bhashini-recent-en">(${langObj.name})</span>
+            ${isSelected ? '<span style="font-size:10px; margin-left:2px;">✓</span>' : ''}
+          </button>
+        `;
+      }).join('');
+    }
+
+    // Render language options with search query filtering
+    function renderLanguageOptions(filterQuery = '') {
+      const listEl = document.getElementById('bhashini-options-list');
+      const recentSection = document.getElementById('bhashini-recent-section');
+      const allHeader = document.getElementById('bhashini-all-header');
+      if (!listEl) return;
+
+      const q = filterQuery.trim().toLowerCase();
+
+      // Show/hide recent section based on whether search filter is active
+      if (recentSection && allHeader) {
+        if (q) {
+          recentSection.style.display = 'none';
+          allHeader.style.display = 'none';
+        } else {
+          recentSection.style.display = 'flex';
+          allHeader.style.display = 'flex';
+          renderRecentLanguages();
+        }
+      }
+
+      const filtered = BHASHINI_LANGUAGES.filter(item => {
+        if (!q) return true;
+        return (
+          item.code.toLowerCase().includes(q) ||
+          item.name.toLowerCase().includes(q) ||
+          item.native.toLowerCase().includes(q) ||
+          item.badge.toLowerCase().includes(q)
+        );
+      });
+
+      if (filtered.length === 0) {
+        listEl.innerHTML = `
+          <li class="bhashini-no-results">
+            No languages matching "<strong>${escapeHtml(filterQuery)}</strong>"
+          </li>
+        `;
+        return;
+      }
+
+      listEl.innerHTML = filtered.map((item, index) => {
+        const isSelected = item.code === currentSelectedLang;
+        const isRecommendedArea = recommendedAreaInfo && recommendedAreaInfo.code === item.code;
+        const highlightedBadge = highlightMatchText(item.badge, q);
+        const highlightedNative = highlightMatchText(item.native, q);
+        const highlightedName = highlightMatchText(item.name, q);
+        return `
+          <li
+            class="bhashini-option-item ${isSelected ? 'selected' : ''}"
+            role="option"
+            aria-selected="${isSelected ? 'true' : 'false'}"
+            data-code="${item.code}"
+            data-index="${index}"
+            onclick="selectBhashiniLanguage('${item.code}')"
+          >
+            <div class="bhashini-opt-left">
+              <span class="bhashini-opt-badge" style="${isSelected ? `color: ${item.color}; background: ${item.bgTint}; border-color: ${item.borderTint};` : ''}">${highlightedBadge}</span>
+              <span class="bhashini-opt-native">${highlightedNative}</span>
+              <span class="bhashini-opt-en">(${highlightedName})</span>
+              ${isRecommendedArea ? '<span class="bhashini-opt-local-tag">📍 Area</span>' : ''}
+            </div>
+            ${isSelected ? '<span class="bhashini-opt-check" aria-hidden="true">✓</span>' : ''}
+          </li>
+        `;
+      }).join('');
+    }
+
+    function escapeHtml(str) {
+      return String(str).replace(/[&<>"']/g, m => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+      }[m]));
+    }
+
+    function highlightMatchText(text, query) {
+      const source = String(text ?? '');
+      const cleanQuery = String(query ?? '').trim();
+      if (!cleanQuery) return escapeHtml(source);
+
+      const lowerSource = source.toLowerCase();
+      const lowerQuery = cleanQuery.toLowerCase();
+      let result = '';
+      let cursor = 0;
+      let matchIdx = lowerSource.indexOf(lowerQuery, cursor);
+
+      if (matchIdx === -1) return escapeHtml(source);
+
+      while (matchIdx !== -1) {
+        if (matchIdx > cursor) {
+          result += escapeHtml(source.slice(cursor, matchIdx));
+        }
+        const matchedSlice = source.slice(matchIdx, matchIdx + cleanQuery.length);
+        result += `<mark class="bhashini-match-highlight">${escapeHtml(matchedSlice)}</mark>`;
+        cursor = matchIdx + cleanQuery.length;
+        matchIdx = lowerSource.indexOf(lowerQuery, cursor);
+      }
+
+      if (cursor < source.length) {
+        result += escapeHtml(source.slice(cursor));
+      }
+      return result;
+    }
+
+    function applyBadgePalette(el, langObj) {
+      if (!el || !langObj) return;
+      el.style.color = langObj.color;
+      el.style.background = langObj.bgTint;
+      el.style.borderColor = langObj.borderTint;
+    }
+
+    // Update Dropdown UI (trigger button label, badge, and active list styling)
+    function updateDropdownTrigger(langCode) {
+      currentSelectedLang = langCode;
+      const langObj = BHASHINI_LANGUAGES.find(l => l.code === langCode) || BHASHINI_LANGUAGES[0];
+
+      const badgeEl = document.getElementById('bhashini-btn-badge');
+      const labelEl = document.getElementById('bhashini-btn-label');
+      const nativeSelect = document.getElementById('role-bhashini-select');
+
+      if (badgeEl) {
+        badgeEl.textContent = langObj.badge;
+        applyBadgePalette(badgeEl, langObj);
+      }
+      if (labelEl) labelEl.textContent = `${langObj.native} (${langObj.name})`;
+      if (nativeSelect) nativeSelect.value = langCode;
+
+      // Update breadcrumb indicator
+      const breadcrumbBadge = document.getElementById('breadcrumb-lang-badge');
+      const breadcrumbText = document.getElementById('breadcrumb-lang-text');
+      if (breadcrumbBadge) {
+        breadcrumbBadge.textContent = langObj.badge;
+        applyBadgePalette(breadcrumbBadge, langObj);
+      }
+      if (breadcrumbText) breadcrumbText.textContent = `${langObj.native} (${langObj.name})`;
+
+      // Update Bhashini Voice Guidance button label inside dropdown
+      const guidanceBadge = document.getElementById('bhashini-guidance-badge');
+      const guidanceSub = document.getElementById('bhashini-guidance-sub');
+      if (guidanceBadge) {
+        guidanceBadge.textContent = `${langObj.badge} TTS`;
+        applyBadgePalette(guidanceBadge, langObj);
+      }
+      if (guidanceSub && !isDropdownGuidancePlaying) {
+        guidanceSub.textContent = `Read aloud ${langObj.native} (${langObj.name}) & guide`;
+      }
+
+      // Sync active waveform panel color if visualizer is running
+      if (typeof syncWaveformBadgeTheme === 'function') {
+        syncWaveformBadgeTheme(langCode);
+      }
+
+      // Render recent languages
+      renderRecentLanguages();
+
+      // Keep geolocation recommendation badge CTA/status in sync
+      if (typeof renderAreaRecommendationBadge === 'function') {
+        renderAreaRecommendationBadge();
+      }
+
+      // Re-render options to update selected checkmark
+      const searchInput = document.getElementById('bhashini-lang-search');
+      renderLanguageOptions(searchInput ? searchInput.value : '');
+    }
+
+    // Open/Close Dropdown Menu
+    function toggleBhashiniDropdown(forceState = null) {
+      const btn = document.getElementById('bhashini-dropdown-btn');
+      const menu = document.getElementById('bhashini-dropdown-menu');
+      const searchInput = document.getElementById('bhashini-lang-search');
+      if (!btn || !menu) return;
+
+      const isCurrentlyOpen = menu.classList.contains('open');
+      const shouldOpen = forceState !== null ? forceState : !isCurrentlyOpen;
+
+      if (shouldOpen) {
+        menu.classList.add('open');
+        btn.setAttribute('aria-expanded', 'true');
+        renderRecentLanguages();
+        if (searchInput) {
+          searchInput.value = '';
+          const clearBtn = document.getElementById('bhashini-search-clear');
+          if (clearBtn) clearBtn.style.display = 'none';
+          renderLanguageOptions('');
+          setTimeout(() => searchInput.focus(), 50);
+        }
+      } else {
+        menu.classList.remove('open');
+        btn.setAttribute('aria-expanded', 'false');
+        focusedOptionIndex = -1;
+      }
+    }
+
+    // Select Language Handler
+    function selectBhashiniLanguage(langCode) {
+      saveCurrentSelectedLang(langCode);
+      addRecentLanguage(langCode);
+      updateDropdownTrigger(langCode);
+      toggleBhashiniDropdown(false);
+      onRoleLanguageChange(langCode);
+    }
+
+    // Voice recognition instance & state for search input
+    let languageVoiceRecognition = null;
+    let isVoiceSearchActive = false;
+
+    /**
+     * Matches a spoken transcript against supported languages.
+     * Supports English names, native scripts, ISO codes, and common regional aliases.
+     * @param {string} spokenText
+     * @returns {Object|null} The matched BHASHINI_LANGUAGES entry or null
+     */
+    function findMatchingLanguage(spokenText) {
+      if (!spokenText || typeof spokenText !== 'string') return null;
+      const clean = spokenText.toLowerCase().replace(/[^a-z0-9\u0900-\u0DFF]/gi, ' ').trim();
+
+      const aliases = {
+        ta: ['tamil', 'thamizh', 'tamizh', 'தமிழ்'],
+        hi: ['hindi', 'hindustani', 'हिन्दी', 'हिंदी'],
+        te: ['telugu', 'theloop', 'తెలుగు'],
+        ml: ['malayalam', 'malyalam', 'മലയാളം'],
+        kn: ['kannada', 'kanada', 'ಕನ್ನಡ'],
+        bn: ['bengali', 'bangla', 'বাংলা'],
+        mr: ['marathi', 'मराठी'],
+        gu: ['gujarati', 'gujarathi', 'ગુજરાતી'],
+        pa: ['punjabi', 'panjabi', 'ਪੰਜਾਬੀ'],
+        or: ['odia', 'oriya', 'orissa', 'ଓଡ଼ିଆ'],
+        es: ['spanish', 'espanol', 'español', 'castilian'],
+        en: ['english', 'angrezi']
+      };
+
+      const words = clean.split(/\s+/).filter(Boolean);
+
+      // 1. Direct code match (e.g. "ta", "hi", "en")
+      for (const lang of BHASHINI_LANGUAGES) {
+        if (words.includes(lang.code.toLowerCase())) {
+          return lang;
+        }
+      }
+
+      // 2. Exact or substring match on name / native script
+      for (const lang of BHASHINI_LANGUAGES) {
+        const nameLower = lang.name.toLowerCase();
+        const nativeLower = lang.native.toLowerCase();
+        if (clean.includes(nameLower) || clean.includes(nativeLower)) {
+          return lang;
+        }
+      }
+
+      // 3. Keyword / alias matches (e.g. "bangla" for Bengali, "oriya" for Odia)
+      for (const lang of BHASHINI_LANGUAGES) {
+        const aliasList = aliases[lang.code] || [];
+        for (const alias of aliasList) {
+          if (clean.includes(alias)) {
+            return lang;
+          }
+        }
+      }
+
+      return null;
+    }
+
+    /**
+     * Toggles Voice-to-Text for the language search input field
+     */
+    function toggleLanguageVoiceSearch() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const micBtn = document.getElementById('bhashini-mic-btn');
+      const voiceStatus = document.getElementById('bhashini-voice-status');
+      const statusText = document.getElementById('bhashini-voice-status-text');
+      const searchInput = document.getElementById('bhashini-lang-search');
+      const clearBtn = document.getElementById('bhashini-search-clear');
+
+      if (!SpeechRecognition) {
+        showToast('Voice-to-text is not supported in this browser. Please type language name.', 'warning');
+        if (searchInput) searchInput.focus();
+        return;
+      }
+
+      // If active, stop listening
+      if (isVoiceSearchActive && languageVoiceRecognition) {
+        try {
+          languageVoiceRecognition.stop();
+        } catch (e) {
+          console.warn('Error stopping speech recognition:', e);
+        }
+        return;
+      }
+
+      try {
+        languageVoiceRecognition = new SpeechRecognition();
+        languageVoiceRecognition.continuous = false;
+        languageVoiceRecognition.interimResults = true;
+        languageVoiceRecognition.maxAlternatives = 3;
+        languageVoiceRecognition.lang = 'en-IN'; // Optimized for Indic & International names
+
+        languageVoiceRecognition.onstart = () => {
+          isVoiceSearchActive = true;
+          if (micBtn) {
+            micBtn.classList.add('listening');
+            micBtn.title = 'Listening... Click to cancel';
+          }
+          if (voiceStatus) {
+            voiceStatus.classList.add('active');
+          }
+          if (statusText) {
+            statusText.textContent = 'Listening... Say language name (e.g. "Tamil", "Hindi", "Telugu")';
+          }
+          if (searchInput) {
+            searchInput.placeholder = '🎙️ Listening... Speak language now...';
+          }
+          showToast('🎙️ Microphone active: Speak your language name...', 'info');
+        };
+
+        languageVoiceRecognition.onresult = (event) => {
+          let spokenText = '';
+          let isFinal = false;
+
+          for (let i = 0; i < event.results.length; i++) {
+            spokenText += event.results[i][0].transcript;
+            if (event.results[i].isFinal) isFinal = true;
+          }
+
+          spokenText = spokenText.trim();
+          if (!spokenText) return;
+
+          if (searchInput) {
+            searchInput.value = spokenText;
+          }
+          if (clearBtn) {
+            clearBtn.style.display = 'inline-block';
+          }
+
+          // Filter list dynamically as words are recognized
+          renderLanguageOptions(spokenText);
+
+          // Check for matching language
+          const matchedLang = findMatchingLanguage(spokenText);
+          if (matchedLang) {
+            if (statusText) {
+              statusText.textContent = `✓ Recognized "${matchedLang.name}"! Selecting...`;
+            }
+            if (isFinal) {
+              showToast(`🎙️ Voice detected: ${matchedLang.native} (${matchedLang.name})! Selecting...`, 'success');
+              setTimeout(() => {
+                selectBhashiniLanguage(matchedLang.code);
+              }, 450);
+            }
+          }
+        };
+
+        languageVoiceRecognition.onerror = (event) => {
+          console.warn('Speech recognition error:', event.error);
+          if (event.error === 'not-allowed') {
+            showToast('Microphone access was denied. Please allow microphone permissions to use voice search.', 'error');
+          } else if (event.error === 'no-speech') {
+            showToast('No speech was detected. Please click the mic and try speaking again.', 'info');
+          } else {
+            showToast('Voice search encountered an issue: ' + event.error, 'info');
+          }
+        };
+
+        languageVoiceRecognition.onend = () => {
+          isVoiceSearchActive = false;
+          if (micBtn) {
+            micBtn.classList.remove('listening');
+            micBtn.title = 'Voice search: Speak your language name';
+          }
+          if (voiceStatus) {
+            voiceStatus.classList.remove('active');
+          }
+          if (searchInput) {
+            searchInput.placeholder = 'Search language (e.g. Tamil, हिन्दी, English)...';
+          }
+        };
+
+        languageVoiceRecognition.start();
+      } catch (err) {
+        console.warn('Failed to start speech recognition:', err);
+        showToast('Unable to start microphone for voice search.', 'error');
+      }
+    }
+
+    // Role Language Switcher Handler
+    function onRoleLanguageChange(lang) {
+      const prevLang = currentSelectedLang;
+      saveCurrentSelectedLang(lang);
+      if (prevLang !== lang) {
+        addRecentLanguage(lang);
+        updateDropdownTrigger(lang);
+      }
+      if (typeof translatePage === 'function') {
+        translatePage(lang);
+      }
+
+      const langName = (window.RAPID_LANG_NAMES && window.RAPID_LANG_NAMES[lang]) || lang;
+      showToast(`🌐 Bhashini AI: ${langName} selected`, 'info');
+    }
+
+    // Trigger Bhashini Neural Machine Translation with live API verification
+    async function triggerBhashiniRoleTranslate() {
+      const targetLang = currentSelectedLang || 'ta';
+      saveCurrentSelectedLang(targetLang);
+      const btn = document.getElementById('btn-role-translate');
+      const icon = document.getElementById('bhashini-translate-icon');
+      const statusText = document.getElementById('bhashini-status-text');
+
+      if (btn) btn.disabled = true;
+      if (icon) icon.textContent = '⏳';
+      if (statusText) statusText.textContent = 'Bhashini Translating...';
+
+      const startTime = performance.now();
+
+      try {
+        if (typeof translatePage === 'function') {
+          translatePage(targetLang);
+        }
+
+        const response = await fetch('/api/bhashini/translate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            texts: [
+              'PUYAL',
+              'Report Emergency',
+              'Admin Control'
+            ],
+            targetLanguage: targetLang,
+            sourceLanguage: 'en'
+          })
+        });
+
+        const elapsed = Math.round(performance.now() - startTime);
+
+        if (response.ok) {
+          const data = await response.json();
+          if (statusText) {
+            statusText.textContent = `Bhashini ${targetLang.toUpperCase()} | ${elapsed}ms`;
+          }
+          const langName = (window.RAPID_LANG_NAMES && window.RAPID_LANG_NAMES[targetLang]) || targetLang;
+          showToast(`⚡ Bhashini AI: Translated to ${langName} in ${elapsed}ms!`, 'success');
+        } else {
+          if (statusText) statusText.textContent = `Bhashini Local Dict (${targetLang.toUpperCase()})`;
+          const langName = (window.RAPID_LANG_NAMES && window.RAPID_LANG_NAMES[targetLang]) || targetLang;
+          showToast(`🌐 Translated to ${langName} via local dictionary`, 'info');
+        }
+      } catch (err) {
+        console.warn('Bhashini translate fetch exception:', err);
+        if (statusText) statusText.textContent = 'Bhashini Offline Fallback';
+        showToast('Translated via cached language dictionary', 'info');
+      } finally {
+        if (btn) btn.disabled = false;
+        if (icon) icon.textContent = '⚡';
+      }
+    }
+
+    // ====================================================================
+    // REAL-TIME VOICE GUIDANCE AUDIO WAVEFORM VISUALIZER CONTROLLER
+    // ====================================================================
+    const ttsWaveformState = {
+      active: false,
+      speaking: false,
+      mode: null, // 'dropdown' | 'role' | 'tutorial'
+      langCode: 'en',
+      primaryColor: '#38bdf8',
+      secondaryColor: '#7dd3fc',
+      rafId: null,
+      timerId: null,
+      startTime: 0,
+      energy: 0.15,
+      boundaryPulse: 0,
+      lastBoundaryAt: 0,
+      barHeights: new Array(32).fill(0.08),
+      miniBarHeights: new Array(10).fill(0.15),
+      fallbackTimerId: null,
+      onCleanup: null
+    };
+
+    function resolveLanguageWaveformPalette(langCode) {
+      const code = langCode || currentSelectedLang || 'en';
+      const langObj = BHASHINI_LANGUAGES.find(l => l.code === code) || BHASHINI_LANGUAGES[0];
+
+      // Read live computed color from the active language badge so waveform bars always match the badge
+      const badgeEl = document.getElementById('bhashini-btn-badge') || document.getElementById('breadcrumb-lang-badge');
+      let badgeComputedColor = null;
+      if (badgeEl && window.getComputedStyle) {
+        const computed = window.getComputedStyle(badgeEl).color;
+        if (computed && computed !== 'rgba(0, 0, 0, 0)' && computed !== 'transparent') {
+          badgeComputedColor = computed;
+        }
+      }
+
+      const primary = badgeComputedColor || langObj.color || '#38bdf8';
+      const secondary = langObj.colorLight || primary;
+      return {
+        primary,
+        secondary,
+        borderTint: langObj.borderTint || 'rgba(56, 189, 248, 0.32)'
+      };
+    }
+
+    function syncWaveformBadgeTheme(langCode) {
+      const palette = resolveLanguageWaveformPalette(langCode);
+      ttsWaveformState.langCode = langCode || currentSelectedLang || 'en';
+      ttsWaveformState.primaryColor = palette.primary;
+      ttsWaveformState.secondaryColor = palette.secondary;
+
+      const panel = document.getElementById('tts-waveform-panel');
+      if (panel) {
+        panel.style.borderColor = palette.borderTint;
+      }
+    }
+
+    function formatWaveElapsed(ms) {
+      const totalSec = Math.max(0, Math.floor(ms / 1000));
+      const mins = String(Math.floor(totalSec / 60)).padStart(2, '0');
+      const secs = String(totalSec % 60).padStart(2, '0');
+      return `${mins}:${secs}`;
+    }
+
+    function setupHighDpiCanvas(canvas, cssW, cssH) {
+      if (!canvas) return null;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const rect = canvas.getBoundingClientRect();
+      const targetW = Math.max(1, Math.round((rect.width || cssW) * dpr));
+      const targetH = Math.max(1, Math.round((rect.height || cssH) * dpr));
+      if (canvas.width !== targetW || canvas.height !== targetH) {
+        canvas.width = targetW;
+        canvas.height = targetH;
+      }
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return null;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      return { ctx, width: rect.width || cssW, height: rect.height || cssH };
+    }
+
+    function renderWaveformFrame(now) {
+      if (!ttsWaveformState.active) return;
+
+      const reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const t = now * 0.001;
+
+      // Keep bar colors synchronized with the active language badge color
+      const palette = resolveLanguageWaveformPalette(ttsWaveformState.langCode);
+      ttsWaveformState.primaryColor = palette.primary;
+      ttsWaveformState.secondaryColor = palette.secondary;
+
+      // Decay boundary word impulse smoothly
+      ttsWaveformState.boundaryPulse *= 0.88;
+
+      // Keep organic vocal cadence running while utterance speaks
+      const msSinceBoundary = now - ttsWaveformState.lastBoundaryAt;
+      const baseActivity = ttsWaveformState.speaking
+        ? (msSinceBoundary < 450 ? 0.52 : 0.34)
+        : 0.14;
+
+      const targetEnergy = Math.min(1, baseActivity + ttsWaveformState.boundaryPulse * 0.65);
+      ttsWaveformState.energy += (targetEnergy - ttsWaveformState.energy) * 0.22;
+
+      // Render main waveform canvas (#tts-waveform-canvas)
+      const mainCanvas = document.getElementById('tts-waveform-canvas');
+      const mainSetup = setupHighDpiCanvas(mainCanvas, 320, 36);
+      if (mainSetup) {
+        const { ctx, width, height } = mainSetup;
+        ctx.clearRect(0, 0, width, height);
+
+        const bars = ttsWaveformState.barHeights;
+        const count = bars.length;
+        const gap = 3;
+        const barW = Math.max(2, (width - gap * (count - 1)) / count);
+        const centerY = height / 2;
+
+        // Language badge color-synced gradient across bars
+        const grad = ctx.createLinearGradient(0, 0, 0, height);
+        grad.addColorStop(0, ttsWaveformState.secondaryColor);
+        grad.addColorStop(0.5, ttsWaveformState.primaryColor);
+        grad.addColorStop(1, ttsWaveformState.secondaryColor);
+        ctx.fillStyle = grad;
+
+        for (let i = 0; i < count; i++) {
+          const normCenter = 1 - Math.abs((i / (count - 1)) * 2 - 1) * 0.45;
+          let targetAmp;
+          if (reducedMotion) {
+            targetAmp = ttsWaveformState.speaking ? 0.42 * normCenter : 0.16 * normCenter;
+          } else {
+            const harmonic =
+              Math.sin(t * 9.5 + i * 0.55) * 0.35 +
+              Math.cos(t * 14.2 - i * 0.82) * 0.25 +
+              Math.sin(t * 5.3 + i * 1.15) * 0.2 +
+              0.55;
+            targetAmp = Math.max(0.08, Math.min(1, harmonic * ttsWaveformState.energy * normCenter));
+          }
+          bars[i] += (targetAmp - bars[i]) * 0.32;
+
+          const barH = Math.max(3, bars[i] * (height - 4));
+          const x = i * (barW + gap);
+          const y = centerY - barH / 2;
+          const r = Math.min(barW / 2, 2);
+
+          ctx.beginPath();
+          if (ctx.roundRect) {
+            ctx.roundRect(x, y, barW, barH, r);
+          } else {
+            ctx.rect(x, y, barW, barH);
+          }
+          ctx.fill();
+        }
+      }
+
+      // Render compact dropdown mini canvas (#dropdown-tts-wave) when active in dropdown mode
+      if (ttsWaveformState.mode === 'dropdown') {
+        const miniCanvas = document.getElementById('dropdown-tts-wave');
+        const miniSetup = setupHighDpiCanvas(miniCanvas, 52, 20);
+        if (miniSetup) {
+          const { ctx, width, height } = miniSetup;
+          ctx.clearRect(0, 0, width, height);
+
+          const bars = ttsWaveformState.miniBarHeights;
+          const count = bars.length;
+          const gap = 2;
+          const barW = Math.max(2, (width - gap * (count - 1)) / count);
+          const centerY = height / 2;
+          ctx.fillStyle = ttsWaveformState.primaryColor;
+
+          for (let i = 0; i < count; i++) {
+            const targetAmp = reducedMotion
+              ? 0.45
+              : Math.max(0.14, Math.min(1, (Math.sin(t * 11 + i * 0.8) * 0.45 + 0.55) * ttsWaveformState.energy));
+            bars[i] += (targetAmp - bars[i]) * 0.35;
+            const barH = Math.max(3, bars[i] * (height - 2));
+            const x = i * (barW + gap);
+            const y = centerY - barH / 2;
+            ctx.beginPath();
+            if (ctx.roundRect) {
+              ctx.roundRect(x, y, barW, barH, 1.5);
+            } else {
+              ctx.rect(x, y, barW, barH);
+            }
+            ctx.fill();
+          }
+        }
+      }
+
+      ttsWaveformState.rafId = requestAnimationFrame(renderWaveformFrame);
+    }
+
+    function startVoiceWaveformVisualizer({ mode, title, langCode, langLabel, stateLabel }) {
+      const panel = document.getElementById('tts-waveform-panel');
+      const titleEl = document.getElementById('tts-wave-title');
+      const langEl = document.getElementById('tts-wave-lang');
+      const stateEl = document.getElementById('tts-wave-state');
+      const timerEl = document.getElementById('tts-wave-timer');
+      const miniCanvas = document.getElementById('dropdown-tts-wave');
+
+      ttsWaveformState.active = true;
+      ttsWaveformState.speaking = false;
+      ttsWaveformState.mode = mode;
+      ttsWaveformState.startTime = Date.now();
+      ttsWaveformState.boundaryPulse = 0.45;
+      ttsWaveformState.lastBoundaryAt = performance.now();
+
+      syncWaveformBadgeTheme(langCode || currentSelectedLang || 'en');
+
+      if (titleEl) titleEl.textContent = title || 'Bhashini Voice Guidance';
+      if (langEl) langEl.textContent = langLabel || 'English (EN)';
+      if (stateEl) stateEl.textContent = stateLabel || 'Synthesizing';
+      if (timerEl) timerEl.textContent = '00:00';
+      if (panel) panel.classList.add('active');
+
+      if (miniCanvas) {
+        if (mode === 'dropdown') {
+          miniCanvas.classList.remove('hidden');
+        } else {
+          miniCanvas.classList.add('hidden');
+        }
+      }
+
+      if (ttsWaveformState.timerId) clearInterval(ttsWaveformState.timerId);
+      ttsWaveformState.timerId = setInterval(() => {
+        if (!ttsWaveformState.active) return;
+        const el = document.getElementById('tts-wave-timer');
+        if (el) el.textContent = formatWaveElapsed(Date.now() - ttsWaveformState.startTime);
+      }, 250);
+
+      if (ttsWaveformState.rafId) cancelAnimationFrame(ttsWaveformState.rafId);
+      ttsWaveformState.rafId = requestAnimationFrame(renderWaveformFrame);
+    }
+
+    function updateVoiceWaveformState(speaking, stateLabel) {
+      if (!ttsWaveformState.active) return;
+      ttsWaveformState.speaking = speaking;
+      if (speaking) {
+        ttsWaveformState.boundaryPulse = 0.85;
+        ttsWaveformState.lastBoundaryAt = performance.now();
+      }
+      const stateEl = document.getElementById('tts-wave-state');
+      if (stateEl && stateLabel) {
+        stateEl.textContent = stateLabel;
+      }
+    }
+
+    function pulseVoiceWaveformBoundary() {
+      if (!ttsWaveformState.active) return;
+      ttsWaveformState.speaking = true;
+      ttsWaveformState.boundaryPulse = 0.9 + Math.random() * 0.2;
+      ttsWaveformState.lastBoundaryAt = performance.now();
+    }
+
+    function stopVoiceWaveformVisualizer() {
+      ttsWaveformState.active = false;
+      ttsWaveformState.speaking = false;
+      ttsWaveformState.mode = null;
+
+      if (ttsWaveformState.rafId) {
+        cancelAnimationFrame(ttsWaveformState.rafId);
+        ttsWaveformState.rafId = null;
+      }
+      if (ttsWaveformState.timerId) {
+        clearInterval(ttsWaveformState.timerId);
+        ttsWaveformState.timerId = null;
+      }
+      if (ttsWaveformState.fallbackTimerId) {
+        clearTimeout(ttsWaveformState.fallbackTimerId);
+        ttsWaveformState.fallbackTimerId = null;
+      }
+
+      const panel = document.getElementById('tts-waveform-panel');
+      if (panel) panel.classList.remove('active');
+
+      const miniCanvas = document.getElementById('dropdown-tts-wave');
+      if (miniCanvas) miniCanvas.classList.add('hidden');
+    }
+
+    function resetAllVoiceGuidanceButtons(langCode) {
+      const code = langCode || currentSelectedLang || localStorage.getItem('rapid_language') || 'en';
+      const langObj = BHASHINI_LANGUAGES.find(l => l.code === code) || BHASHINI_LANGUAGES[0];
+
+      // Reset dropdown guidance button
+      resetDropdownGuidanceUI(langObj);
+
+      // Reset toolbar listen button
+      isRoleVoicePlaying = false;
+      const voiceBtn = document.getElementById('btn-role-voice');
+      const voiceIcon = document.getElementById('bhashini-voice-icon');
+      if (voiceBtn) voiceBtn.classList.remove('speaking');
+      if (voiceIcon) voiceIcon.textContent = '🔊';
+
+      // Reset tutorial button
+      isTutorialAudioPlaying = false;
+      const tutorialBtn = document.getElementById('btn-audio-tutorial');
+      const tutIcon = document.getElementById('bhashini-tutorial-icon');
+      const tutText = document.getElementById('bhashini-tutorial-text');
+      if (tutorialBtn) tutorialBtn.classList.remove('playing');
+      if (tutIcon) tutIcon.textContent = '🎧';
+      if (tutText) tutText.textContent = (window.t && window.t('role.bhashini_tutorial', code)) || 'Play Audio Tutorial';
+    }
+
+    function stopAllVoiceGuidance(silent = false) {
+      if ('speechSynthesis' in window) {
+        try { window.speechSynthesis.cancel(); } catch (e) {}
+      }
+      stopVoiceWaveformVisualizer();
+      resetAllVoiceGuidanceButtons();
+      if (!silent) {
+        showToast('⏹️ Voice guidance playback stopped.', 'info');
+      }
+    }
+
+    function speakTextWithVisualizer({ text, langCode, bhashiniLangCode, mode, title, onFinished }) {
+      const langObj = BHASHINI_LANGUAGES.find(l => l.code === langCode) || BHASHINI_LANGUAGES[0];
+      const targetLang = bhashiniLangCode || (langCode === 'en' ? 'en-US' : `${langCode}-IN`);
+
+      if (!ttsWaveformState.active || ttsWaveformState.mode !== mode) {
+        startVoiceWaveformVisualizer({
+          mode,
+          title,
+          langCode,
+          langLabel: `${langObj.native} (${langObj.badge})`,
+          stateLabel: 'Speaking'
+        });
+      } else {
+        syncWaveformBadgeTheme(langCode);
+        updateVoiceWaveformState(true, 'Speaking');
+      }
+
+      if ('speechSynthesis' in window) {
+        try {
+          window.speechSynthesis.cancel();
+          const utterance = new SpeechSynthesisUtterance(text);
+          utterance.lang = targetLang;
+          utterance.rate = 0.95;
+
+          const voices = window.speechSynthesis.getVoices();
+          const matchedVoice = voices.find(v => v.lang === targetLang || v.lang.startsWith(langCode));
+          if (matchedVoice) {
+            utterance.voice = matchedVoice;
+          }
+
+          let wordCounter = 0;
+          utterance.onstart = () => {
+            updateVoiceWaveformState(true, 'Speaking');
+          };
+          utterance.onboundary = () => {
+            wordCounter++;
+            pulseVoiceWaveformBoundary();
+            const stateEl = document.getElementById('tts-wave-state');
+            if (stateEl && ttsWaveformState.active) {
+              stateEl.textContent = `Speaking · ${wordCounter}w`;
+            }
+          };
+
+          const finish = () => {
+            if (ttsWaveformState.fallbackTimerId) {
+              clearTimeout(ttsWaveformState.fallbackTimerId);
+              ttsWaveformState.fallbackTimerId = null;
+            }
+            stopVoiceWaveformVisualizer();
+            if (typeof onFinished === 'function') onFinished();
+          };
+
+          utterance.onend = finish;
+          utterance.onerror = finish;
+
+          // Mark speaking immediately in case a headless/browser engine omits onstart
+          updateVoiceWaveformState(true, 'Speaking');
+          window.speechSynthesis.speak(utterance);
+
+          const fallbackTimerMs = Math.max(7000, text.length * 85);
+          if (ttsWaveformState.fallbackTimerId) clearTimeout(ttsWaveformState.fallbackTimerId);
+          ttsWaveformState.fallbackTimerId = setTimeout(finish, fallbackTimerMs);
+          return;
+        } catch (err) {
+          console.warn('Web Speech playback error:', err);
+        }
+      }
+
+      // Visual cadence fallback when speechSynthesis is unavailable
+      updateVoiceWaveformState(true, 'Visual Playback');
+      if (ttsWaveformState.fallbackTimerId) clearTimeout(ttsWaveformState.fallbackTimerId);
+      ttsWaveformState.fallbackTimerId = setTimeout(() => {
+        stopVoiceWaveformVisualizer();
+        if (typeof onFinished === 'function') onFinished();
+      }, Math.max(4000, Math.min(9000, text.length * 55)));
+    }
+
+    let isRoleVoicePlaying = false;
+
+    // Play Voice Guidance using Bhashini AI TTS / Native Speech Synthesis
+    async function playRoleGuidanceAudio() {
+      const currentLang = currentSelectedLang || (localStorage.getItem('rapid_language') || 'en');
+      if (isRoleVoicePlaying) {
+        stopAllVoiceGuidance();
+        return;
+      }
+
+      stopAllVoiceGuidance(true);
+      isRoleVoicePlaying = true;
+
+      const voiceBtn = document.getElementById('btn-role-voice');
+      const icon = document.getElementById('bhashini-voice-icon');
+
+      const userTitle = (window.t && window.t('role.user_title', currentLang)) || 'Report Emergency';
+      const userDesc = (window.t && window.t('role.user_desc', currentLang)) || 'Report an emergency, use voice or SOS for instant help';
+      const adminTitle = (window.t && window.t('role.admin_title', currentLang)) || 'Admin Control';
+      const speechMessage = `${userTitle}. ${userDesc}. ${adminTitle}.`;
+
+      if (voiceBtn) voiceBtn.classList.add('speaking');
+      if (icon) icon.textContent = '⏹️';
+
+      showToast(`🔊 Speaking in ${(window.RAPID_LANG_NAMES && window.RAPID_LANG_NAMES[currentLang]) || currentLang}...`, 'info');
+
+      speakTextWithVisualizer({
+        text: speechMessage,
+        langCode: currentLang,
+        mode: 'role',
+        title: 'Bhashini AI Voice Guidance',
+        onFinished: () => resetAllVoiceGuidanceButtons(currentLang)
+      });
+    }
+
+    // Language-specific Bhashini Voice Guidance scripts (fallback if offline)
+    const BHASHINI_DROPDOWN_GUIDANCE_FALLBACK = {
+      en: 'Selected language: English. You can report an emergency using voice or SOS, or open Admin Control to coordinate rescue teams. Press Control plus L anytime to switch languages.',
+      ta: 'தேர்ந்தெடுக்கப்பட்ட மொழி: தமிழ். அவசரநிலையைப் புகாரளிக்க "அவசரநிலையைப் புகாரளிக்கவும்" என்பதைத் தேர்ந்தெடுக்கவும், அல்லது மீட்புக் குழுக்களை ஒருங்கிணைக்க நிர்வாகக் கட்டுப்பாட்டைத் திறக்கவும். உடனடி உதவிக்கு SOS அல்லது குரல் பதிவைப் பயன்படுத்தவும்.',
+      hi: 'चयनित भाषा: हिन्दी। आपातकाल की रिपोर्ट करने के लिए "आपातकाल की रिपोर्ट करें" चुनें, या बचाव दल के समन्वय के लिए प्रशासन नियंत्रण खोलें। त्वरित सहायता के लिए आवाज़ या एसओएस का उपयोग करें।',
+      te: 'ఎంచుకున్న భాష: తెలుగు. తక్షణ సహాయం కోసం వాయిస్ లేదా SOS ద్వారా "అత్యవసర పరిస్థితిని నివేదించండి" ఎంచుకోండి, లేదా సహాయక చర్యలను సమన్వయం చేయడానికి అడ్మిన్ నియంత్రణను తెరవండి.',
+      ml: 'തിരഞ്ഞെടുത്ത ഭാഷ: മലയാളം. ശബ്ദം അല്ലെങ്കിൽ SOS വഴി അടിയന്തര സാഹചര്യം അറിയിക്കാൻ ആദ്യ ഓപ്ഷൻ തിരഞ്ഞെടുക്കുക, അല്ലെങ്കിൽ രക്ഷാപ്രവർത്തനങ്ങൾ ഏകോപിപ്പിക്കാൻ അഡ്മിൻ കൺട്രോൾ തുറക്കുക.',
+      kn: 'ಆಯ್ಕೆಮಾಡಿದ ಭಾಷೆ: ಕನ್ನಡ. ಧ್ವನಿ ಅಥವಾ SOS ಮೂಲಕ ತುರ್ತು ಪರಿಸ್ಥಿತಿಯನ್ನು ವರದಿ ಮಾಡಲು ಮೊದಲ ಕಾರ್ಡ್ ಆಯ್ಕೆಮಾಡಿ, ಅಥವಾ ರಕ್ಷಣಾ ತಂಡಗಳನ್ನು ಸಂಯೋಜಿಸಲು ನಿರ್ವಾಹಕ ನಿಯಂತ್ರಣವನ್ನು ತೆರೆಯಿರಿ.',
+      bn: 'নির্বাচিত ভাষা: বাংলা। ভয়েস বা SOS-এর মাধ্যমে জরুরি অবস্থা জানাতে প্রথম অপশনটি বেছে নিন, অথবা উদ্ধার দল সমন্বয় করতে প্রশাসন নিয়ন্ত্রণ খুলুন।',
+      mr: 'निवडलेली भाषा: मराठी. आवाज किंवा SOS द्वारे तात्काळ मदतीसाठी आपत्कालीन परिस्थितीची नोंद करा, किंवा मदत पथकांचे समन्वय करण्यासाठी प्रशासन नियंत्रण उघडा.',
+      gu: 'પસંદ કરેલી ભાષા: ગુજરાતી. તાત્કાલિક મદદ માટે વૉઇસ અથવા SOS દ્વારા ઇમરજન્સીની જાણ કરો, અથવા બચાવ દળોના સંકલન માટે વહીવટી નિયંત્રણ ખોલો.',
+      pa: 'ਚੁਣੀ ਗਈ ਭਾਸ਼ਾ: ਪੰਜਾਬੀ। ਤੁਰੰਤ ਮਦਦ ਲਈ ਆਵਾਜ਼ ਜਾਂ SOS ਰਾਹੀਂ ਐਮਰਜੈਂਸੀ ਦੀ ਰਿਪੋਰਟ ਕਰੋ, ਜਾਂ ਬਚਾਅ ਟੀਮਾਂ ਦਾ ਤਾਲਮੇਲ ਕਰਨ ਲਈ ਐਡਮਿਨ ਕੰਟਰੋਲ ਖੋਲ੍ਹੋ।',
+      or: 'ମନୋନୀତ ଭାଷା: ଓଡ଼ିଆ। ତୁରନ୍ତ ସାହାଯ୍ୟ ପାଇଁ ଭଏସ୍ କିମ୍ବା SOS ମାଧ୍ୟମରେ ଜରୁରୀକାଳୀନ ରିପୋର୍ଟ କରନ୍ତୁ, କିମ୍ବା ଉଦ୍ଧାରକାରୀ ଦଳର ସମନ୍ୱୟ ପାଇଁ ପ୍ରଶାସନ ନିୟନ୍ତ୍ରଣ ଖୋଲନ୍ତୁ।',
+      es: 'Idioma seleccionado: Español. Seleccione Reportar Emergencia para enviar alertas por voz o SOS, o abra Control Administrativo para coordinar los equipos de rescate.'
+    };
+
+    let isDropdownGuidancePlaying = false;
+
+    function resetDropdownGuidanceUI(langObj) {
+      isDropdownGuidancePlaying = false;
+      const btn = document.getElementById('btn-bhashini-voice-guidance');
+      const icon = document.getElementById('bhashini-guidance-icon');
+      const title = document.getElementById('bhashini-guidance-title');
+      const sub = document.getElementById('bhashini-guidance-sub');
+      const miniCanvas = document.getElementById('dropdown-tts-wave');
+      if (btn) btn.classList.remove('speaking');
+      if (icon) icon.textContent = '🔊';
+      if (title) title.textContent = 'Bhashini Voice Guidance';
+      if (sub && langObj) sub.textContent = `Read aloud ${langObj.native} (${langObj.name}) & guide`;
+      if (miniCanvas) miniCanvas.classList.add('hidden');
+    }
+
+    /**
+     * Plays Bhashini Voice Guidance from inside the language dropdown menu:
+     * Calls the Bhashini TTS service and reads aloud the selected language name
+     * plus specific instructions for that language with real-time waveform feedback.
+     */
+    async function playBhashiniDropdownVoiceGuidance(event) {
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+
+      const langCode = currentSelectedLang || localStorage.getItem('rapid_language') || 'en';
+      const langObj = BHASHINI_LANGUAGES.find(l => l.code === langCode) || BHASHINI_LANGUAGES[0];
+
+      if (isDropdownGuidancePlaying) {
+        stopAllVoiceGuidance();
+        return;
+      }
+
+      stopAllVoiceGuidance(true);
+      isDropdownGuidancePlaying = true;
+
+      const btn = document.getElementById('btn-bhashini-voice-guidance');
+      const icon = document.getElementById('bhashini-guidance-icon');
+      const title = document.getElementById('bhashini-guidance-title');
+      const sub = document.getElementById('bhashini-guidance-sub');
+      const statusText = document.getElementById('bhashini-status-text');
+
+      if (btn) btn.classList.add('speaking');
+      if (icon) icon.textContent = '⏹️';
+      if (title) title.textContent = 'Stop Voice Guidance';
+      if (sub) sub.textContent = `Synthesizing ${langObj.native} (${langObj.name}) via Bhashini TTS...`;
+
+      startVoiceWaveformVisualizer({
+        mode: 'dropdown',
+        title: 'Bhashini Voice Guidance',
+        langCode,
+        langLabel: `${langObj.native} (${langObj.badge})`,
+        stateLabel: 'Synthesizing'
+      });
+
+      let guidanceText = BHASHINI_DROPDOWN_GUIDANCE_FALLBACK[langCode] || BHASHINI_DROPDOWN_GUIDANCE_FALLBACK.en;
+      let ttsLangCode = langCode === 'en' ? 'en-IN' : `${langCode}-IN`;
+
+      try {
+        let ttsData = null;
+        if (window.rapidSync && typeof window.rapidSync.synthesizeWithBhashiniTTS === 'function') {
+          ttsData = await window.rapidSync.synthesizeWithBhashiniTTS('', langCode, 'guidance');
+        } else {
+          const res = await fetch('/api/bhashini/tts', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ language: langCode, mode: 'guidance' })
+          });
+          if (res.ok) ttsData = await res.json();
+        }
+
+        if (ttsData && ttsData.success) {
+          if (ttsData.text) guidanceText = ttsData.text;
+          if (ttsData.bhashiniLangCode) ttsLangCode = ttsData.bhashiniLangCode;
+          if (statusText) {
+            statusText.textContent = `Bhashini TTS Active (${ttsData.bhashiniLangCode || langCode.toUpperCase()})`;
+          }
+        }
+      } catch (err) {
+        console.warn('Bhashini TTS API fallback to local guidance:', err);
+      }
+
+      if (!isDropdownGuidancePlaying) return;
+
+      if (sub) sub.textContent = `Speaking ${langObj.native} (${langObj.name})...`;
+      showToast(`🔊 Bhashini TTS: Reading ${langObj.native} (${langObj.name}) voice guidance...`, 'info');
+
+      speakTextWithVisualizer({
+        text: guidanceText,
+        langCode,
+        bhashiniLangCode: ttsLangCode,
+        mode: 'dropdown',
+        title: 'Bhashini Voice Guidance',
+        onFinished: () => resetAllVoiceGuidanceButtons(langCode)
+      });
+    }
+
+    // Multilingual Audio Tutorial Scripts (Explains how to navigate Bhashini UI in selected language)
+    const BHASHINI_AUDIO_TUTORIALS = {
+      en: "Welcome to PUYAL. To change languages, click the language dropdown or press Control plus L. You can type in the search bar or click the microphone to speak a language name. Quickly select from your Recent Languages at the top, or choose from twelve languages below. Your selection instantly translates the entire emergency portal.",
+      ta: "புயல் (PUYAL) மொழி தேர்வுக்கு வரவேற்கிறோம். மொழியை மாற்ற, பட்டியலைத் திறக்கலாம் அல்லது கண்ட்ரோல் பிளஸ் எல் அழுத்தலாம். தேடல் பெட்டியில் தட்டச்சு செய்யலாம் அல்லது மைக்ரோஃபோன் பொத்தானை அழுத்தி மொழி பெயரைப் பேசலாம். சமீபத்திய மொழிகளில் இருந்தும் விரைவாக தேர்ந்தெடுக்கலாம். நீங்கள் தேர்வு செய்யும் மொழி முழு அவசர போர்ட்டலையும் உடனுக்குடன் மொழிபெயர்க்கும்.",
+      hi: "PUYAL भाषा चयन में आपका स्वागत है। भाषा बदलने के लिए ड्रॉपडाउन पर क्लिक करें या कंट्रोल प्लस एल दबाएं। आप खोज बॉक्स में टाइप कर सकते हैं या माइक बटन दबाकर भाषा का नाम बोल सकते हैं। हालिया भाषाओं से तुरंत चुनें या बारह भाषाओं में से चुनें। आपकी पसंद पूरे पोर्टल का तुरंत अनुवाद कर देगी।",
+      te: "PUYAL భాషా ఎంపికకు స్వాగతం. భాషను మార్చడానికి డ్రాప్‌డౌన్‌పై క్లిక్ చేయండి లేదా కంట్రోల్ ప్లస్ ఎల్ నొక్కండి. మీరు శోధన పెట్టెలో టైప్ చేయవచ్చు లేదా మైక్రోఫోన్ బటన్‌ను నొక్కి భాష పేరును మాట్లాడవచ్చు. పైనున్న ఇటీవలి భాషల నుండి కూడా త్వరగా ఎంచుకోవచ్చు. మీ ఎంపిక పోర్టల్‌ను తక్షణమే అనువదిస్తుంది.",
+      ml: "PUYAL ഭാഷാ തെരഞ്ഞെടുപ്പിലേക്ക് സ്വാగതം. ഭാഷ മാറ്റാൻ ഡ്രോപ്ഡൗൺ ക്ലിക്ക് ചെയ്യുകയോ കൺട്രോൾ പ്ലസ് എൽ അമർത്തുകയോ ചെയ്യുക. സെർച്ച് ബോക്സിൽ ടൈപ്പ് ചെയ്യുകയോ മൈಕ್ರോഫോൺ ബട്ടൺ അമർത്തി സംസാരിക്കുകയോ ചെയ്യാം. മുകളിലുള്ള സമീപകാല ഭാഷകളിൽ നിന്നും തിരഞ്ഞെടുക്കാം.",
+      kn: "PUYAL ಭಾಷಾ ಆಯ್ಕೆಗೆ ಸುಸ್ವಾಗತ. ಭಾಷೆಯನ್ನು ಬದಲಾಯಿಸಲು ಡ್ರಾಪ್‌ಡೌನ್ ಕ್ಲಿಕ್ ಮಾಡಿ ಅಥವಾ ಕಂಟ్రోಲ್ ಪ್ಲಸ್ ಎಲ್ ಒತ್ತಿರಿ. ಸರ್ಚ್ ಬಾಕ್ಸ್‌ನಲ್ಲಿ ಟೈಪ್ ಮಾಡಬಹುದು ಅಥವಾ ಮೈಕ್ರೋಫೋನ್ ಬಳಸಿ ಭಾಷೆಯ ಹೆಸರನ್ನು ಮಾತನಾಡಬಹುದು. ಮೇಲಿರುವ ಇತ್ತೀಚಿನ ಭಾಷೆಗಳಿಂದಲೂ ತಕ್ಷಣವೇ ಆಯ್ಕೆ ಮಾಡಬಹುದು.",
+      bn: "PUYAL ভাষা নির্বাচনে আপনাকে স্বাগতম। ভাষা পরিবর্তন করতে ড্রপডাউনে ক্লিক করুন বা কন্ট্রোল প্লাস এল চাপুন। আপনি সার্চ বক্সে টাইপ করতে পারেন অথবা মাইক বোতাম টিপে ভাষার নাম বলতে পারেন। আপনার পছন্দের ভাষা পুরো জরুরি পোর্টালটিকে তাৎক্ষণিকভাবে অনুবাদ করবে।",
+      mr: "PUYAL भाषा निवडीमध्ये आपले स्वागत आहे. भाषा बदलण्यासाठी ड्रॉपडाउन उघडा किंवा कंट्रोल अधिक एल दाबा. आपण सर्च बॉक्समध्ये टाइप करू शकता किंवा मायक्रोफोन वापरून भाषेचे नाव बोलू शकता. वरील अलीकडील भाषांमधूनही आपण पटकन निवडू शकता.",
+      gu: "PUYAL ભાષા પસંદગીમાં આપનું સ્વાગત છે. ભાષા બદલવા માટે ડ્રોપડાઉન પર ક્લિક કરો અથવા કંટ્રોલ પ્લસ એલ દબાવો. તમે સર્ચ બોક્સમાં ટાઈપ કરી શકો છો અથવા માઇક બટન દબાવીને ભાષાનું નામ બોલી શકો છો. તમારી પસંદગી સમગ્ર ઇમરજન્સી પોર્ટલને ત્વરિત અનુવાદિત કરશે.",
+      pa: "PUYAL ਭਾਸ਼ਾ ਚੋਣ ਵਿੱਚ ਜੀ ਆਇਆਂ ਨੂੰ। ਭਾਸ਼ਾ ਬਦਲਣ ਲਈ ਡ੍ਰੌਪਡਾਊਨ ਖੋਲ੍ਹੋ ਜਾਂ ਕੰਟਰੋਲ ਪਲੱਸ ਐਲ ਦਬਾਓ। ਤੁਸੀਂ ਸਰਚ ਬਾਕਸ ਵਿੱਚ ਟਾਈਪ ਕਰ ਸਕਦੇ ਹੋ ਜਾਂ ਮਾਈਕ ਬਟਨ ਦਬਾ ਕੇ ਭਾਸ਼ਾ ਦਾ ਨਾਮ ਬੋਲ ਸਕਦੇ ਹੋ। ਉੱਪਰ ਦਿੱਤੀਆਂ ਤਾਜ਼ਾ ਭਾਸ਼ਾਵਾਂ ਵਿੱਚੋਂ ਵੀ ਤੇਜ਼ੀ ਨਾਲ ਚੁਣ ਸਕਦੇ ਹੋ।",
+      or: "PUYAL ଭାଷା ଚୟନକୁ ସ୍ୱାଗତ। ଭାଷା ବଦଳାଇବା ପାଇଁ ଡ୍ରପଡାଉନ୍ ଖୋଲନ୍ତୁ କିମ୍ବା କଣ୍ଟ୍ରୋଲ୍ ସହିତ ଏଲ୍ ଦବାନ୍ତୁ। ଆପଣ ସର୍ଚ୍ଚ ବକ୍ସରେ ଟାଇପ୍ କରିପାରିବେ କିମ୍ବା ମାଇକ୍ ଦବାଇ ଭାଷାର ନାମ କହିପାରିବେ। ଆପଣଙ୍କ ଚୟନ ସମଗ୍ର ପୋର୍ଟାଲକୁ ତୁରନ୍ତ ଅନୁବାଦ କରିବ।",
+      es: "Bienvenido a PUYAL. Para cambiar el idioma, abra el menú desplegable o presione Control más L. Puede escribir en el buscador o presionar el micrófono para decir el nombre del idioma. Seleccione entre sus idiomas recientes o elija entre los doce idiomas disponibles. Toda la plataforma se traducirá al instante."
+    };
+
+    let isTutorialAudioPlaying = false;
+
+    /**
+     * Toggles playback of the audio tutorial explaining Bhashini navigation
+     * in the currently selected language with real-time waveform visualizer feedback
+     */
+    async function toggleAudioTutorial() {
+      const currentLang = currentSelectedLang || (localStorage.getItem('rapid_language') || 'en');
+
+      if (isTutorialAudioPlaying) {
+        stopAllVoiceGuidance();
+        return;
+      }
+
+      stopAllVoiceGuidance(true);
+      isTutorialAudioPlaying = true;
+
+      const tutorialBtn = document.getElementById('btn-audio-tutorial');
+      const icon = document.getElementById('bhashini-tutorial-icon');
+      const text = document.getElementById('bhashini-tutorial-text');
+      const script = BHASHINI_AUDIO_TUTORIALS[currentLang] || BHASHINI_AUDIO_TUTORIALS.en;
+
+      if (tutorialBtn) tutorialBtn.classList.add('playing');
+      if (icon) icon.textContent = '⏹️';
+      if (text) text.textContent = 'Stop Tutorial';
+
+      const langName = (window.RAPID_LANG_NAMES && window.RAPID_LANG_NAMES[currentLang]) || currentLang;
+      showToast(`🎧 Audio Tutorial: Speaking in ${langName}...`, 'info');
+
+      speakTextWithVisualizer({
+        text: script,
+        langCode: currentLang,
+        mode: 'tutorial',
+        title: 'Bhashini Navigation Tutorial',
+        onFinished: () => resetAllVoiceGuidanceButtons(currentLang)
+      });
+    }
+
+    /**
+     * Browser-based language detection function.
+     * Automatically inspects navigator.languages and navigator.language to detect
+     * the user's preferred language, matching against the supported Bhashini list.
+     *
+     * @returns {string|null} Matched language code if available in supported list, otherwise null
+     */
+    function detectBrowserLanguage() {
+      try {
+        const supportedCodes = BHASHINI_LANGUAGES.map(l => l.code);
+        const candidateLangs = [];
+
+        if (Array.isArray(navigator.languages) && navigator.languages.length > 0) {
+          candidateLangs.push(...navigator.languages);
+        }
+        if (navigator.language) {
+          candidateLangs.push(navigator.language);
+        }
+        if (navigator.userLanguage) {
+          candidateLangs.push(navigator.userLanguage);
+        }
+        if (navigator.browserLanguage) {
+          candidateLangs.push(navigator.browserLanguage);
+        }
+
+        for (const raw of candidateLangs) {
+          if (!raw || typeof raw !== 'string') continue;
+          const clean = raw.trim().toLowerCase();
+          const primary = clean.split(/[-_]/)[0];
+
+          // Direct match against supported list (e.g. 'ta', 'hi', 'te', 'es', 'en')
+          if (supportedCodes.includes(primary)) {
+            return primary;
+          }
+
+          // Handle common ISO 639-2/3 aliases and regional variants
+          if ((primary === 'od' || primary === 'ory') && supportedCodes.includes('or')) return 'or';
+          if (primary === 'pan' && supportedCodes.includes('pa')) return 'pa';
+          if (primary === 'ben' && supportedCodes.includes('bn')) return 'bn';
+          if (primary === 'guj' && supportedCodes.includes('gu')) return 'gu';
+          if (primary === 'mar' && supportedCodes.includes('mr')) return 'mr';
+          if (primary === 'tam' && supportedCodes.includes('ta')) return 'ta';
+          if (primary === 'hin' && supportedCodes.includes('hi')) return 'hi';
+          if (primary === 'tel' && supportedCodes.includes('te')) return 'te';
+          if (primary === 'mal' && supportedCodes.includes('ml')) return 'ml';
+          if (primary === 'kan' && supportedCodes.includes('kn')) return 'kn';
+          if (primary === 'spa' && supportedCodes.includes('es')) return 'es';
+          if (primary === 'eng' && supportedCodes.includes('en')) return 'en';
+        }
+      } catch (err) {
+        console.warn('Browser language detection error:', err);
+      }
+      return null;
+    }
+
+    /**
+     * Automatically detect and apply the browser's preferred language in the dropdown
+     * @param {boolean} [isManualTrigger=false] Whether explicitly triggered by the user
+     */
+    function detectAndApplyBrowserLanguage(isManualTrigger = false) {
+      const detectedCode = detectBrowserLanguage();
+      const statusText = document.getElementById('bhashini-status-text');
+
+      if (detectedCode) {
+        selectBhashiniLanguage(detectedCode);
+        const langObj = BHASHINI_LANGUAGES.find(l => l.code === detectedCode);
+        const langName = langObj ? `${langObj.native} (${langObj.name})` : detectedCode;
+
+        if (statusText) {
+          statusText.textContent = `Auto-Detected: ${detectedCode.toUpperCase()}`;
+        }
+        showToast(`🌐 Browser language detected: ${langName}! Automatically applied.`, 'success');
+        return detectedCode;
+      } else {
+        if (isManualTrigger) {
+          const rawLang = navigator.language || (navigator.languages && navigator.languages[0]) || 'en';
+          showToast(`Browser language (${rawLang}) not in supported list. English is currently selected.`, 'info');
+        }
+        return null;
+      }
+    }
+
+    // Restore saved language preference immediately on page load (before paint/DOMContentLoaded)
+    function restoreLanguagePreferenceImmediately() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlLang = urlParams.get('lang');
+      const savedLang = readSavedSelectedLang();
+      const detectedBrowserLang = detectBrowserLanguage();
+
+      let initialLang = 'en';
+      let autoDetected = false;
+
+      // Priority order:
+      // 1. Explicit URL parameter (?lang=...)
+      // 2. Saved currentSelectedLang preference in localStorage
+      // 3. Browser-based preferred language detection
+      // 4. Default fallback: 'en'
+      if (urlLang && BHASHINI_LANGUAGES.some(l => l.code === urlLang)) {
+        initialLang = urlLang;
+        saveCurrentSelectedLang(initialLang);
+      } else if (savedLang) {
+        initialLang = savedLang;
+        saveCurrentSelectedLang(initialLang);
+      } else if (detectedBrowserLang && BHASHINI_LANGUAGES.some(l => l.code === detectedBrowserLang)) {
+        initialLang = detectedBrowserLang;
+        autoDetected = true;
+      }
+
+      updateDropdownTrigger(initialLang);
+      document.documentElement.lang = initialLang;
+      if (typeof translatePage === 'function') {
+        translatePage(initialLang);
+      }
+
+      return { initialLang, autoDetected };
+    }
+
+    const initialRestoredLangState = restoreLanguagePreferenceImmediately();
+
+    // Geolocation-based local language recommendation engine (100% offline-capable)
+    const BHASHINI_REGION_ANCHORS = [
+      // Tamil Nadu, Puducherry & North/East Sri Lanka
+      { lat: 13.0827, lon: 80.2707, code: 'ta', region: 'Chennai, Tamil Nadu' },
+      { lat: 11.0168, lon: 76.9558, code: 'ta', region: 'Coimbatore, Tamil Nadu' },
+      { lat: 9.9252, lon: 78.1198, code: 'ta', region: 'Madurai, Tamil Nadu' },
+      { lat: 10.7905, lon: 78.7047, code: 'ta', region: 'Tiruchirappalli, Tamil Nadu' },
+      { lat: 11.6643, lon: 78.1460, code: 'ta', region: 'Salem, Tamil Nadu' },
+      { lat: 8.7139, lon: 77.7567, code: 'ta', region: 'Tirunelveli, Tamil Nadu' },
+      { lat: 12.9165, lon: 79.1325, code: 'ta', region: 'Vellore, Tamil Nadu' },
+      { lat: 11.9416, lon: 79.8083, code: 'ta', region: 'Puducherry' },
+      { lat: 9.6615, lon: 80.0255, code: 'ta', region: 'Northern Sri Lanka' },
+      // Kerala
+      { lat: 8.5241, lon: 76.9366, code: 'ml', region: 'Thiruvananthapuram, Kerala' },
+      { lat: 9.9312, lon: 76.2673, code: 'ml', region: 'Kochi, Kerala' },
+      { lat: 11.2588, lon: 75.7804, code: 'ml', region: 'Kozhikode, Kerala' },
+      { lat: 10.5276, lon: 76.2144, code: 'ml', region: 'Thrissur, Kerala' },
+      // Karnataka
+      { lat: 12.9716, lon: 77.5946, code: 'kn', region: 'Bengaluru, Karnataka' },
+      { lat: 12.2958, lon: 76.6394, code: 'kn', region: 'Mysuru, Karnataka' },
+      { lat: 12.9141, lon: 74.8560, code: 'kn', region: 'Mangaluru, Karnataka' },
+      { lat: 15.3647, lon: 75.1240, code: 'kn', region: 'Hubballi, Karnataka' },
+      { lat: 17.3297, lon: 76.8343, code: 'kn', region: 'Kalaburagi, Karnataka' },
+      // Telangana & Andhra Pradesh
+      { lat: 17.3850, lon: 78.4867, code: 'te', region: 'Hyderabad, Telangana' },
+      { lat: 17.9689, lon: 79.5941, code: 'te', region: 'Warangal, Telangana' },
+      { lat: 16.5062, lon: 80.6480, code: 'te', region: 'Vijayawada, Andhra Pradesh' },
+      { lat: 17.6868, lon: 83.2185, code: 'te', region: 'Visakhapatnam, Andhra Pradesh' },
+      { lat: 13.6288, lon: 79.4192, code: 'te', region: 'Tirupati, Andhra Pradesh' },
+      { lat: 15.8281, lon: 78.0373, code: 'te', region: 'Kurnool, Andhra Pradesh' },
+      // Maharashtra & Goa
+      { lat: 19.0760, lon: 72.8777, code: 'mr', region: 'Mumbai, Maharashtra' },
+      { lat: 18.5204, lon: 73.8567, code: 'mr', region: 'Pune, Maharashtra' },
+      { lat: 21.1458, lon: 79.0882, code: 'mr', region: 'Nagpur, Maharashtra' },
+      { lat: 19.9975, lon: 73.7898, code: 'mr', region: 'Nashik, Maharashtra' },
+      { lat: 19.8762, lon: 75.3433, code: 'mr', region: 'Aurangabad, Maharashtra' },
+      { lat: 16.7050, lon: 74.2433, code: 'mr', region: 'Kolhapur, Maharashtra' },
+      // Gujarat
+      { lat: 23.0225, lon: 72.5714, code: 'gu', region: 'Ahmedabad, Gujarat' },
+      { lat: 21.1702, lon: 72.8311, code: 'gu', region: 'Surat, Gujarat' },
+      { lat: 22.3072, lon: 73.1812, code: 'gu', region: 'Vadodara, Gujarat' },
+      { lat: 22.3039, lon: 70.8022, code: 'gu', region: 'Rajkot, Gujarat' },
+      { lat: 23.2420, lon: 69.6669, code: 'gu', region: 'Bhuj, Gujarat' },
+      // Odisha
+      { lat: 20.2961, lon: 85.8245, code: 'or', region: 'Bhubaneswar, Odisha' },
+      { lat: 20.4625, lon: 85.8830, code: 'or', region: 'Cuttack, Odisha' },
+      { lat: 22.2604, lon: 84.8536, code: 'or', region: 'Rourkela, Odisha' },
+      { lat: 21.4669, lon: 83.9812, code: 'or', region: 'Sambalpur, Odisha' },
+      // West Bengal, Tripura & Bangladesh
+      { lat: 22.5726, lon: 88.3639, code: 'bn', region: 'Kolkata, West Bengal' },
+      { lat: 26.7271, lon: 88.3953, code: 'bn', region: 'Siliguri, West Bengal' },
+      { lat: 23.5204, lon: 87.3119, code: 'bn', region: 'Durgapur, West Bengal' },
+      { lat: 23.8315, lon: 91.2868, code: 'bn', region: 'Agartala, Tripura' },
+      { lat: 23.8103, lon: 90.4125, code: 'bn', region: 'Dhaka Region' },
+      // Punjab & Chandigarh
+      { lat: 31.6340, lon: 74.8723, code: 'pa', region: 'Amritsar, Punjab' },
+      { lat: 30.9010, lon: 75.8573, code: 'pa', region: 'Ludhiana, Punjab' },
+      { lat: 31.3260, lon: 75.5762, code: 'pa', region: 'Jalandhar, Punjab' },
+      { lat: 30.3398, lon: 76.3869, code: 'pa', region: 'Patiala, Punjab' },
+      { lat: 30.7333, lon: 76.7794, code: 'pa', region: 'Chandigarh Region' },
+      // Hindi Belt (Delhi NCR, UP, Rajasthan, MP, Bihar, Jharkhand, Chhattisgarh, Uttarakhand, HP)
+      { lat: 28.6139, lon: 77.2090, code: 'hi', region: 'New Delhi, Delhi NCR' },
+      { lat: 26.9124, lon: 75.7873, code: 'hi', region: 'Jaipur, Rajasthan' },
+      { lat: 26.2389, lon: 73.0243, code: 'hi', region: 'Jodhpur, Rajasthan' },
+      { lat: 26.8467, lon: 80.9462, code: 'hi', region: 'Lucknow, Uttar Pradesh' },
+      { lat: 25.3176, lon: 82.9739, code: 'hi', region: 'Varanasi, Uttar Pradesh' },
+      { lat: 27.1767, lon: 78.0081, code: 'hi', region: 'Agra, Uttar Pradesh' },
+      { lat: 23.2599, lon: 77.4126, code: 'hi', region: 'Bhopal, Madhya Pradesh' },
+      { lat: 22.7196, lon: 75.8577, code: 'hi', region: 'Indore, Madhya Pradesh' },
+      { lat: 23.1815, lon: 79.9864, code: 'hi', region: 'Jabalpur, Madhya Pradesh' },
+      { lat: 21.2514, lon: 81.6296, code: 'hi', region: 'Raipur, Chhattisgarh' },
+      { lat: 25.5941, lon: 85.1376, code: 'hi', region: 'Patna, Bihar' },
+      { lat: 23.3441, lon: 85.3096, code: 'hi', region: 'Ranchi, Jharkhand' },
+      { lat: 30.3165, lon: 78.0322, code: 'hi', region: 'Dehradun, Uttarakhand' },
+      { lat: 31.1048, lon: 77.1734, code: 'hi', region: 'Shimla, Himachal Pradesh' }
+    ];
+
+    function resolveLocalLanguageFromCoords(lat, lon) {
+      const numLat = Number(lat);
+      const numLon = Number(lon);
+      if (!Number.isFinite(numLat) || !Number.isFinite(numLon)) return null;
+
+      // South Asia & India regional language matching
+      if (numLat >= 6.0 && numLat <= 37.5 && numLon >= 68.0 && numLon <= 97.5) {
+        const cosLat = Math.cos((numLat * Math.PI) / 180);
+        let bestAnchor = null;
+        let bestDistSq = Infinity;
+
+        for (const anchor of BHASHINI_REGION_ANCHORS) {
+          const dLat = numLat - anchor.lat;
+          const dLon = (numLon - anchor.lon) * cosLat;
+          const distSq = dLat * dLat + dLon * dLon;
+          if (distSq < bestDistSq) {
+            bestDistSq = distSq;
+            bestAnchor = anchor;
+          }
+        }
+
+        if (bestAnchor) {
+          return { code: bestAnchor.code, regionName: bestAnchor.region };
+        }
+      }
+
+      // Iberian Peninsula (Spain)
+      if (numLat >= 36.0 && numLat <= 43.9 && numLon >= -9.5 && numLon <= 4.3) {
+        return { code: 'es', regionName: 'Spain' };
+      }
+
+      // Spanish-speaking Americas (excluding Brazil eastern region)
+      if (numLat >= -56.0 && numLat <= 32.7 && numLon >= -118.0 && numLon <= -34.0) {
+        const isBrazilMain = numLat >= -33.7 && numLat <= 5.3 && numLon >= -60.0 && numLon <= -34.7;
+        if (!isBrazilMain) {
+          return { code: 'es', regionName: 'Americas' };
+        }
+      }
+
+      return { code: 'en', regionName: 'Local Area' };
+    }
+
+    function renderAreaRecommendationBadge() {
+      const row = document.getElementById('bhashini-geo-rec-row');
+      const badge = document.getElementById('bhashini-area-rec-badge');
+      const langEl = document.getElementById('bhashini-area-rec-lang');
+      const regionEl = document.getElementById('bhashini-area-rec-region');
+      const ctaEl = document.getElementById('bhashini-area-rec-cta');
+      if (!row || !badge) return;
+
+      if (!recommendedAreaInfo || !recommendedAreaInfo.code) {
+        row.hidden = true;
+        return;
+      }
+
+      const langObj = BHASHINI_LANGUAGES.find(l => l.code === recommendedAreaInfo.code);
+      if (!langObj) {
+        row.hidden = true;
+        return;
+      }
+
+      const isApplied = currentSelectedLang === langObj.code;
+      row.hidden = false;
+      badge.classList.toggle('applied', isApplied);
+      badge.setAttribute('aria-pressed', isApplied ? 'true' : 'false');
+
+      if (langEl) {
+        langEl.textContent = `${langObj.native} (${langObj.name})`;
+      }
+      if (regionEl) {
+        regionEl.textContent = recommendedAreaInfo.regionName ? `· ${recommendedAreaInfo.regionName}` : '';
+      }
+      if (ctaEl) {
+        ctaEl.textContent = isApplied ? '✓ Active' : `Switch to ${langObj.badge}`;
+      }
+    }
+
+    function applyRecommendedAreaLanguage() {
+      if (!recommendedAreaInfo || !recommendedAreaInfo.code) return;
+      const langObj = BHASHINI_LANGUAGES.find(l => l.code === recommendedAreaInfo.code);
+      if (!langObj) return;
+
+      if (currentSelectedLang === langObj.code) {
+        showToast(`📍 ${langObj.native} (${langObj.name}) is already active for ${recommendedAreaInfo.regionName || 'your area'}.`, 'info');
+        return;
+      }
+
+      selectBhashiniLanguage(langObj.code);
+      const statusText = document.getElementById('bhashini-status-text');
+      if (statusText) {
+        statusText.textContent = `Local Area: ${langObj.badge}`;
+      }
+      showToast(`📍 Switched to ${langObj.native} (${langObj.name}) for ${recommendedAreaInfo.regionName || 'your area'}.`, 'success');
+    }
+
+    function applyGeolocationRecommendation(lat, lon, source = 'gps') {
+      const match = resolveLocalLanguageFromCoords(lat, lon);
+      if (!match) return null;
+
+      recommendedAreaInfo = {
+        code: match.code,
+        regionName: match.regionName,
+        source
+      };
+      renderAreaRecommendationBadge();
+
+      const searchInput = document.getElementById('bhashini-lang-search');
+      renderLanguageOptions(searchInput ? searchInput.value : '');
+      return recommendedAreaInfo;
+    }
+
+    function triggerGeolocationLanguageSuggestion() {
+      // 1. Instant offline fallback from cachedCoords in localStorage
+      let hadCachedCoords = false;
+      try {
+        const rawCached = localStorage.getItem('cachedCoords');
+        if (rawCached) {
+          const parsed = JSON.parse(rawCached);
+          if (parsed && Number.isFinite(Number(parsed.lat)) && Number.isFinite(Number(parsed.lon))) {
+            hadCachedCoords = true;
+            applyGeolocationRecommendation(Number(parsed.lat), Number(parsed.lon), 'cache');
+          }
+        }
+      } catch (e) {}
+
+      // 2. Live geolocation trigger on landing
+      if (typeof navigator !== 'undefined' && navigator.geolocation && typeof navigator.geolocation.getCurrentPosition === 'function') {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            if (!pos || !pos.coords) return;
+            const lat = pos.coords.latitude;
+            const lon = pos.coords.longitude;
+            try {
+              localStorage.setItem('cachedCoords', JSON.stringify({ lat, lon, ts: Date.now() }));
+            } catch (e) {}
+            applyGeolocationRecommendation(lat, lon, 'gps');
+          },
+          () => {
+            if (!hadCachedCoords) {
+              const fallbackCode = detectBrowserLanguage();
+              if (fallbackCode && BHASHINI_LANGUAGES.some(l => l.code === fallbackCode)) {
+                recommendedAreaInfo = { code: fallbackCode, regionName: 'Device Locale', source: 'locale' };
+                renderAreaRecommendationBadge();
+              }
+            }
+          },
+          { enableHighAccuracy: false, timeout: 6000, maximumAge: 300000 }
+        );
+      } else if (!hadCachedCoords) {
+        const fallbackCode = detectBrowserLanguage();
+        if (fallbackCode && BHASHINI_LANGUAGES.some(l => l.code === fallbackCode)) {
+          recommendedAreaInfo = { code: fallbackCode, regionName: 'Device Locale', source: 'locale' };
+          renderAreaRecommendationBadge();
+        }
+      }
+    }
+
+    // Set up Search Input, Clear Button, and Keyboard Navigation
+    document.addEventListener('DOMContentLoaded', () => {
+      const { initialLang, autoDetected } = initialRestoredLangState;
+
+      // Trigger geolocation-based regional language recommendation on landing
+      triggerGeolocationLanguageSuggestion();
+
+      // If automatically detected from browser on load, inform user and reflect in status
+      if (autoDetected) {
+        const langObj = BHASHINI_LANGUAGES.find(l => l.code === initialLang);
+        const langName = langObj ? `${langObj.native} (${langObj.name})` : initialLang;
+        const statusText = document.getElementById('bhashini-status-text');
+        if (statusText) {
+          statusText.textContent = `Auto-Detected: ${initialLang.toUpperCase()}`;
+        }
+        setTimeout(() => {
+          showToast(`🌐 Browser language detected: ${langName} auto-selected!`, 'info');
+        }, 500);
+      }
+
+      // Trigger button click
+      const dropdownBtn = document.getElementById('bhashini-dropdown-btn');
+      if (dropdownBtn) {
+        dropdownBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          toggleBhashiniDropdown();
+        });
+      }
+
+      // Search input field filtering
+      const searchInput = document.getElementById('bhashini-lang-search');
+      const clearBtn = document.getElementById('bhashini-search-clear');
+
+      if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+          const val = e.target.value;
+          if (clearBtn) clearBtn.style.display = val ? 'inline-block' : 'none';
+          renderLanguageOptions(val);
+          focusedOptionIndex = -1;
+        });
+
+        // Keyboard navigation in search input
+        searchInput.addEventListener('keydown', (e) => {
+          const items = document.querySelectorAll('.bhashini-option-item');
+          if (items.length === 0) return;
+
+          if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            focusedOptionIndex = (focusedOptionIndex + 1) % items.length;
+            highlightFocusedOption(items);
+          } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            focusedOptionIndex = (focusedOptionIndex - 1 + items.length) % items.length;
+            highlightFocusedOption(items);
+          } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (focusedOptionIndex >= 0 && items[focusedOptionIndex]) {
+              const code = items[focusedOptionIndex].getAttribute('data-code');
+              if (code) selectBhashiniLanguage(code);
+            } else if (items.length > 0) {
+              const code = items[0].getAttribute('data-code');
+              if (code) selectBhashiniLanguage(code);
+            }
+          } else if (e.key === 'Escape') {
+            toggleBhashiniDropdown(false);
+            if (dropdownBtn) dropdownBtn.focus();
+          }
+        });
+      }
+
+      // Clear search button
+      if (clearBtn) {
+        clearBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (searchInput) {
+            searchInput.value = '';
+            clearBtn.style.display = 'none';
+            renderLanguageOptions('');
+            searchInput.focus();
+          }
+        });
+      }
+
+      // Adapt shortcut badge text based on operating system (Mac Cmd vs Windows/Linux Ctrl)
+      const shortcutBadge = document.getElementById('bhashini-shortcut-badge');
+      const isMac = (navigator.platform || navigator.userAgent || '').toUpperCase().indexOf('MAC') >= 0;
+      if (shortcutBadge && isMac) {
+        shortcutBadge.textContent = '⌘L';
+        shortcutBadge.title = 'Shortcut: ⌘L (or ⌥L)';
+      }
+
+      // Close on click outside
+      document.addEventListener('click', (e) => {
+        const wrapper = document.getElementById('bhashini-dropdown-wrapper');
+        if (wrapper && !wrapper.contains(e.target)) {
+          toggleBhashiniDropdown(false);
+        }
+      });
+
+      // Global keyboard shortcut listener (Ctrl+L / Cmd+L / Alt+L to open & focus, Escape to close)
+      document.addEventListener('keydown', (e) => {
+        const isKeyL = (e.key && e.key.toLowerCase() === 'l') || e.code === 'KeyL';
+        const hasModifier = e.ctrlKey || e.metaKey || e.altKey;
+
+        if (isKeyL && hasModifier) {
+          e.preventDefault();
+          e.stopPropagation();
+
+          // Open dropdown and focus the search filter input field
+          toggleBhashiniDropdown(true);
+
+          const searchInput = document.getElementById('bhashini-lang-search');
+          if (searchInput) {
+            setTimeout(() => {
+              searchInput.focus();
+              searchInput.select();
+            }, 60);
+          }
+
+          const shortcutKeyName = isMac ? '⌘L' : 'Ctrl+L';
+          showToast(`⌨️ Language dropdown opened (${shortcutKeyName})`, 'info');
+        } else if (e.key === 'Escape') {
+          toggleBhashiniDropdown(false);
+        }
+      });
+
+      // Re-apply initial translation on DOM ready if needed
+      if (typeof translatePage === 'function' && currentSelectedLang && currentSelectedLang !== 'en') {
+        translatePage(currentSelectedLang);
+      }
+
+      // Attach haptic feedback to direct SOS launch button on landing page
+      const directSosLink = document.getElementById('link-direct-sos');
+      if (directSosLink) {
+        directSosLink.addEventListener('click', () => {
+          if (window.PuyalHaptics && typeof window.PuyalHaptics.onSosButtonClick === 'function') {
+            window.PuyalHaptics.onSosButtonClick();
+          }
+        });
+      }
+    });
+
+    function highlightFocusedOption(items) {
+      items.forEach((item, idx) => {
+        if (idx === focusedOptionIndex) {
+          item.classList.add('focused');
+          item.scrollIntoView({ block: 'nearest' });
+        } else {
+          item.classList.remove('focused');
+        }
+      });
+    }
+  </script>
+  <script src="js/haptic-feedback.js"></script>
+  <script src="js/pwa-offline.js"></script>
+</body>
+</html>

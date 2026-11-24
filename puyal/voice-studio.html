@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PUYAL — Voice AI, Hardware &amp; Android APK Studio</title>
+  <meta name="description" content="PUYAL Voice AI Assistant &amp; Model Suite, custom command modules, smart-home hardware bridges, Python/Node.js modular assistant builder, and Android APK packager." />
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="PUYAL" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <link rel="alternate icon" href="favicon.ico" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    :root {
+      --studio-bg: #0b1120;
+      --studio-surface: #111827;
+      --studio-card: #162033;
+      --studio-card-alt: #1e293b;
+      --studio-border: rgba(148, 163, 184, 0.2);
+      --studio-accent: #38bdf8;
+      --studio-accent-strong: #0284c7;
+      --studio-emerald: #10b981;
+      --studio-amber: #f59e0b;
+      --studio-red: #ef4444;
+      --studio-text: #f8fafc;
+      --studio-muted: #94a3b8;
+    }
+
+    body.studio-body {
+      background: radial-gradient(circle at 12% 0%, rgba(14, 165, 233, 0.14), transparent 45%), var(--studio-bg);
+      color: var(--studio-text);
+      min-height: 100vh;
+    }
+
+    .studio-shell {
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 22px 20px 64px;
+    }
+
+    .studio-hero {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 20px;
+      flex-wrap: wrap;
+      padding: 22px 24px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.96), rgba(30, 41, 59, 0.88));
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      box-shadow: 0 18px 40px rgba(2, 6, 23, 0.45);
+      margin-bottom: 20px;
+    }
+
+    .studio-hero h2 {
+      margin: 0 0 6px;
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #f8fafc;
+    }
+
+    .studio-hero p {
+      margin: 0;
+      font-size: 13.5px;
+      color: var(--studio-muted);
+      max-width: 720px;
+      line-height: 1.5;
+    }
+
+    .studio-kpis {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .studio-kpi {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid var(--studio-border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      min-width: 112px;
+    }
+
+    .studio-kpi-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--studio-muted);
+      font-weight: 700;
+    }
+
+    .studio-kpi-val {
+      font-size: 19px;
+      font-weight: 800;
+      color: var(--studio-accent);
+      margin-top: 2px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Tabs */
+    .studio-tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--studio-border);
+      padding-bottom: 12px;
+    }
+
+    .studio-tab {
+      background: rgba(30, 41, 59, 0.72);
+      color: #cbd5e1;
+      border: 1px solid var(--studio-border);
+      border-radius: 10px;
+      padding: 10px 16px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.16s ease;
+    }
+
+    .studio-tab:hover {
+      border-color: rgba(56, 189, 248, 0.5);
+      color: #ffffff;
+    }
+
+    .studio-tab.active {
+      background: linear-gradient(135deg, #0284c7, #2563eb);
+      color: #ffffff;
+      border-color: rgba(125, 211, 252, 0.7);
+      box-shadow: 0 6px 18px rgba(2, 132, 199, 0.35);
+    }
+
+    .studio-panel {
+      display: none;
+    }
+
+    .studio-panel.active {
+      display: block;
+    }
+
+    .studio-grid-2 {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+      gap: 20px;
+      align-items: start;
+    }
+
+    .studio-grid-equal {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 20px;
+      align-items: start;
+    }
+
+    @media (max-width: 960px) {
+      .studio-grid-2,
+      .studio-grid-equal {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .studio-card {
+      background: var(--studio-card);
+      border: 1px solid var(--studio-border);
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 12px 28px rgba(2, 6, 23, 0.32);
+    }
+
+    .studio-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .studio-card-title {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 800;
+      color: #f8fafc;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .studio-card-sub {
+      margin: 4px 0 0;
+      font-size: 12.5px;
+      color: var(--studio-muted);
+      line-height: 1.45;
+    }
+
+    /* Controls & Inputs */
+    .st-field {
+      margin-bottom: 12px;
+    }
+
+    .st-label {
+      display: block;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #cbd5e1;
+      margin-bottom: 5px;
+      letter-spacing: 0.02em;
+    }
+
+    .st-input,
+    .st-select,
+    .st-textarea {
+      width: 100%;
+      box-sizing: border-box;
+      background: #0f172a;
+      color: #f8fafc;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      border-radius: 8px;
+      padding: 9px 11px;
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.15s ease;
+    }
+
+    .st-input:focus,
+    .st-select:focus,
+    .st-textarea:focus {
+      border-color: var(--studio-accent);
+    }
+
+    .st-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    @media (max-width: 640px) {
+      .st-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .st-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      border-radius: 9px;
+      padding: 9px 14px;
+      font-size: 12.5px;
+      font-weight: 700;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: transform 0.12s ease, opacity 0.15s ease, background 0.15s ease;
+      font-family: inherit;
+    }
+
+    .st-btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .st-btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .st-btn-primary {
+      background: linear-gradient(135deg, #0284c7, #2563eb);
+      color: #ffffff;
+      border-color: rgba(125, 211, 252, 0.45);
+    }
+
+    .st-btn-emerald {
+      background: linear-gradient(135deg, #059669, #10b981);
+      color: #ffffff;
+    }
+
+    .st-btn-danger {
+      background: rgba(239, 68, 68, 0.18);
+      color: #fecaca;
+      border-color: rgba(248, 113, 113, 0.5);
+    }
+
+    .st-btn-ghost {
+      background: rgba(148, 163, 184, 0.12);
+      color: #e2e8f0;
+      border-color: rgba(148, 163, 184, 0.28);
+    }
+
+    .st-btn-mic {
+      background: linear-gradient(135deg, #dc2626, #b91c1c);
+      color: #ffffff;
+      border-color: rgba(252, 165, 165, 0.45);
+    }
+
+    .st-btn-mic.listening {
+      animation: micPulse 1.1s infinite ease-in-out;
+      box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.25);
+    }
+
+    @keyframes micPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.03); }
+    }
+
+    /* Voice Console */
+    .voice-control-bar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 14px;
+      padding: 12px;
+      border-radius: 10px;
+      background: rgba(15, 23, 42, 0.72);
+      border: 1px solid var(--studio-border);
+    }
+
+    .voice-quick-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-bottom: 14px;
+    }
+
+    .voice-quick-btn {
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      color: #bae6fd;
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .voice-quick-btn:hover {
+      background: rgba(56, 189, 248, 0.22);
+      color: #ffffff;
+    }
+
+    .voice-console-log {
+      background: #090e1a;
+      border: 1px solid var(--studio-border);
+      border-radius: 12px;
+      padding: 14px;
+      min-height: 290px;
+      max-height: 410px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .voice-entry {
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 13px;
+      line-height: 1.5;
+      border: 1px solid rgba(148, 163, 184, 0.16);
+    }
+
+    .voice-entry.user {
+      background: rgba(2, 132, 199, 0.2);
+      border-color: rgba(56, 189, 248, 0.4);
+      align-self: flex-end;
+      max-width: 88%;
+    }
+
+    .voice-entry.assistant {
+      background: rgba(30, 41, 59, 0.85);
+      align-self: flex-start;
+      max-width: 94%;
+    }
+
+    .voice-entry.error {
+      background: rgba(127, 29, 29, 0.4);
+      border-color: rgba(248, 113, 113, 0.5);
+      color: #fecaca;
+    }
+
+    .voice-entry-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+      font-size: 10.5px;
+      color: var(--studio-muted);
+      margin-bottom: 4px;
+      font-weight: 700;
+    }
+
+    .route-tag {
+      display: inline-block;
+      padding: 2px 7px;
+      border-radius: 5px;
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      background: rgba(56, 189, 248, 0.16);
+      color: #7dd3fc;
+      border: 1px solid rgba(56, 189, 248, 0.35);
+    }
+
+    .route-tag.hw {
+      background: rgba(16, 185, 129, 0.18);
+      color: #6ee7b7;
+      border-color: rgba(52, 211, 153, 0.4);
+    }
+
+    .route-tag.mod {
+      background: rgba(245, 158, 11, 0.18);
+      color: #fde68a;
+      border-color: rgba(251, 191, 36, 0.4);
+    }
+
+    .voice-input-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    /* Model Suite List */
+    .model-suite-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .model-card {
+      background: rgba(15, 23, 42, 0.78);
+      border: 1px solid var(--studio-border);
+      border-radius: 10px;
+      padding: 12px 14px;
+    }
+
+    .model-card-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
+    .model-id-code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: #7dd3fc;
+      background: rgba(2, 132, 199, 0.18);
+      padding: 2px 7px;
+      border-radius: 5px;
+    }
+
+    .model-role-tag {
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      color: #6ee7b7;
+    }
+
+    /* Modules & Hardware Lists */
+    .item-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .module-row,
+    .hw-card {
+      background: rgba(15, 23, 42, 0.78);
+      border: 1px solid var(--studio-border);
+      border-radius: 11px;
+      padding: 13px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .module-row.disabled {
+      opacity: 0.58;
+    }
+
+    .hw-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 12px;
+    }
+
+    .hw-card {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .hw-state-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 3px 9px;
+      border-radius: 6px;
+      letter-spacing: 0.04em;
+    }
+
+    .hw-state-badge.on {
+      background: rgba(16, 185, 129, 0.22);
+      color: #6ee7b7;
+      border: 1px solid rgba(52, 211, 153, 0.55);
+    }
+
+    .hw-state-badge.off {
+      background: rgba(148, 163, 184, 0.14);
+      color: #cbd5e1;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+    }
+
+    .bridge-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      padding: 13px 16px;
+      border-radius: 12px;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(56, 189, 248, 0.28);
+      margin-bottom: 18px;
+    }
+
+    .serial-log-box {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11.5px;
+      background: #070b14;
+      color: #7dd3fc;
+      border: 1px solid var(--studio-border);
+      border-radius: 8px;
+      padding: 9px 11px;
+      max-height: 110px;
+      overflow-y: auto;
+      margin-top: 10px;
+      white-space: pre-wrap;
+    }
+
+    /* Code Viewer */
+    .code-file-tabs {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin: 12px 0 8px;
+    }
+
+    .code-file-tab {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      padding: 5px 9px;
+      border-radius: 6px;
+      background: #0f172a;
+      color: #94a3b8;
+      border: 1px solid var(--studio-border);
+      cursor: pointer;
+    }
+
+    .code-file-tab.active {
+      background: rgba(2, 132, 199, 0.25);
+      color: #e0f2fe;
+      border-color: var(--studio-accent);
+    }
+
+    .code-viewer {
+      background: #070b14;
+      border: 1px solid var(--studio-border);
+      border-radius: 10px;
+      padding: 14px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      line-height: 1.55;
+      color: #e2e8f0;
+      overflow: auto;
+      max-height: 400px;
+      white-space: pre;
+      margin: 0;
+    }
+
+    .apk-cmd-box {
+      background: #070b14;
+      border: 1px solid var(--studio-border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11.5px;
+      color: #a7f3d0;
+      overflow-x: auto;
+      margin-top: 8px;
+    }
+
+    .apk-file-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+      gap: 6px;
+      margin-top: 10px;
+      max-height: 160px;
+      overflow-y: auto;
+    }
+
+    .apk-file-item {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      background: rgba(15, 23, 42, 0.72);
+      border: 1px solid var(--studio-border);
+      border-radius: 6px;
+      padding: 5px 8px;
+      color: #cbd5e1;
+      display: flex;
+      justify-content: space-between;
+      gap: 6px;
+    }
+
+    .check-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 6px 12px;
+      margin-top: 6px;
+    }
+
+    .check-label {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 12px;
+      color: #e2e8f0;
+      cursor: pointer;
+    }
+
+    .mono-inline {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11.5px;
+      color: #7dd3fc;
+    }
+  </style>
+</head>
+<body class="studio-body">
+
+  <!-- ============ NAVBAR ============ -->
+  <nav class="navbar">
+    <div class="nav-brand">
+      <span class="sos-tag">SOS</span>
+      <h1>PUYAL — Voice AI, Hardware &amp; APK Studio</h1>
+    </div>
+    <div class="nav-right" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+      <a href="index.html" class="nav-btn" style="background: rgba(255,255,255,0.12); color: #fff; text-decoration: none; font-size: 12px; padding: 6px 10px; border-radius: 6px; font-weight: 600;">🏠 Portal</a>
+      <a href="dashboard-user.html" class="nav-btn" style="background: rgba(220,38,38,0.22); border: 1px solid rgba(248,113,113,0.45); color: #fecaca; text-decoration: none; font-size: 12px; padding: 6px 10px; border-radius: 6px; font-weight: 700;">🚨 Civilian SOS</a>
+      <a href="dashboard-admin.html" class="nav-btn" style="background: rgba(2,132,199,0.22); border: 1px solid rgba(56,189,248,0.45); color: #bae6fd; text-decoration: none; font-size: 12px; padding: 6px 10px; border-radius: 6px; font-weight: 700;">🛡️ Admin Command</a>
+    </div>
+  </nav>
+
+  <div class="toast" id="toast"></div>
+
+  <main class="studio-shell">
+    <!-- Hero Summary -->
+    <section class="studio-hero">
+      <div>
+        <h2>Modular Voice AI, Hardware Control &amp; Android APK Packager</h2>
+        <p>
+          Speak or dispatch commands across PUYAL custom modules, toggle smart-home/ESP32/Home Assistant hardware relays over voice or USB/BLE, export modular Python &amp; Node.js voice assistants, and bundle PUYAL as an Android APK project.
+        </p>
+      </div>
+      <div class="studio-kpis">
+        <div class="studio-kpi">
+          <div class="studio-kpi-label">Voice Models</div>
+          <div class="studio-kpi-val" id="kpi-models-count">5</div>
+        </div>
+        <div class="studio-kpi">
+          <div class="studio-kpi-label">Command Modules</div>
+          <div class="studio-kpi-val" id="kpi-modules-count">0</div>
+        </div>
+        <div class="studio-kpi">
+          <div class="studio-kpi-label">Hardware Nodes</div>
+          <div class="studio-kpi-val" id="kpi-hardware-count">0</div>
+        </div>
+        <div class="studio-kpi">
+          <div class="studio-kpi-label">APK Package</div>
+          <div class="studio-kpi-val" style="font-size: 13px; padding-top: 4px;" id="kpi-apk-pkg">com.puyal.command</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Studio Navigation Tabs -->
+    <div class="studio-tabs" role="tablist" aria-label="PUYAL Studio Sections">
+      <button type="button" class="studio-tab active" data-tab="voice" role="tab" aria-selected="true">
+        🎙️ Voice AI &amp; Model Suite
+      </button>
+      <button type="button" class="studio-tab" data-tab="modules" role="tab" aria-selected="false">
+        🧩 Custom Command Modules
+      </button>
+      <button type="button" class="studio-tab" data-tab="hardware" role="tab" aria-selected="false">
+        🔌 Smart-Home &amp; Hardware
+      </button>
+      <button type="button" class="studio-tab" data-tab="builder" role="tab" aria-selected="false">
+        📦 Code Builder &amp; Android APK
+      </button>
+    </div>
+
+    <!-- ================================================================
+         TAB 1: VOICE AI ASSISTANT & MODEL SUITE
+         ================================================================ -->
+    <section id="panel-voice" class="studio-panel active" role="tabpanel">
+      <div class="studio-grid-2">
+        <!-- Left: Live Command Console -->
+        <div class="studio-card">
+          <div class="studio-card-header">
+            <div>
+              <h3 class="studio-card-title">🎙️ Live PUYAL Voice Command Console</h3>
+              <p class="studio-card-sub">Matches registered custom modules &amp; hardware relays instantly, or routes general requests to the Gemini Model Suite.</p>
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <button type="button" id="btn-wake-word" class="st-btn st-btn-ghost" title="Continuously listen for 'Hey Puyal'">
+                👂 Wake Word: OFF
+              </button>
+              <button type="button" id="btn-ptt-mic" class="st-btn st-btn-mic" title="Record &amp; transcribe voice command">
+                🎙️ Push to Talk
+              </button>
+            </div>
+          </div>
+
+          <div class="voice-control-bar">
+            <div style="flex:1; min-width: 170px;">
+              <label class="st-label" for="voice-model-select">Active Reasoning Model</label>
+              <select id="voice-model-select" class="st-select">
+                <option value="gemini-4-hydrogen" selected>gemini-4-hydrogen (Balanced &amp; Tooling)</option>
+                <option value="gemini-3.1-flash-lite">gemini-3.1-flash-lite (Ultra-Low Latency)</option>
+              </select>
+            </div>
+            <div style="min-width: 140px;">
+              <label class="st-label" for="voice-tts-voice">Neural TTS Voice</label>
+              <select id="voice-tts-voice" class="st-select">
+                <option value="Kore" selected>Kore (Clear Command)</option>
+                <option value="Puck">Puck (Energetic)</option>
+                <option value="Charon">Charon (Deep Tactical)</option>
+                <option value="Fenrir">Fenrir (Authoritative)</option>
+                <option value="Zephyr">Zephyr (Calm Safety)</option>
+              </select>
+            </div>
+            <label class="check-label" style="margin-top: 16px;">
+              <input type="checkbox" id="chk-neural-tts" checked />
+              <span>Auto-Speak Reply</span>
+            </label>
+          </div>
+
+          <div class="voice-quick-row">
+            <button type="button" class="voice-quick-btn" data-utterance="Hey Puyal, sector status">📊 Sector Status</button>
+            <button type="button" class="voice-quick-btn" data-utterance="Hey Puyal, turn on perimeter lights">💡 Turn ON Perimeter Lights</button>
+            <button type="button" class="voice-quick-btn" data-utterance="Hey Puyal, turn off emergency siren">📢 Silence Siren</button>
+            <button type="button" class="voice-quick-btn" data-utterance="Hey Puyal, activate SOS">🚨 Activate SOS</button>
+            <button type="button" class="voice-quick-btn" data-utterance="Hey Puyal, flood safety protocol">🌊 Flood Survival Brief</button>
+          </div>
+
+          <div id="voice-console-log" class="voice-console-log" aria-live="polite">
+            <div class="voice-entry assistant">
+              <div class="voice-entry-meta">
+                <span class="route-tag">VOICE SUITE READY</span>
+                <span>Wake phrase: "Hey Puyal"</span>
+              </div>
+              <div>
+                PUYAL Voice AI Assistant initialized. Say or type a custom command module trigger, toggle a connected smart-home hardware relay, or ask an emergency/disaster intelligence question.
+              </div>
+            </div>
+          </div>
+
+          <form id="voice-command-form" class="voice-input-row">
+            <input
+              type="text"
+              id="voice-utterance-input"
+              class="st-input"
+              placeholder="Type or speak command (e.g., 'Hey Puyal, turn on shelter backup generator')..."
+              autocomplete="off"
+              required
+            />
+            <button type="submit" id="btn-dispatch-voice" class="st-btn st-btn-primary">
+              Execute ➤
+            </button>
+          </form>
+        </div>
+
+        <!-- Right: Model Suite Catalog -->
+        <div class="studio-card">
+          <div class="studio-card-header">
+            <div>
+              <h3 class="studio-card-title">🧠 Voice AI Model Suite</h3>
+              <p class="studio-card-sub">Multi-model voice pipeline combining fast command routing, audio transcription, neural 24kHz WAV TTS, and duplex voice.</p>
+            </div>
+            <span id="model-api-badge" class="route-tag">CHECKING...</span>
+          </div>
+
+          <div id="model-suite-list" class="model-suite-grid">
+            <div class="model-card">Loading model suite...</div>
+          </div>
+
+          <div style="margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--studio-border); display:flex; gap:8px; flex-wrap:wrap; align-items:center; justify-content:space-between;">
+            <span style="font-size:12px; color:var(--studio-muted);">Test neural TTS voice output directly:</span>
+            <button type="button" id="btn-test-tts" class="st-btn st-btn-ghost">🔊 Test Neural TTS</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================
+         TAB 2: CUSTOM COMMAND MODULES FOR PUYAL
+         ================================================================ -->
+    <section id="panel-modules" class="studio-panel" role="tabpanel">
+      <div class="studio-grid-2">
+        <!-- Registered Command Modules -->
+        <div class="studio-card">
+          <div class="studio-card-header">
+            <div>
+              <h3 class="studio-card-title">🧩 Registered PUYAL Command Modules</h3>
+              <p class="studio-card-sub">Every enabled module is live in the Voice Console and automatically compiled into your exported Python / Node.js assistant projects.</p>
+            </div>
+            <button type="button" id="btn-refresh-modules" class="st-btn st-btn-ghost">🔄 Refresh</button>
+          </div>
+
+          <div id="modules-list" class="item-stack">
+            <div class="module-row">Loading command modules...</div>
+          </div>
+        </div>
+
+        <!-- Add New Command Module -->
+        <div class="studio-card">
+          <div class="studio-card-header">
+            <div>
+              <h3 class="studio-card-title">➕ Add Custom Command Module</h3>
+              <p class="studio-card-sub">Bind natural-language trigger phrases to PUYAL SOS, telemetry, smart-home hardware relays, webhooks, or Gemini AI prompts.</p>
+            </div>
+          </div>
+
+          <form id="module-create-form">
+            <div class="st-row">
+              <div class="st-field">
+                <label class="st-label" for="mod-name">Module Name *</label>
+                <input type="text" id="mod-name" class="st-input" placeholder="e.g., Shelter Flood Gate" required />
+              </div>
+              <div class="st-field">
+                <label class="st-label" for="mod-category">Category</label>
+                <select id="mod-category" class="st-select">
+                  <option value="Custom">Custom</option>
+                  <option value="Emergency">Emergency</option>
+                  <option value="Hardware">Hardware</option>
+                  <option value="Operations">Operations</option>
+                  <option value="Automation">Automation</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="st-field">
+              <label class="st-label" for="mod-triggers">Voice Trigger Phrases (comma-separated) *</label>
+              <input type="text" id="mod-triggers" class="st-input" placeholder="e.g., seal flood gate, close shelter barrier, open barrier" required />
+            </div>
+
+            <div class="st-field">
+              <label class="st-label" for="mod-action-type">Action Type *</label>
+              <select id="mod-action-type" class="st-select">
+                <option value="hardware_control">Hardware / Smart-Home Device Control</option>
+                <option value="ai_prompt">Gemini AI Guided Response</option>
+                <option value="webhook">External Webhook / Automation POST</option>
+                <option value="puyal_status">PUYAL Live Sector Telemetry</option>
+                <option value="puyal_sos">Trigger PUYAL Emergency SOS</option>
+              </select>
+            </div>
+
+            <div class="st-field" id="mod-target-device-wrap">
+              <label class="st-label" for="mod-target-device">Target Hardware Device</label>
+              <select id="mod-target-device" class="st-select"></select>
+            </div>
+
+            <div class="st-field" id="mod-target-text-wrap" style="display:none;">
+              <label class="st-label" id="mod-target-text-label" for="mod-target-text">Target Prompt / Webhook URL</label>
+              <input type="text" id="mod-target-text" class="st-input" placeholder="https://homeassistant.local/api/webhook/... or AI instruction" />
+            </div>
+
+            <div class="st-field">
+              <label class="st-label" for="mod-response">Spoken Response Template</label>
+              <input type="text" id="mod-response" class="st-input" placeholder="e.g., {{name}} switched {{state}}." />
+            </div>
+
+            <div class="st-field">
+              <label class="st-label" for="mod-desc">Description</label>
+              <input type="text" id="mod-desc" class="st-input" placeholder="Brief description of what this module automates" />
+            </div>
+
+            <button type="submit" class="st-btn st-btn-emerald" style="width:100%;">
+              ➕ Register Command Module
+            </button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================
+         TAB 3: SMART-HOME & HARDWARE MODULES WITH PUYAL
+         ================================================================ -->
+    <section id="panel-hardware" class="studio-panel" role="tabpanel">
+      <!-- Hardware Bridge Bar (Web Serial USB/ESP32 + Web Bluetooth BLE) -->
+      <div class="bridge-bar">
+        <div>
+          <div style="font-size: 14px; font-weight: 800; color: #f8fafc;">⚡ Live Hardware Bridges (USB Serial / ESP32 / Arduino &amp; Web Bluetooth BLE)</div>
+          <div style="font-size: 12px; color: var(--studio-muted); margin-top: 2px;">
+            Connect a physical microcontroller directly from your browser or send outbound HTTP webhooks to Home Assistant / MQTT bridges.
+          </div>
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+          <button type="button" id="btn-connect-serial" class="st-btn st-btn-primary">🔌 Connect USB Serial (ESP32)</button>
+          <button type="button" id="btn-connect-ble" class="st-btn st-btn-ghost">📶 Pair Bluetooth (BLE)</button>
+        </div>
+      </div>
+
+      <div class="studio-grid-2">
+        <!-- Left: Active Hardware Modules Grid -->
+        <div class="studio-card">
+          <div class="studio-card-header">
+            <div>
+              <h3 class="studio-card-title">🏠 Connected Smart-Home &amp; Field Hardware</h3>
+              <p class="studio-card-sub">Toggle relays manually or via voice commands. Real-time state syncs across all PUYAL tabs via SSE.</p>
+            </div>
+            <span id="bridge-status-pill" class="route-tag">BRIDGE: HTTP / MQTT READY</span>
+          </div>
+
+          <div id="hardware-devices-grid" class="hw-grid">
+            <div class="hw-card">Loading hardware modules...</div>
+          </div>
+
+          <div id="hardware-serial-log" class="serial-log-box">[PUYAL Hardware Bridge] Ready. Toggle any relay or connect Web Serial / BLE.</div>
+        </div>
+
+        <!-- Right: Add Hardware Device Form -->
+        <div class="studio-card">
+          <div class="studio-card-header">
+            <div>
+              <h3 class="studio-card-title">➕ Register Smart-Home / Hardware Module</h3>
+              <p class="studio-card-sub">Add Home Assistant webhooks, MQTT relays, ESP32 USB serial actuators, or BLE beacons.</p>
+            </div>
+          </div>
+
+          <form id="hardware-create-form">
+            <div class="st-field">
+              <label class="st-label" for="hw-name">Device Name *</label>
+              <input type="text" id="hw-name" class="st-input" placeholder="e.g., Roof Solar Floodlight" required />
+            </div>
+
+            <div class="st-row">
+              <div class="st-field">
+                <label class="st-label" for="hw-protocol">Protocol</label>
+                <select id="hw-protocol" class="st-select">
+                  <option value="Home Assistant / HTTP">Home Assistant / HTTP</option>
+                  <option value="MQTT / Home Assistant">MQTT / Home Assistant</option>
+                  <option value="Web Serial / ESP32">Web Serial / ESP32</option>
+                  <option value="Web Bluetooth / BLE">Web Bluetooth / BLE</option>
+                  <option value="GPIO / Raspberry Pi">GPIO / Raspberry Pi</option>
+                </select>
+              </div>
+              <div class="st-field">
+                <label class="st-label" for="hw-zone">Sector / Zone</label>
+                <input type="text" id="hw-zone" class="st-input" placeholder="e.g., Shelter Wing B" value="Command Sector" />
+              </div>
+            </div>
+
+            <div class="st-field">
+              <label class="st-label" for="hw-topic">MQTT Topic / Entity ID</label>
+              <input type="text" id="hw-topic" class="st-input" placeholder="e.g., puyal/sector1/floodlight or switch.floodlight" />
+            </div>
+
+            <div class="st-field">
+              <label class="st-label" for="hw-webhook">Webhook URL (Optional — real HTTP POST on toggle)</label>
+              <input type="url" id="hw-webhook" class="st-input" placeholder="https://homeassistant.local:8123/api/webhook/puyal_relay" />
+            </div>
+
+            <div class="st-row">
+              <div class="st-field">
+                <label class="st-label" for="hw-serial-on">Serial / BLE ON Command</label>
+                <input type="text" id="hw-serial-on" class="st-input" value="RELAY:ON" />
+              </div>
+              <div class="st-field">
+                <label class="st-label" for="hw-serial-off">Serial / BLE OFF Command</label>
+                <input type="text" id="hw-serial-off" class="st-input" value="RELAY:OFF" />
+              </div>
+            </div>
+
+            <div class="st-field">
+              <label class="st-label" for="hw-aliases">Voice Aliases (comma-separated)</label>
+              <input type="text" id="hw-aliases" class="st-input" placeholder="e.g., roof light, solar floodlight, deck lamp" />
+            </div>
+
+            <button type="submit" class="st-btn st-btn-emerald" style="width:100%;">
+              ➕ Add Hardware Module
+            </button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================
+         TAB 4: MODULAR VOICE ASSISTANT CODE BUILDER & ANDROID APK
+         ================================================================ -->
+    <section id="panel-builder" class="studio-panel" role="tabpanel">
+      <div class="studio-grid-equal">
+        <!-- Left: Python / Node.js Modular Voice Assistant Code Builder -->
+        <div class="studio-card">
+          <div class="studio-card-header">
+            <div>
+              <h3 class="studio-card-title">💻 Modular Voice Assistant Code Builder</h3>
+              <p class="studio-card-sub">
+                Generates a complete runnable Python (<span class="mono-inline">google-genai</span>) or Node.js (<span class="mono-inline">@google/genai</span>) project wired to your active PUYAL command &amp; hardware modules.
+              </p>
+            </div>
+          </div>
+
+          <form id="code-builder-form">
+            <div class="st-row">
+              <div class="st-field">
+                <label class="st-label" for="cb-runtime">Target Runtime</label>
+                <select id="cb-runtime" class="st-select">
+                  <option value="python" selected>Python 3 (google-genai)</option>
+                  <option value="nodejs">Node.js ESM (@google/genai)</option>
+                </select>
+              </div>
+              <div class="st-field">
+                <label class="st-label" for="cb-project">Project Name</label>
+                <input type="text" id="cb-project" class="st-input" value="puyal-voice-assistant" />
+              </div>
+            </div>
+
+            <div class="st-row">
+              <div class="st-field">
+                <label class="st-label" for="cb-wake">Wake Word</label>
+                <input type="text" id="cb-wake" class="st-input" value="hey puyal" />
+              </div>
+              <div class="st-field">
+                <label class="st-label" for="cb-model">Default Gemini Model</label>
+                <select id="cb-model" class="st-select">
+                  <option value="gemini-4-hydrogen" selected>gemini-4-hydrogen</option>
+                  <option value="gemini-3.1-flash-lite">gemini-3.1-flash-lite</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="st-field">
+              <label class="st-label" for="cb-custom-skill">Optional: Synthesize Extra Custom AI Skill Module (via Gemini)</label>
+              <input type="text" id="cb-custom-skill" class="st-input" placeholder="e.g., Check battery backup voltage and trigger shelter ventilation" />
+            </div>
+
+            <label class="check-label" style="margin-bottom: 12px;">
+              <input type="checkbox" id="cb-include-hw" checked />
+              <span>Include Smart-Home &amp; ESP32 / Home Assistant Hardware Bridge</span>
+            </label>
+
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <button type="submit" id="btn-generate-code" class="st-btn st-btn-primary">
+                ⚡ Generate Modular Code
+              </button>
+              <button type="button" id="btn-download-kit" class="st-btn st-btn-emerald">
+                📦 Download Starter Kit (.zip)
+              </button>
+              <button type="button" id="btn-copy-code" class="st-btn st-btn-ghost">
+                📋 Copy Active File
+              </button>
+            </div>
+          </form>
+
+          <div id="code-file-tabs" class="code-file-tabs"></div>
+          <pre id="code-viewer" class="code-viewer">// Click "Generate Modular Code" to inspect your Python or Node.js voice assistant modules.</pre>
+        </div>
+
+        <!-- Right: Android APK Project Packager & Installer -->
+        <div class="studio-card">
+          <div class="studio-card-header">
+            <div>
+              <h3 class="studio-card-title">📱 Android APK Packager &amp; Mobile Install</h3>
+              <p class="studio-card-sub">
+                Customize and download a ready-to-compile Android Studio Gradle + Bubblewrap TWA + Capacitor APK project with native <span class="mono-inline">PuyalAndroidBridge</span> haptics, offline WebView, and microphone permissions.
+              </p>
+            </div>
+          </div>
+
+          <form id="apk-builder-form">
+            <div class="st-row">
+              <div class="st-field">
+                <label class="st-label" for="apk-app-name">Android App Name</label>
+                <input type="text" id="apk-app-name" class="st-input" value="PUYAL Command" required />
+              </div>
+              <div class="st-field">
+                <label class="st-label" for="apk-package-id">Package ID</label>
+                <input type="text" id="apk-package-id" class="st-input" value="com.puyal.command" required />
+              </div>
+            </div>
+
+            <div class="st-row">
+              <div class="st-field">
+                <label class="st-label" for="apk-version-name">Version Name</label>
+                <input type="text" id="apk-version-name" class="st-input" value="1.0.0" />
+              </div>
+              <div class="st-field">
+                <label class="st-label" for="apk-version-code">Version Code</label>
+                <input type="number" id="apk-version-code" class="st-input" value="1" min="1" />
+              </div>
+            </div>
+
+            <div class="st-field">
+              <label class="st-label" for="apk-server-url">PUYAL Server URL (bundled into APK WebView &amp; TWA)</label>
+              <input type="url" id="apk-server-url" class="st-input" placeholder="https://your-puyal-host" />
+            </div>
+
+            <div class="st-field">
+              <span class="st-label">Android Manifest Permissions</span>
+              <div class="check-grid">
+                <label class="check-label"><input type="checkbox" id="perm-loc" checked /> GPS Location</label>
+                <label class="check-label"><input type="checkbox" id="perm-cam" checked /> Camera (SOS Stream)</label>
+                <label class="check-label"><input type="checkbox" id="perm-mic" checked /> Microphone (Voice AI)</label>
+                <label class="check-label"><input type="checkbox" id="perm-vib" checked /> Haptic Vibration</label>
+                <label class="check-label"><input type="checkbox" id="perm-ble" checked /> Bluetooth (Hardware)</label>
+                <label class="check-label"><input type="checkbox" id="perm-notif" checked /> Offline Notifications</label>
+              </div>
+            </div>
+
+            <label class="check-label" style="margin-bottom: 14px;">
+              <input type="checkbox" id="apk-include-voice-kit" checked />
+              <span>Bundle Modular Voice Assistant Starter Kit inside APK ZIP</span>
+            </label>
+
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <button type="submit" id="btn-export-apk" class="st-btn st-btn-emerald">
+                📥 Download Android APK Project (.zip)
+              </button>
+              <button type="button" id="btn-install-android-pwa" class="st-btn st-btn-primary">
+                📲 Install Android App Now (PWA)
+              </button>
+            </div>
+          </form>
+
+          <div style="margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--studio-border);">
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
+              <strong style="font-size: 12.5px; color: #f8fafc;">Build APK Locally (Android Studio / Gradle / Bubblewrap)</strong>
+              <a href="/.well-known/assetlinks.json" target="_blank" rel="noopener noreferrer" style="font-size:11.5px; color:#7dd3fc; text-decoration:none;">
+                🔗 Verify assetlinks.json ↗
+              </a>
+            </div>
+            <div id="apk-build-cmds" class="apk-cmd-box">
+unzip com.puyal.command-android-apk-project.zip &amp;&amp; cd puyal-android-apk
+./build-apk.sh          # or open in Android Studio &amp; run ./gradlew assembleDebug
+            </div>
+
+            <div style="margin-top: 12px; font-size: 11.5px; color: var(--studio-muted); font-weight: 700;">
+              Generated Android APK Project Files (<span id="apk-file-count">0</span> files):
+            </div>
+            <div id="apk-file-list" class="apk-file-list"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/auth-sync.js"></script>
+  <script src="js/haptic-feedback.js"></script>
+  <script src="js/voice-studio.js"></script>
+  <script src="js/pwa-offline.js"></script>
+</body>
+</html>

@@ -1,0 +1,3037 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PUYAL — Civilian Emergency Portal</title>
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="PUYAL" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <link rel="alternate icon" href="favicon.ico" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <link rel="stylesheet" href="css/styles.css" />
+  <!-- Open-Source Local Leaflet GIS Engine -->
+  <link rel="stylesheet" href="/vendor/leaflet/leaflet.css" />
+  <script src="/vendor/leaflet/leaflet.js"></script>
+  <script src="js/leaflet-idb-cache.js"></script>
+  <script src="js/gps-accuracy-badge.js"></script>
+</head>
+<body>
+
+  <!-- ============ NAVBAR ============ -->
+  <nav class="navbar">
+    <div class="nav-brand">
+      <span class="sos-tag">SOS</span>
+      <h1 data-i18n="nav.brand_user">PUYAL Command</h1>
+    </div>
+    <div class="nav-right" style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+      <!-- Multilingual Translation Selector & Instant Translate Button -->
+      <div class="lang-selector-bar" style="display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.08); padding: 4px 8px; border-radius: var(--radius-md); border: 1px solid rgba(255,255,255,0.18);">
+        <span style="font-size: 14px;">🌐</span>
+        <select id="global-lang-select" onchange="translatePage(this.value)" aria-label="Select Language" style="background: transparent; color: #fff; border: none; font-size: 12px; font-weight: 600; outline: none; cursor: pointer; padding: 2px 4px;">
+          <option value="en" style="background: #1e293b; color: #fff;">English (English)</option>
+          <option value="ta" style="background: #1e293b; color: #fff;">தமிழ் (Tamil)</option>
+          <option value="hi" style="background: #1e293b; color: #fff;">हिन्दी (Hindi)</option>
+          <option value="te" style="background: #1e293b; color: #fff;">తెలుగు (Telugu)</option>
+          <option value="ml" style="background: #1e293b; color: #fff;">മലയാളം (Malayalam)</option>
+          <option value="kn" style="background: #1e293b; color: #fff;">ಕನ್ನಡ (Kannada)</option>
+          <option value="bn" style="background: #1e293b; color: #fff;">বাংলা (Bengali)</option>
+          <option value="es" style="background: #1e293b; color: #fff;">Español (Spanish)</option>
+        </select>
+        <button type="button" id="btn-translate-page" class="btn" style="background: var(--primary); color: #fff; padding: 4px 10px; font-size: 12px; font-weight: 700; border-radius: var(--radius-sm); border: none; cursor: pointer;" onclick="onGlobalTranslateClick()">
+          <span data-i18n="nav.translate_btn">🌐 Translate</span>
+        </button>
+      </div>
+      <span class="nav-user" id="nav-user-email">Civilian Portal</span>
+      <a href="voice-studio.html" class="nav-btn" style="background: rgba(2,132,199,0.24); border: 1px solid rgba(56,189,248,0.45); color: #e0f2fe; text-decoration: none; font-size: 12px; padding: 6px 10px; border-radius: var(--radius-sm); font-weight: 700;">🤖 Voice &amp; APK</a>
+      <a href="index.html" class="nav-btn" style="background: rgba(255,255,255,0.12); color: #fff; text-decoration: none; font-size: 12px; padding: 6px 10px; border-radius: var(--radius-sm); font-weight: 600;">🏠 Home</a>
+      <a href="login-user.html?switch=1" id="nav-signin-link" class="nav-btn" style="background: #2563eb; color: #fff; text-decoration: none; font-size: 12px; padding: 6px 10px; border-radius: var(--radius-sm); font-weight: 700; display: none;">👤 Sign In</a>
+      <button class="nav-btn btn-logout" id="nav-logout-btn" onclick="logout()"><span data-i18n="nav.logout">Logout</span></button>
+    </div>
+  </nav>
+
+  <!-- ============ TOAST NOTIFICATION ============ -->
+  <div class="toast" id="toast"></div>
+
+  <!-- ============ MAIN CONTENT ============ -->
+  <main class="main-container">
+
+    <!-- ── Emergency Device Readiness Bar ── -->
+    <div style="background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 14px 20px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; box-shadow: var(--shadow-xs);">
+      <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+        <span style="font-size: 13px; font-weight: 700; color: var(--navy); display: flex; align-items: center; gap: 6px;">
+          <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--success); box-shadow: 0 0 6px var(--success);"></span> <span data-i18n="readiness.title">Device Readiness:</span>
+        </span>
+        <span style="font-size: 12px; font-weight: 600; color: var(--text-secondary);"><span data-i18n="readiness.location">📍 Location:</span> <strong style="color: var(--success);" id="readiness-loc-val">Detecting GPS...</strong></span>
+        <span style="font-size: 12px; font-weight: 600; color: var(--text-secondary);"><span data-i18n="readiness.camera">📹 Camera:</span> <strong style="color: var(--success);" id="readiness-cam-val">Authorized</strong></span>
+        <span style="font-size: 12px; font-weight: 600; color: var(--text-secondary);"><span data-i18n="readiness.mic">🎙️ Mic:</span> <strong style="color: var(--success);" id="readiness-mic-val">Authorized</strong></span>
+      </div>
+      <button type="button" class="btn" style="background: var(--subtle); border: 1px solid var(--border); padding: 6px 14px; font-size: 12px; font-weight: 600; cursor: pointer; border-radius: var(--radius-md);" onclick="testAndReauthorizePermissions()">
+        <span data-i18n="readiness.retest">🔄 Re-test Permissions</span>
+      </button>
+    </div>
+
+    <!-- ── Quick Action Options (Direct Access to All Civilian Tools) ── -->
+    <div class="quick-actions">
+      <div class="action-card" id="card-sos-launch" role="button" tabindex="0" aria-label="SOS Emergency Live Stream" style="background: linear-gradient(135deg, #dc2626, #991b1b); color: #fff; cursor: pointer;">
+        <span class="action-icon">🚨</span>
+        <div class="action-label" data-i18n="action.sos_title">SOS Emergency Live Stream</div>
+        <div class="action-desc" data-i18n="action.sos_desc">Streams live camera &amp; audio directly to Admin Command Console</div>
+      </div>
+      <div class="action-card" id="card-voice-launch" style="background: linear-gradient(135deg, #7c3aed, #4f46e5); color: #fff; cursor: pointer;" onclick="openVoiceReport()">
+        <span class="action-icon">🎙️</span>
+        <div class="action-label" data-i18n="action.bhashini_title">Bhashini Multilingual Voice</div>
+        <div class="action-desc" data-i18n="action.bhashini_desc">Speak in Tamil, Hindi, Telugu, English &amp; more — Gemini AI classified</div>
+      </div>
+      <div class="action-card" id="card-report-launch" style="background: linear-gradient(135deg, #2563eb, #1d4ed8); color: #fff; cursor: pointer;" onclick="focusCivilianReportForm()">
+        <span class="action-icon">📝</span>
+        <div class="action-label">Report Incident Form</div>
+        <div class="action-desc">Submit structured disaster details with Auto GPS &amp; AI Severity Gauge</div>
+      </div>
+      <div class="action-card" id="card-tracking-launch" style="background: linear-gradient(135deg, #059669, #047857); color: #fff; cursor: pointer;" onclick="focusCivilianTracking()">
+        <span class="action-icon">🚑</span>
+        <div class="action-label">Live Responder Map</div>
+        <div class="action-desc">Track dispatched emergency vehicles &amp; live ETA route to your site</div>
+      </div>
+      <a href="tactical-3d.html?role=user" class="action-card" id="card-3d-launch" style="background: linear-gradient(135deg, #0f172a, #1e293b); color: #38bdf8; cursor: pointer; text-decoration: none; border: 1px solid rgba(56, 189, 248, 0.35);">
+        <span class="action-icon">🧊</span>
+        <div class="action-label" style="color: #f8fafc;">3D Sector Twin</div>
+        <div class="action-desc" style="color: #cbd5e1;">Explore real-time 3D operational sector beacons &amp; active units</div>
+      </a>
+      <a href="voice-studio.html" class="action-card" id="card-voice-studio-launch" style="background: linear-gradient(135deg, #0369a1, #0f172a); color: #e0f2fe; cursor: pointer; text-decoration: none; border: 1px solid rgba(56, 189, 248, 0.45);">
+        <span class="action-icon">🤖</span>
+        <div class="action-label" style="color: #f8fafc;">Voice AI, Hardware &amp; APK</div>
+        <div class="action-desc" style="color: #bae6fd;">Custom command modules, smart-home relays, code builder &amp; Android APK</div>
+      </a>
+    </div>
+
+    <!-- ── Report Form ── -->
+    <section class="card" id="civilian-report-section" style="max-width: 720px; margin: 0 auto;">
+      <h2 class="section-title" data-i18n="form.heading">Report an Emergency Incident</h2>
+      <p class="section-subtitle" data-i18n="form.subheading">Provide accurate details so response teams can prioritize and dispatch help.</p>
+
+      <form id="incident-form">
+        <div class="form-group">
+          <label for="title" data-i18n="form.incident_title">Incident Title *</label>
+          <input class="form-control" type="text" id="title" required placeholder="e.g., Multi-vehicle collision on NH-48" data-i18n-placeholder="form.title_placeholder" oninput="updateAISeveritySuggestion()" />
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="category" data-i18n="form.category">Emergency Category *</label>
+            <select class="form-control" id="category" required onchange="updateAISeveritySuggestion()">
+              <option value="Road Accident" data-i18n="cat.road_accident">Road Accident</option>
+              <option value="Fire" data-i18n="cat.fire">Fire</option>
+              <option value="Flood" data-i18n="cat.flood">Flood</option>
+              <option value="Medical Emergency" data-i18n="cat.medical">Medical Emergency</option>
+              <option value="Natural Disaster" data-i18n="cat.disaster">Natural Disaster</option>
+              <option value="Violence/Crime" data-i18n="cat.crime">Violence / Crime</option>
+              <option value="Structural Collapse" data-i18n="cat.collapse">Structural Collapse</option>
+              <option value="Other" data-i18n="cat.other">Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="severity" data-i18n="form.severity">Severity Level *</label>
+            <select class="form-control" id="severity" required onchange="onManualSeverityChange()">
+              <option value="Auto" data-i18n="form.severity_auto">Auto-Classify (Threat Gauge)</option>
+              <option value="Critical" data-i18n="meter.critical">Critical</option>
+              <option value="High" data-i18n="meter.high">High</option>
+              <option value="Medium" data-i18n="meter.medium">Medium</option>
+              <option value="Low" data-i18n="meter.low">Low</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- ── AI Smart Severity Suggestion Card (Live as user types) ── -->
+        <div id="ai-severity-suggestion-card" class="ai-severity-suggestion-card">
+          <div class="ai-suggestion-header">
+            <div class="ai-spark-label">
+              <span data-i18n="meter.ai_title">✨ AI Smart Severity Suggestion:</span>
+              <span id="ai-suggested-severity-badge" class="severity-score-badge meter-high">High (72/100)</span>
+            </div>
+            <button type="button" id="btn-apply-suggestion" class="btn-apply-suggestion" onclick="applySuggestedSeverity()">
+              <span data-i18n="meter.apply_suggested">⚡ Apply Suggested:</span> <span id="btn-suggested-text">High</span>
+            </button>
+          </div>
+          <div id="ai-suggestion-rationale" class="ai-suggestion-rationale">
+            Analyzing report details... Type title, category, and affected count to see live AI recommendation.
+          </div>
+        </div>
+
+        <!-- ── Dynamic Severity Meter & Risk Gauge ── -->
+        <div class="severity-meter-card">
+          <div class="severity-meter-header">
+            <span style="font-size: 13px; font-weight: 700; color: var(--navy);" data-i18n="meter.threat_gauge">⚡ Threat Severity Meter</span>
+            <span id="severity-score-val" class="severity-score-badge meter-medium">Score: 50 — Moderate Risk</span>
+          </div>
+          <div class="meter-track">
+            <div id="severity-meter-bar" class="meter-fill meter-medium" style="width: 50%;"></div>
+          </div>
+          <div class="meter-labels">
+            <span data-i18n="meter.low">🟢 Low (0-25)</span>
+            <span data-i18n="meter.medium">🟡 Medium (26-55)</span>
+            <span data-i18n="meter.high">🟠 High (56-80)</span>
+            <span data-i18n="meter.critical">🔴 Critical (81-100)</span>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="location" data-i18n="form.location">Location *</label>
+            <div style="display: flex; gap: 8px;">
+              <input class="form-control" type="text" id="location" required placeholder="Area, Landmark, or Coordinates" data-i18n-placeholder="form.location_placeholder" style="flex: 1;" />
+              <button type="button" class="btn" style="background: var(--info); color: #fff; padding: 10px 14px; white-space: nowrap;" onclick="autoDetectLocation()">
+                <span data-i18n="form.auto_btn">📍 Auto GPS</span>
+              </button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="affected" data-i18n="form.affected">People Affected *</label>
+            <input class="form-control" type="number" id="affected" min="0" value="1" required oninput="updateAISeveritySuggestion()" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:6px;">
+            <label for="description" data-i18n="form.description" style="margin-bottom:0;">Incident Description *</label>
+            <button type="button" class="btn" style="background:#f0fdf4; border:1px solid #86efac; color:#15803d; font-size:11px; font-weight:700; padding:4px 10px; border-radius:6px; cursor:pointer; display:inline-flex; align-items:center; gap:6px;" onclick="window.recordAndTranscribeWithGemini('description', 'voice-transcribe-status')">
+              <span id="voice-transcribe-status">🎙️ Speak &amp; Transcribe (Gemini 3.5)</span>
+            </button>
+          </div>
+          <textarea class="form-control" id="description" rows="3" required placeholder="Describe injuries, hazards, or immediate needs..." data-i18n-placeholder="form.desc_placeholder" oninput="updateAISeveritySuggestion()"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="contact" data-i18n="form.contact">Contact Information (Optional)</label>
+          <input class="form-control" type="text" id="contact" placeholder="Name / Phone Number" data-i18n-placeholder="form.contact_placeholder" />
+        </div>
+
+        <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; align-items: stretch;">
+          <button type="submit" class="btn btn-primary" style="flex: 2; min-width: 210px;">
+            <span data-i18n="form.submit_btn">🚨 Submit Emergency Report</span>
+          </button>
+          <button type="button" id="btn-form-incident-qr" class="btn" style="flex: 1; min-width: 185px; background: #0f172a; color: #f8fafc; border: 1px solid #334155; font-weight: 700; padding: 12px 16px; border-radius: var(--radius-md); cursor: pointer;" onclick="openCurrentDraftQR()">
+            📱 Show Incident QR
+          </button>
+        </div>
+      </form>
+
+      <div id="last-submitted-qr-bar" style="display: none; margin-top: 14px; padding: 12px 14px; background: #f0fdf4; border: 1px solid #86efac; border-radius: var(--radius-md); align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
+        <div style="font-size: 12px; color: #14532d;">
+          <strong>✅ Report Ready for Responder Scan:</strong> <span id="last-submitted-qr-title">Incident</span>
+        </div>
+        <button type="button" class="btn" style="background: #0f172a; color: #38bdf8; border: none; padding: 7px 14px; font-size: 12px; font-weight: 700; border-radius: var(--radius-sm); cursor: pointer;" onclick="openLastSubmittedQR()">
+          📱 Display Incident QR
+        </button>
+      </div>
+    </section>
+
+    <!-- ── Live Emergency Dispatch & Route Tracking Map (Simulated in Real Time) ── -->
+    <section id="civilian-tracking-section" class="civilian-tracking-card" style="max-width: 720px; margin: 24px auto 0;">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 20px;">🚑</span>
+          <div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <h3 style="font-size: 16px; font-weight: 800; color: var(--navy); margin: 0;">Live Response Team En Route Tracking</h3>
+              <span id="civilian-tracking-status-pill" class="team-status-pill status-dispatched">● EN ROUTE</span>
+            </div>
+            <p style="font-size: 12px; color: var(--text-muted); margin: 2px 0 0;">
+              Real-time GPS telemetry and navigational route from emergency depot to your reported incident site
+            </p>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+          <button type="button" id="btn-cache-civ-tiles" class="btn" style="background: var(--subtle); color: var(--navy); font-size: 12px; font-weight: 700; border: 1px solid var(--border); padding: 6px 12px; border-radius: var(--radius-md); cursor: pointer;" onclick="prefetchCivilianOfflineTiles(true)" title="Pre-cache OpenStreetMap tiles in IndexedDB for offline access">
+            💾 Cache Map <span id="civ-tile-cache-count" style="opacity:0.8; font-size:10px;"></span>
+          </button>
+          <a href="/tactical-3d.html?role=user" class="btn" style="background: #0f172a; color: #38bdf8; font-size: 12px; font-weight: 700; border: 1px solid #1e293b; padding: 6px 12px; border-radius: var(--radius-md); text-decoration: none;">
+            🧊 3D Sector Twin
+          </a>
+          <button type="button" class="btn" style="background: #dc2626; color: #fff; font-size: 12px; font-weight: 700; border: none; padding: 6px 14px; border-radius: var(--radius-md); cursor: pointer;" onclick="triggerCivilianDemoDispatch()">
+            🚀 Simulate Dispatch Demo
+          </button>
+        </div>
+      </div>
+
+      <!-- Live Telemetry Grid -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 14px;">
+        <div style="background: var(--subtle); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 10px;">
+          <div style="font-size: 11px; font-weight: 700; color: var(--text-muted);">DISPATCHED UNIT</div>
+          <div id="tracking-team-name" style="font-size: 13px; font-weight: 800; color: var(--navy); margin-top: 2px;">Metro Rapid EMS Alpha</div>
+          <div id="tracking-team-cat" style="font-size: 11px; color: var(--info); font-weight: 600;">Medical Emergency</div>
+        </div>
+        <div style="background: var(--subtle); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 10px;">
+          <div style="font-size: 11px; font-weight: 700; color: var(--text-muted);">DISTANCE REMAINING</div>
+          <div id="tracking-dist-km" style="font-size: 16px; font-weight: 800; color: #dc2626; margin-top: 2px;">1.4 km</div>
+          <div id="tracking-progress-pct" style="font-size: 11px; color: var(--text-secondary);">35% Route Covered</div>
+        </div>
+        <div style="background: var(--subtle); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 10px;">
+          <div style="font-size: 11px; font-weight: 700; color: var(--text-muted);">ESTIMATED ARRIVAL (ETA)</div>
+          <div id="tracking-eta-mins" style="font-size: 16px; font-weight: 800; color: #059669; margin-top: 2px;">~3 mins</div>
+          <div id="tracking-speed-kmh" style="font-size: 11px; color: var(--text-secondary);">Speed: ~52 km/h</div>
+        </div>
+        <div style="background: var(--subtle); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 10px;">
+          <div style="font-size: 11px; font-weight: 700; color: var(--text-muted);">TARGET INCIDENT</div>
+          <div id="tracking-incident-title" style="font-size: 12px; font-weight: 700; color: var(--navy); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Structural Risk & Water Surge</div>
+          <div id="tracking-station-name" style="font-size: 11px; color: var(--text-secondary);">Depot: Central Command Base</div>
+        </div>
+      </div>
+
+      <!-- Real-Time Leaflet Interactive Map -->
+      <div id="civilian-tracking-map" style="width: 100%; height: 280px; border-radius: var(--radius-lg); border: 1px solid var(--border);"></div>
+
+      <!-- Map Route Legend -->
+      <div class="map-legend-bar" style="margin-top: 10px; font-size: 11px;">
+        <div class="legend-items">
+          <div class="legend-item"><span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:#dc2626;"></span> 📍 Incident Site</div>
+          <div class="legend-item"><span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:#1e293b;"></span> 🏢 Station Depot</div>
+          <div class="legend-item"><span style="display:inline-block; width:14px; height:4px; background:#10b981;"></span> Traveled Route</div>
+          <div class="legend-item"><span style="display:inline-block; width:14px; height:4px; background:#dc2626; border-bottom: 2px dashed #dc2626;"></span> Live Route Ahead</div>
+          <div class="legend-item"><span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:#f59e0b;"></span> 🚑 Moving Vehicle</div>
+        </div>
+        <div id="civilian-map-attribution" style="font-size: 10px; color: var(--text-muted); font-weight: 700;">OpenStreetMap &bull; Leaflet</div>
+      </div>
+      <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">
+        GPS location sharing is explicit and revocable via browser permissions or Ending SOS. Map visualization is subject to
+        <a href="https://maps.google.com/help/terms_maps/?utm_campaign=gmp_mcp_codeassist_v1_aistudio" target="_blank" rel="noopener noreferrer" style="color: var(--primary); text-decoration: underline;">Google Maps End User Terms</a>.
+      </div>
+    </section>
+
+    <!-- ── Find Nearby Hospitals, Shelters & Emergency Aid (Google Maps Grounding) ── -->
+    <section class="card" id="civilian-maps-grounding-section" style="max-width: 720px; margin: 24px auto 0;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; flex-wrap: wrap; margin-bottom: 12px;">
+        <div>
+          <span style="font-size: 10px; font-weight: 800; background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; padding: 2px 8px; border-radius: 6px; letter-spacing: 0.4px;">GOOGLE MAPS GROUNDING &bull; GEMINI 4 HYDROGEN</span>
+          <h3 style="font-size: 16px; font-weight: 800; color: var(--navy); margin: 6px 0 2px;">📍 Nearby Hospitals, Shelters &amp; Aid</h3>
+          <p style="font-size: 12px; color: var(--text-muted); margin: 0;">Search verified nearby emergency facilities anchored to your GPS coordinates using real Google Maps data.</p>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px;">
+        <input type="text" id="civ-maps-query" class="form-control" style="flex: 1; min-width: 200px;" placeholder="e.g., nearest 24-hour emergency hospitals, flood shelters, or fire stations" value="nearest emergency hospitals and safe shelters" />
+        <button type="button" id="civ-maps-search-btn" class="btn btn-primary" style="padding: 8px 16px; white-space: nowrap;" onclick="searchCivilianMapsGrounding()">
+          🔍 Search Nearby
+        </button>
+      </div>
+
+      <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px;">
+        <button type="button" class="btn" style="background: var(--subtle); border: 1px solid var(--border); font-size: 11px; font-weight: 700; padding: 5px 10px; border-radius: 6px; cursor: pointer;" onclick="searchCivilianMapsGrounding('nearest 24 hour hospitals and trauma centers')">🏥 Hospitals &amp; Trauma</button>
+        <button type="button" class="btn" style="background: var(--subtle); border: 1px solid var(--border); font-size: 11px; font-weight: 700; padding: 5px 10px; border-radius: 6px; cursor: pointer;" onclick="searchCivilianMapsGrounding('emergency relief shelters and community safe halls nearby')">🏢 Emergency Shelters</button>
+        <button type="button" class="btn" style="background: var(--subtle); border: 1px solid var(--border); font-size: 11px; font-weight: 700; padding: 5px 10px; border-radius: 6px; cursor: pointer;" onclick="searchCivilianMapsGrounding('24 hour pharmacies and medical aid clinics nearby')">💊 Medical Aid &amp; Pharmacies</button>
+      </div>
+
+      <div id="civ-maps-grounding-results" style="font-size: 13px; color: var(--text-secondary); background: var(--subtle); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 12px;">
+        Tap <strong>Search Nearby</strong> or select a quick category above to retrieve verified nearby hospitals and shelters with Google Maps links.
+      </div>
+    </section>
+
+    <!-- ── Community Active Incidents & Priority Ranking ── -->
+    <section class="card" style="max-width: 720px; margin: 24px auto 0;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+        <div>
+          <h3 style="font-size: 16px; font-weight: 800; color: var(--navy);" data-i18n="user_list.heading">⚡ Active Civilian Reports &amp; Priority Rank</h3>
+          <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;" data-i18n="user_list.subheading">
+            Civilian-submitted emergencies ranked by AI priority score (Severity, Affected, Category Risk &amp; Elapsed Time)
+          </p>
+        </div>
+        <span id="user-incidents-count" class="priority-rank-badge rank-top">Loading...</span>
+      </div>
+      <div id="user-incidents-list" style="display: flex; flex-direction: column; gap: 10px;">
+        <div style="padding: 16px; text-align: center; color: var(--text-faint); font-size: 13px;" data-i18n="user_list.no_incidents">Loading civilian reports...</div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ============ VOICE REPORT OVERLAY (BHASHINI AI MULTILINGUAL) ============ -->
+  <div class="voice-overlay hidden" id="voice-overlay">
+    <div class="voice-panel">
+      <!-- Bhashini Language Selector -->
+      <div class="bhashini-bar">
+        <span class="lang-badge">🌐 Bhashini AI Language:</span>
+        <select id="bhashini-lang-select" class="lang-select" onchange="onLanguageChange(this.value)">
+          <option value="en">English (India)</option>
+          <option value="ta">Tamil (தமிழ்)</option>
+          <option value="hi">Hindi (हिन्दी)</option>
+          <option value="te">Telugu (తెలుగు)</option>
+          <option value="kn">Kannada (ಕನ್ನಡ)</option>
+          <option value="ml">Malayalam (മലയാളം)</option>
+          <option value="bn">Bengali (বাংলা)</option>
+          <option value="mr">Marathi (मराठी)</option>
+          <option value="gu">Gujarati (ગુજરાતી)</option>
+        </select>
+        <span style="font-size: 11px; color: var(--info); font-weight: 700; margin-left: auto;">Gemini 3.8 AI</span>
+      </div>
+
+      <div class="mic-icon idle" id="mic-icon">🎙️</div>
+      <div class="voice-status" id="voice-status">Tap to Start Speaking</div>
+      <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
+        Speak in your regional language — Bhashini &amp; Gemini AI will auto-translate, assess threat level &amp; submit dispatch.
+      </p>
+
+      <div class="voice-transcript" id="voice-transcript">
+        <span style="color: var(--text-faint);">Your spoken words will appear here...</span>
+      </div>
+
+      <!-- AI Classification & Threat Score Display -->
+      <div class="voice-classification" id="voice-classification">
+        <strong>Category:</strong> <span id="voice-category">—</span> |
+        <strong>Severity:</strong> <span id="voice-severity">—</span> |
+        <strong>Threat Score:</strong> <span id="voice-threat-score">—</span>
+      </div>
+
+      <!-- AI First-Aid & Emergency Guidance Box with TTS -->
+      <div id="voice-guidance-box" class="hidden" style="background: var(--info-soft); border: 1px solid rgba(37,99,235,0.25); border-radius: var(--radius-md); padding: 12px; margin-top: 10px; text-align: left;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+          <strong style="color: var(--navy); font-size: 13px;">🛡️ AI Emergency Guidance:</strong>
+          <button type="button" class="btn" style="background: var(--info); color: #fff; padding: 4px 10px; font-size: 11px; border-radius: var(--radius-sm); border: none; cursor: pointer;" onclick="playAIGuidanceAudio()">
+            🔊 Listen (TTS)
+          </button>
+        </div>
+        <div id="voice-guidance-text" style="font-size: 12px; color: var(--text); line-height: 1.5;"></div>
+      </div>
+
+      <div class="voice-actions" style="margin-top: 16px;">
+        <button class="btn btn-cancel" onclick="closeVoiceReport()">Cancel</button>
+        <button class="btn btn-confirm hidden" id="voice-confirm-btn" onclick="confirmVoiceReport()">
+          ✅ Confirm &amp; Submit
+        </button>
+        <button class="btn btn-voice" id="voice-start-btn" onclick="toggleVoiceRecording()">
+          🎙️ Start Listening
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ SOS OVERLAY (LIVE STREAMING TO ADMIN) ============ -->
+  <div class="sos-overlay hidden" id="sos-overlay">
+    <div class="sos-panel">
+      <div class="sos-header">
+        <span class="sos-icon">🚨</span>
+        <h2>SOS ACTIVATED</h2>
+        <p>Live camera video, microphone audio &amp; GPS coordinates are streaming directly to Admin Command Console</p>
+      </div>
+
+      <div class="sos-info-grid">
+        <div class="sos-info-item">
+          <div class="info-label">📍 Location</div>
+          <div class="info-value" id="sos-location">Detecting...</div>
+        </div>
+        <div class="sos-info-item">
+          <div class="info-label">📐 Coordinates &amp; GPS Confidence</div>
+          <div class="info-value" id="sos-coords">Fetching GPS...</div>
+          <div class="sos-coords-accuracy-slot" id="sos-accuracy-badge" aria-live="polite"></div>
+        </div>
+        <div class="sos-info-item">
+          <div class="info-label">⏱️ Active Since</div>
+          <div class="info-value" id="sos-time">—</div>
+        </div>
+        <div class="sos-info-item">
+          <div class="info-label">📡 Live Relay</div>
+          <div class="info-value" style="color: var(--success);" id="sos-status-label">● Streaming to HQ Admin</div>
+          <div id="sos-haptic-indicator" style="font-size: 10px; font-weight: 700; color: #cbd5e1; margin-top: 2px;">📳 Haptic Standby</div>
+        </div>
+      </div>
+
+      <div class="sos-media-grid">
+        <div class="sos-media-item" style="position: relative; overflow: hidden; background: #0f172a;">
+          <video id="sos-video" autoplay muted playsinline style="width: 100%; height: 100%; object-fit: cover;"></video>
+          <!-- Canvas for capturing & simulated video stream frames -->
+          <canvas id="sos-canvas" width="320" height="240" style="display:none; width: 100%; height: 100%; object-fit: cover;"></canvas>
+          <span class="media-label" id="sos-camera-label">📹 Live Camera Feed</span>
+          <span class="media-status" id="sos-feed-indicator"></span>
+        </div>
+        <div class="sos-media-item" style="display: flex; align-items: center; justify-content: center; background: var(--navy); position: relative;">
+          <div style="text-align: center; color: #fff; width: 90%;">
+            <div style="font-size: 28px; margin-bottom: 4px;">🎙️</div>
+            <div style="font-size: 12px; font-weight: 700;" id="sos-audio-mode-label">AUDIO RELAY ACTIVE</div>
+            <canvas id="sos-user-waveform-canvas" width="220" height="36" style="width: 100%; max-width: 220px; height: 36px; margin: 6px auto 4px; display: block; border-radius: 6px; background: rgba(15, 23, 42, 0.55); border: 1px solid rgba(56, 189, 248, 0.25);"></canvas>
+            <div id="audio-level" style="width: 120px; height: 6px; background: rgba(255,255,255,0.2); border-radius: 3px; margin: 4px auto 0; overflow: hidden;">
+              <div id="audio-bar" style="width: 30%; height: 100%; background: var(--success); border-radius: 3px; transition: width 0.08s;"></div>
+            </div>
+            <div style="font-size: 10px; opacity: 0.85; margin-top: 5px; font-family: monospace;" id="sos-audio-freq-label">Monitoring...</div>
+          </div>
+          <span class="media-label">🎙️ Live Microphone</span>
+          <span class="media-status"></span>
+        </div>
+      </div>
+
+      <div class="sos-actions" style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+        <button type="button" class="btn" id="btn-toggle-user-mic" style="background: rgba(16, 185, 129, 0.25); color: #86efac; font-size: 12px; font-weight: 700; border: 1px solid rgba(134, 239, 172, 0.45); padding: 10px 16px; border-radius: var(--radius-md); cursor: pointer;" onclick="toggleUserMicMute()">
+          🎙️ Mic: LIVE
+        </button>
+        <button type="button" class="btn" id="btn-flip-sos-camera" style="background: rgba(56, 189, 248, 0.2); color: #bae6fd; font-size: 12px; font-weight: 700; border: 1px solid rgba(56, 189, 248, 0.45); padding: 10px 16px; border-radius: var(--radius-md); cursor: pointer;" onclick="switchSosCamera()">
+          🔄 Flip Camera
+        </button>
+        <button type="button" class="btn" id="btn-toggle-sim-feed" style="background: rgba(255,255,255,0.15); color: #fff; font-size: 12px; font-weight: 700; border: 1px solid rgba(255,255,255,0.3); padding: 10px 16px; border-radius: var(--radius-md); cursor: pointer;" onclick="toggleSimulatedFeedMode()">
+          📹 Toggle Real / Tactical Feed
+        </button>
+        <button class="btn btn-end-sos" onclick="deactivateSOS()">
+          ✕ End SOS Session
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ SCRIPTS ============ -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/auth-sync.js"></script>
+  <script src="js/translations.js"></script>
+
+  <script>
+    // Initialize GPS coordinates & shared portal state early (avoid Temporal Dead Zone)
+    let currentCoords = window.getCurrentOrCachedCoords ? window.getCurrentOrCachedCoords() : { latitude: 13.0604, longitude: 80.2496, accuracy: 10 };
+    window._currentCoords = currentCoords;
+    let liveGeoWatchId = null;
+    let lastLocationPushTs = 0;
+
+    let sosStream = null;
+    let audioContext = null;
+    let audioAnalyser = null;
+    const STREAM_AUDIO_RATE = 24000;
+    let audioProcessorNode = null;
+    let audioWorkletNode = null;
+    let audioWorkletUrl = null;
+    let audioMuteGain = null;
+    let audioAnimFrame = null;
+    let currentSosAlertId = null;
+    let streamInterval = null;
+    let videoFrameCbId = null;
+    let streamPumpRaf = null;
+    let sosBroadcasterWs = null;
+    let sosWsReconnectTimer = null;
+    let sosWsPingInterval = null;
+    let sosWsLatencyMs = null;
+    let sosCommandViewers = 0;
+    let sosActiveFlag = false;
+    let userMicMuted = false;
+    let hasPhysicalVideo = false;
+    let hasPhysicalAudio = false;
+    let liveAudioLevel = 0;
+    let videoSeq = 0;
+    let audioSeq = 0;
+    let currentFpsActual = 0;
+    let currentStreamRes = '854x480';
+    let broadcasterFrameTimestamps = [];
+    let httpFrameInFlight = false;
+    let blobEncodeInFlight = false;
+    let sosFacingMode = 'environment';
+    let sosCaptureCanvas = null;
+    let sosCaptureCtx = null;
+    let reusableVideoPktBuf = new Uint8Array(256 * 1024);
+    let canEncodeWebP = null;
+    let isSimulatedFeed = false;
+    let simulatedPacketSeq = 1;
+    let geoWatchStartedBySos = false;
+
+    let civilianTrackingMap = null;
+    let googleCivilianMap = null;
+    let usingGoogleCivMap = false;
+    let civMapInitPromise = null;
+    let civLayers = {
+      incidentMarker: null,
+      incidentPerimeter: null,
+      stationMarker: null,
+      vehicleMarker: null,
+      routeTraveled: null,
+      routeAhead: null
+    };
+    let activeDispatchedTeam = null;
+    let activeDispatchedIncident = null;
+
+    // ====================================================================
+    // AUTH & DIRECT GUEST ACCESS — Zero-friction Civilian Emergency Portal
+    // ====================================================================
+    let currentUser = null;
+
+    const savedUserStr = localStorage.getItem('currentUser');
+    let hasAdminSession = false;
+    if (savedUserStr) {
+      try {
+        const parsed = JSON.parse(savedUserStr);
+        if (parsed && parsed.role === 'admin') {
+          hasAdminSession = true;
+        } else if (parsed && (parsed.role === 'user' || localStorage.getItem('userRole') === 'user')) {
+          currentUser = parsed;
+        }
+      } catch (e) {}
+    }
+
+    if (!currentUser) {
+      let guestUid = localStorage.getItem('guestCivilianUid');
+      if (!guestUid) {
+        guestUid = 'guest_civilian_' + Math.random().toString(36).slice(2, 8);
+        localStorage.setItem('guestCivilianUid', guestUid);
+      }
+      currentUser = {
+        uid: guestUid,
+        email: 'guest.civilian@rapidresponse.org',
+        role: 'user',
+        displayName: 'Civilian Guest',
+        isGuest: true
+      };
+      if (!hasAdminSession) {
+        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+        localStorage.setItem('userRole', 'user');
+      }
+    }
+
+    function updateCivilianNavUserUI() {
+      const navEmailEl = document.getElementById('nav-user-email');
+      const signInLink = document.getElementById('nav-signin-link');
+      const logoutBtn = document.getElementById('nav-logout-btn');
+      if (navEmailEl) {
+        navEmailEl.textContent = currentUser && currentUser.isGuest
+          ? 'Civilian Guest Mode'
+          : (currentUser?.email || 'Civilian User');
+      }
+      if (signInLink) {
+        signInLink.style.display = currentUser && currentUser.isGuest ? 'inline-flex' : 'none';
+      }
+      if (logoutBtn) {
+        logoutBtn.style.display = currentUser && currentUser.isGuest ? 'none' : 'inline-flex';
+      }
+    }
+    updateCivilianNavUserUI();
+
+    if (window.auth && window.auth.onAuthStateChanged) {
+      window.auth.onAuthStateChanged((user) => {
+        if (user) {
+          currentUser = {
+            uid: user.uid,
+            email: user.email,
+            role: 'user',
+            displayName: user.displayName || user.email.split('@')[0],
+            isGuest: false
+          };
+          localStorage.setItem('currentUser', JSON.stringify(currentUser));
+          localStorage.setItem('userRole', 'user');
+          updateCivilianNavUserUI();
+        }
+      });
+    }
+
+    function logout() {
+      universalLogout();
+    }
+
+    function focusCivilianReportForm() {
+      const sec = document.getElementById('civilian-report-section');
+      if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const titleInput = document.getElementById('title');
+      if (titleInput) setTimeout(() => titleInput.focus(), 250);
+    }
+
+    function focusCivilianTracking() {
+      const sec = document.getElementById('civilian-tracking-section');
+      if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    // ====================================================================
+    // DYNAMIC SEVERITY THREAT METER & AI SMART SUGGESTION
+    // ====================================================================
+    let currentAISuggestion = {
+      severity: 'Medium',
+      score: 50,
+      rationale: ''
+    };
+    let manualSeveritySelected = false;
+
+    function calculateThreatScore(category, affected, chosenSeverity) {
+      let base = 30;
+      const catWeights = {
+        'Fire': 85,
+        'Natural Disaster': 90,
+        'Structural Collapse': 80,
+        'Road Accident': 65,
+        'Medical Emergency': 60,
+        'Flood': 75,
+        'Violence/Crime': 70,
+        'Other': 40
+      };
+      base = catWeights[category] || 40;
+
+      // Factor in affected count
+      const count = parseInt(affected || 1, 10);
+      let multiplier = count >= 10 ? 25 : count >= 5 ? 18 : count >= 2 ? 10 : 0;
+      let total = Math.min(100, Math.max(15, base + multiplier));
+
+      if (chosenSeverity === 'Critical') total = Math.max(85, total);
+      else if (chosenSeverity === 'High') total = Math.min(84, Math.max(60, total));
+      else if (chosenSeverity === 'Medium') total = Math.min(59, Math.max(30, total));
+      else if (chosenSeverity === 'Low') total = Math.min(25, total);
+
+      return total;
+    }
+
+    function updateAISeveritySuggestion() {
+      const title = (document.getElementById('title').value || '').toLowerCase();
+      const desc = (document.getElementById('description').value || '').toLowerCase();
+      const cat = document.getElementById('category').value;
+      const affected = Math.max(1, parseInt(document.getElementById('affected').value || '1', 10));
+      const combinedText = title + ' ' + desc;
+
+      // Keyword risk patterns
+      const criticalKeywords = ['trapped', 'fire', 'explosion', 'collapsed', 'unconscious', 'burning', 'heavy flood', 'sinking', 'severe', 'casualties', 'critically', 'fatal', 'poison', 'chemical', 'blast', 'overflowing', 'drowning'];
+      const highKeywords = ['injured', 'bleeding', 'fracture', 'crash', 'collision', 'submerged', 'water rising', 'broken', 'hazard', 'struck', 'smoke'];
+
+      const critMatches = criticalKeywords.filter(k => combinedText.includes(k));
+      const highMatches = highKeywords.filter(k => combinedText.includes(k));
+
+      // Category baseline
+      const catBase = {
+        'Fire': 82, 'Natural Disaster': 88, 'Structural Collapse': 85,
+        'Flood': 74, 'Road Accident': 64, 'Medical Emergency': 62,
+        'Violence/Crime': 68, 'Other': 38
+      }[cat] || 45;
+
+      const affectedBonus = affected >= 10 ? 26 : affected >= 5 ? 18 : affected >= 2 ? 10 : 0;
+      const keywordBonus = (critMatches.length * 14) + (highMatches.length * 7);
+      const totalScore = Math.min(100, Math.max(18, catBase + affectedBonus + keywordBonus));
+
+      let suggestedSev = 'Medium';
+      if (totalScore >= 81) suggestedSev = 'Critical';
+      else if (totalScore >= 56) suggestedSev = 'High';
+      else if (totalScore >= 26) suggestedSev = 'Medium';
+      else suggestedSev = 'Low';
+
+      let rationale = `Category: ${cat} · ${affected} person(s) affected.`;
+      if (critMatches.length > 0) {
+        rationale += ` Detected urgent hazard indicators ("${critMatches.slice(0, 2).join('", "')}").`;
+      }
+      if (suggestedSev === 'Critical') {
+        rationale += ` AI recommends immediate Critical response priority.`;
+      } else if (suggestedSev === 'High') {
+        rationale += ` AI recommends High priority dispatch.`;
+      } else {
+        rationale += ` Standard priority dispatch suitable.`;
+      }
+
+      currentAISuggestion = {
+        severity: suggestedSev,
+        score: totalScore,
+        rationale
+      };
+
+      // Update UI elements
+      const card = document.getElementById('ai-severity-suggestion-card');
+      const badge = document.getElementById('ai-suggested-severity-badge');
+      const rationaleEl = document.getElementById('ai-suggestion-rationale');
+      const btnText = document.getElementById('btn-suggested-text');
+      const btnApply = document.getElementById('btn-apply-suggestion');
+      const sevDropdown = document.getElementById('severity');
+
+      card.className = 'ai-severity-suggestion-card' + (suggestedSev === 'Critical' ? ' high-threat' : suggestedSev === 'High' ? ' elevated-threat' : '');
+      badge.textContent = `${suggestedSev} (${totalScore}/100)`;
+      badge.className = 'severity-score-badge ' + (suggestedSev === 'Critical' ? 'meter-critical' : suggestedSev === 'High' ? 'meter-high' : suggestedSev === 'Medium' ? 'meter-medium' : 'meter-low');
+      btnText.textContent = suggestedSev;
+      rationaleEl.textContent = rationale;
+
+      // If user hasn't explicitly overridden manually, auto-align severity or show clear status
+      if (!manualSeveritySelected || sevDropdown.value === 'Auto') {
+        sevDropdown.value = suggestedSev;
+        btnApply.innerHTML = `✓ Applied: <strong>${suggestedSev}</strong>`;
+        btnApply.classList.add('applied');
+      } else {
+        if (sevDropdown.value === suggestedSev) {
+          btnApply.innerHTML = `✓ Applied: <strong>${suggestedSev}</strong>`;
+          btnApply.classList.add('applied');
+        } else {
+          btnApply.innerHTML = `⚡ Apply Suggested: <strong>${suggestedSev}</strong>`;
+          btnApply.classList.remove('applied');
+        }
+      }
+
+      updateDynamicSeverityMeter();
+    }
+
+    function applySuggestedSeverity() {
+      manualSeveritySelected = false;
+      const sevDropdown = document.getElementById('severity');
+      sevDropdown.value = currentAISuggestion.severity;
+      updateAISeveritySuggestion();
+      updateDynamicSeverityMeter();
+      showToast(`✨ AI Suggested Severity "${currentAISuggestion.severity}" applied to report!`, 'success');
+      speakText(`Applied AI suggested severity: ${currentAISuggestion.severity}`, 'en');
+    }
+
+    function onManualSeverityChange() {
+      const val = document.getElementById('severity').value;
+      if (val === 'Auto') {
+        manualSeveritySelected = false;
+        updateAISeveritySuggestion();
+      } else {
+        manualSeveritySelected = true;
+        const btnApply = document.getElementById('btn-apply-suggestion');
+        if (val === currentAISuggestion.severity) {
+          btnApply.innerHTML = `✓ Applied: <strong>${val}</strong>`;
+          btnApply.classList.add('applied');
+        } else {
+          btnApply.innerHTML = `⚡ Apply Suggested: <strong>${currentAISuggestion.severity}</strong>`;
+          btnApply.classList.remove('applied');
+          showToast(`Manual severity set to ${val}. Click above to re-apply AI suggestion anytime.`, 'info');
+        }
+        updateDynamicSeverityMeter();
+      }
+    }
+
+    function updateDynamicSeverityMeter() {
+      const cat = document.getElementById('category').value;
+      const affected = document.getElementById('affected').value;
+      let chosen = document.getElementById('severity').value;
+
+      if (chosen === 'Auto') {
+        chosen = currentAISuggestion.severity;
+      }
+
+      const score = calculateThreatScore(cat, affected, chosen);
+      const bar = document.getElementById('severity-meter-bar');
+      const badge = document.getElementById('severity-score-val');
+
+      bar.style.width = score + '%';
+      bar.className = 'meter-fill';
+
+      if (score >= 81) {
+        bar.classList.add('meter-critical');
+        badge.className = 'severity-score-badge meter-critical';
+        badge.textContent = `Score: ${score}/100 — Critical Threat`;
+      } else if (score >= 56) {
+        bar.classList.add('meter-high');
+        badge.className = 'severity-score-badge meter-high';
+        badge.textContent = `Score: ${score}/100 — High Threat`;
+      } else if (score >= 26) {
+        bar.classList.add('meter-medium');
+        badge.className = 'severity-score-badge meter-medium';
+        badge.textContent = `Score: ${score}/100 — Moderate Risk`;
+      } else {
+        bar.classList.add('meter-low');
+        badge.className = 'severity-score-badge meter-low';
+        badge.textContent = `Score: ${score}/100 — Low Risk`;
+      }
+
+      return score;
+    }
+
+    // ====================================================================
+    // USER COMMUNITY INCIDENTS & PRIORITY RANKINGS
+    // ====================================================================
+    let userIncidents = [];
+
+    function isCivilianIncidentRecord(item) {
+      if (!item || item.isSimulated || item.isTest) return false;
+      if (!item.reportedRole) return true;
+      const role = String(item.reportedRole).trim().toLowerCase();
+      return role === 'civilian' || role === 'user';
+    }
+
+    async function loadUserIncidents() {
+      try {
+        const list = await rapidSync.fetchIncidents();
+        userIncidents = (list || []).filter(isCivilianIncidentRecord);
+        renderUserIncidents();
+        checkCivilianDispatches();
+      } catch (e) {
+        console.warn('Failed to load incidents in user portal:', e);
+      }
+    }
+
+    function renderUserIncidents() {
+      const container = document.getElementById('user-incidents-list');
+      const countEl = document.getElementById('user-incidents-count');
+      if (!container) return;
+
+      countEl.textContent = `${userIncidents.length} civilian`;
+
+      if (userIncidents.length === 0) {
+        container.innerHTML = `<div style="padding: 16px; text-align: center; color: var(--text-faint); font-size: 13px;">No civilian emergency reports submitted yet.</div>`;
+        return;
+      }
+
+      // Sort by priority rank (highest priority first)
+      const sorted = [...userIncidents].sort((a, b) => (b.priorityScore || 50) - (a.priorityScore || 50));
+
+      container.innerHTML = sorted.map((item, idx) => {
+        const rank = idx + 1;
+        const rankClass = rank === 1 ? 'rank-top' : rank <= 3 ? 'rank-high' : 'rank-mid';
+        const teamAssigned = item.assignedTeamName ? `🚑 Dispatched: <strong>${item.assignedTeamName}</strong>` : '⏳ Awaiting Command Team Assignment';
+
+        return `
+          <div style="background: var(--subtle); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 240px;">
+              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 4px;">
+                <span class="priority-rank-badge ${rankClass}">Rank #${rank} Priority</span>
+                <span style="font-weight: 800; font-size: 13px; color: var(--navy);">${item.title}</span>
+                <span class="sev-badge sev-${item.severity}" style="font-size: 11px;">${item.severity}</span>
+              </div>
+              <div style="font-size: 12px; color: var(--text-secondary);">
+                📍 ${item.location} · 👥 ${item.affected} affected · 🕒 ${item.timestamp}
+              </div>
+              <div style="font-size: 11px; color: ${item.assignedTeamName ? 'var(--success)' : 'var(--warning)'}; margin-top: 4px; font-weight: 600;">
+                ${teamAssigned}
+              </div>
+            </div>
+            <div style="text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+              <span style="font-size: 12px; font-weight: 700; color: var(--navy); display: block;">Score: ${item.priorityScore || 50}/100</span>
+              <span style="font-size: 11px; color: var(--text-muted);">${item.status}</span>
+              <button type="button" class="btn" style="background: #0f172a; color: #f8fafc; border: none; padding: 4px 10px; font-size: 11px; font-weight: 700; border-radius: var(--radius-sm); cursor: pointer; margin-top: 2px;" onclick="openUserIncidentQR('${item.id}')">
+                📱 QR Code
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function openCurrentDraftQR() {
+      if (typeof window.showIncidentQRModal !== 'function' || typeof window.getCurrentFormIncidentDraft !== 'function') {
+        showToast('QR generator is still loading, please retry.', 'warning');
+        return;
+      }
+      window.showIncidentQRModal(window.getCurrentFormIncidentDraft());
+    }
+
+    function openLastSubmittedQR() {
+      if (window.lastSubmittedIncident && typeof window.showIncidentQRModal === 'function') {
+        window.showIncidentQRModal(window.lastSubmittedIncident);
+      } else {
+        openCurrentDraftQR();
+      }
+    }
+
+    function openUserIncidentQR(id) {
+      const item = userIncidents.find(i => String(i.id) === String(id));
+      if (!item || typeof window.showIncidentQRModal !== 'function') return;
+      window.showIncidentQRModal(item);
+    }
+
+    updateAISeveritySuggestion();
+    loadUserIncidents();
+    setInterval(loadUserIncidents, 6000);
+
+    // ====================================================================
+    // PERMISSIONS READINESS BAR INITIALIZATION
+    // ====================================================================
+    function updateReadinessUI() {
+      const coords = window.getCurrentOrCachedCoords ? window.getCurrentOrCachedCoords() : { latitude: 13.0604, longitude: 80.2496, accuracy: 10 };
+      window._currentCoords = coords;
+      currentCoords = coords;
+      document.getElementById('readiness-loc-val').textContent = `${coords.latitude}, ${coords.longitude}`;
+      if (!document.getElementById('location').value) {
+        document.getElementById('location').value = `${coords.latitude}, ${coords.longitude} (GPS Auto)`;
+      }
+      autoDetectLocation(false);
+    }
+    updateReadinessUI();
+
+    async function testAndReauthorizePermissions() {
+      showToast('Requesting device sensor permissions...', 'warning');
+      const res = await requestEmergencyPermissions();
+      if (res.coords) {
+        window._currentCoords = res.coords;
+        currentCoords = res.coords;
+        document.getElementById('readiness-loc-val').textContent = `${res.coords.latitude}, ${res.coords.longitude}`;
+        document.getElementById('location').value = `${res.coords.latitude}, ${res.coords.longitude} (GPS Auto)`;
+      }
+      document.getElementById('readiness-cam-val').textContent = res.camera ? 'Authorized' : 'Denied';
+      document.getElementById('readiness-mic-val').textContent = res.microphone ? 'Authorized' : 'Denied';
+      showToast('Device permissions checked and updated!', 'success');
+    }
+
+    // ====================================================================
+    // TOAST NOTIFICATIONS
+    // ====================================================================
+    function showToast(message, type = 'success') {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.className = 'toast ' + type + ' show';
+      setTimeout(() => toast.classList.remove('show'), 4000);
+    }
+
+    // ====================================================================
+    // INCIDENT SUBMISSION (Syncs to server & Firestore)
+    // ====================================================================
+    document.getElementById('incident-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await submitIncidentFromForm();
+    });
+
+    async function submitIncidentFromForm() {
+      const category = document.getElementById('category').value;
+      const affected = parseInt(document.getElementById('affected').value, 10);
+      const chosenSeverity = document.getElementById('severity').value;
+      const threatScore = updateDynamicSeverityMeter();
+
+      let resolvedSeverity = chosenSeverity;
+      if (chosenSeverity === 'Auto') {
+        resolvedSeverity = threatScore >= 81 ? 'Critical' : threatScore >= 56 ? 'High' : threatScore >= 26 ? 'Medium' : 'Low';
+      }
+
+      // Extract coordinates from input or fallback to locked GPS coordinates
+      const locInput = document.getElementById('location').value.trim();
+      let lat = window._currentCoords?.latitude ? parseFloat(window._currentCoords.latitude) : 13.0604;
+      let lon = window._currentCoords?.longitude ? parseFloat(window._currentCoords.longitude) : 80.2496;
+      const match = locInput.match(/(-?\d+\.\d+)\s*[, ]\s*(-?\d+\.\d+)/);
+      if (match) {
+        lat = parseFloat(match[1]);
+        lon = parseFloat(match[2]);
+      }
+
+      const newIncident = {
+        id: Date.now(),
+        title: document.getElementById('title').value,
+        category,
+        severity: resolvedSeverity,
+        severityScore: threatScore,
+        location: locInput || `${lat}, ${lon} (GPS Auto)`,
+        latitude: lat,
+        longitude: lon,
+        coords: { lat, lon },
+        affected,
+        description: document.getElementById('description').value,
+        contact: document.getElementById('contact').value || 'Not provided',
+        status: 'Reported',
+        timestamp: new Date().toLocaleString(),
+        reportedBy: currentUser ? currentUser.email : 'civilian.demo@rapidresponse.org',
+        reportedRole: 'civilian',
+        source: 'form'
+      };
+
+      let wasOfflineQueued = false;
+      if (window.PuyalHaptics) {
+        window.PuyalHaptics.beginIncidentReporting();
+      }
+      try {
+        const createRes = await rapidSync.createIncident(newIncident);
+        if (createRes && createRes.success === false) {
+          if (window.PuyalHaptics) window.PuyalHaptics.endIncidentReporting(false);
+          showToast(createRes.error || 'Only civilian reports are accepted.', 'error');
+          return;
+        }
+        wasOfflineQueued = Boolean(createRes && createRes.offlineQueued);
+        if (window.PuyalHaptics) window.PuyalHaptics.endIncidentReporting(true);
+      } catch (err) {
+        if (window.PuyalHaptics) window.PuyalHaptics.endIncidentReporting(false);
+        console.warn('Server incident post error:', err);
+        showToast(err.message || 'Unable to submit incident report.', 'error');
+        return;
+      }
+
+      if (window.db && navigator.onLine) {
+        try {
+          window.db.collection('incidents').add({
+            ...newIncident,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          }).catch(console.warn);
+        } catch (e) {}
+      }
+
+      // Voice read-back confirmation using TTS
+      speakText(
+        wasOfflineQueued
+          ? `Emergency saved offline. Will automatically dispatch to command center when connection returns.`
+          : `Emergency incident submitted. Severity level ${resolvedSeverity}. Emergency response teams notified.`,
+        currentAppLanguage || 'en'
+      );
+
+      window.lastSubmittedIncident = newIncident;
+      const qrBar = document.getElementById('last-submitted-qr-bar');
+      const qrBarTitle = document.getElementById('last-submitted-qr-title');
+      if (qrBar && qrBarTitle) {
+        qrBarTitle.textContent = `${newIncident.title} (#${newIncident.id})`;
+        qrBar.style.display = 'flex';
+      }
+
+      document.getElementById('incident-form').reset();
+      updateDynamicSeverityMeter();
+      autoDetectLocation(false);
+      await loadUserIncidents();
+      if (wasOfflineQueued && typeof window.triggerOfflineAlert === 'function') {
+        window.triggerOfflineAlert({
+          id: `offline-inc-${newIncident.id}`,
+          title: 'Incident Alert Saved Offline',
+          message: `"${newIncident.title}" (${resolvedSeverity}) saved locally and queued for auto-sync when network returns.`,
+          level: resolvedSeverity === 'Critical' ? 'critical' : 'warning',
+          sound: true,
+          notifyOS: true,
+          url: '/dashboard-user.html'
+        });
+      }
+      showToast(
+        wasOfflineQueued
+          ? '📴 Offline: Report saved locally and queued for auto-sync when reconnected!'
+          : '✅ Emergency reported! GPS coordinates & broadcast sent to Command Center.',
+        wasOfflineQueued ? 'warning' : 'success'
+      );
+    }
+
+    // ====================================================================
+    // AUTO-DETECT & CONTINUOUS LIVE GPS LOCATION WATCH
+    // ====================================================================
+    function applyDetectedCoords(lat, lon, acc = 10, source = 'GPS', extras = {}) {
+      const normalized = {
+        latitude: parseFloat(Number(lat).toFixed(6)),
+        longitude: parseFloat(Number(lon).toFixed(6)),
+        accuracy: parseFloat((Number(acc) || 10).toFixed(1)),
+        speed: extras.speed !== undefined && extras.speed !== null && !isNaN(extras.speed) ? parseFloat(Number(extras.speed).toFixed(1)) : null,
+        heading: extras.heading !== undefined && extras.heading !== null && !isNaN(extras.heading) ? Math.round(Number(extras.heading)) : null,
+        updatedAt: Date.now()
+      };
+      window._currentCoords = normalized;
+      currentCoords = normalized;
+
+      const locInput = document.getElementById('location');
+      if (locInput && (!locInput.value || locInput.value.includes('(GPS Auto)'))) {
+        locInput.value = `${normalized.latitude}, ${normalized.longitude} (GPS Auto)`;
+      }
+      const readinessLoc = document.getElementById('readiness-loc-val');
+      if (readinessLoc) {
+        readinessLoc.textContent = `${normalized.latitude}, ${normalized.longitude} (±${normalized.accuracy}m)`;
+      }
+      localStorage.setItem('cachedCoords', JSON.stringify(normalized));
+
+      if (typeof sosActiveFlag !== 'undefined' && sosActiveFlag) {
+        const sosCoordsEl = document.getElementById('sos-coords');
+        const sosLocEl = document.getElementById('sos-location');
+        if (sosCoordsEl) sosCoordsEl.textContent = `${normalized.latitude}, ${normalized.longitude}`;
+        if (sosLocEl) {
+          const speedText = normalized.speed && normalized.speed > 0.4
+            ? ` · ${(normalized.speed * 3.6).toFixed(1)} km/h`
+            : '';
+          sosLocEl.textContent = `● Live GPS ±${normalized.accuracy}m${speedText}`;
+        }
+        if (window.PuyalGpsAccuracy) {
+          window.PuyalGpsAccuracy.updateGpsAccuracyBadge('sos-accuracy-badge', normalized.accuracy, { theme: 'light' });
+        }
+        pushLiveSosLocation(normalized);
+      }
+    }
+
+    function pushLiveSosLocation(coords) {
+      if (!sosActiveFlag || !currentSosAlertId || !coords) return;
+      const now = Date.now();
+      if (now - lastLocationPushTs < 800) return;
+      lastLocationPushTs = now;
+
+      if (sosBroadcasterWs && sosBroadcasterWs.readyState === WebSocket.OPEN) {
+        sosBroadcasterWs.send(JSON.stringify({
+          type: 'LOCATION_UPDATE',
+          sosId: currentSosAlertId,
+          coords,
+          ts: now
+        }));
+      } else {
+        rapidSync.updateSOSLocation(currentSosAlertId, coords);
+      }
+    }
+
+    function startLiveGeoWatch() {
+      if (!navigator.geolocation || liveGeoWatchId !== null) return;
+      try {
+        liveGeoWatchId = navigator.geolocation.watchPosition(
+          (pos) => {
+            applyDetectedCoords(
+              pos.coords.latitude,
+              pos.coords.longitude,
+              pos.coords.accuracy || 8,
+              'Live Watch GPS',
+              { speed: pos.coords.speed, heading: pos.coords.heading }
+            );
+          },
+          (err) => {
+            console.warn('Continuous GPS watch notice:', err.message);
+          },
+          { enableHighAccuracy: true, timeout: 10000, maximumAge: 2000 }
+        );
+      } catch (e) {}
+    }
+
+    function stopLiveGeoWatch() {
+      if (liveGeoWatchId !== null && navigator.geolocation) {
+        try {
+          navigator.geolocation.clearWatch(liveGeoWatchId);
+        } catch (e) {}
+        liveGeoWatchId = null;
+      }
+    }
+
+    function autoDetectLocation(showToastMsg = true) {
+      if (showToastMsg) showToast('📍 Acquiring high-accuracy GPS lock...', 'warning');
+
+      if (!navigator.geolocation) {
+        const fallback = window.getCurrentOrCachedCoords ? window.getCurrentOrCachedCoords() : { latitude: 13.0604, longitude: 80.2496 };
+        applyDetectedCoords(fallback.latitude, fallback.longitude, fallback.accuracy || 10, 'Regional Grid');
+        if (showToastMsg) showToast(`📍 GPS coordinates locked: ${fallback.latitude}, ${fallback.longitude}`, 'info');
+        return;
+      }
+
+      startLiveGeoWatch();
+
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          applyDetectedCoords(
+            pos.coords.latitude,
+            pos.coords.longitude,
+            pos.coords.accuracy || 8,
+            'High-Accuracy GPS',
+            { speed: pos.coords.speed, heading: pos.coords.heading }
+          );
+          if (showToastMsg) {
+            const acc = parseFloat((pos.coords.accuracy || 8).toFixed(1));
+            showToast(`📍 Live GPS locked: ${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)} (±${acc}m)`, 'success');
+          }
+        },
+        (err) => {
+          console.warn('Geolocation sensor notification:', err.message);
+          const fallback = window.getCurrentOrCachedCoords ? window.getCurrentOrCachedCoords() : { latitude: 13.0604, longitude: 80.2496 };
+          applyDetectedCoords(fallback.latitude, fallback.longitude, fallback.accuracy || 10, 'Regional Grid');
+          if (showToastMsg) showToast(`📍 GPS coordinates locked: ${fallback.latitude}, ${fallback.longitude}`, 'info');
+        },
+        { enableHighAccuracy: true, timeout: 6000, maximumAge: 15000 }
+      );
+    }
+
+    // ====================================================================
+    // BHASHINI MULTILINGUAL VOICE REPORT & GEMINI 3.8 FLASH PIPELINE
+    // ====================================================================
+    let recognition = null;
+    let voiceTranscript = '';
+    let isRecording = false;
+    let selectedLang = 'en';
+    let currentAIGuidance = '';
+
+    const bhashiniLangCodes = {
+      'en': 'en-IN',
+      'ta': 'ta-IN',
+      'hi': 'hi-IN',
+      'te': 'te-IN',
+      'kn': 'kn-IN',
+      'ml': 'ml-IN',
+      'bn': 'bn-IN',
+      'mr': 'mr-IN',
+      'gu': 'gu-IN'
+    };
+
+    function onLanguageChange(lang) {
+      selectedLang = lang;
+      if (recognition && isRecording) {
+        stopRecording();
+      }
+      showToast(`Language switched to ${document.getElementById('bhashini-lang-select').selectedOptions[0].text}`, 'info');
+    }
+
+    function openVoiceReport() {
+      document.getElementById('voice-overlay').classList.remove('hidden');
+      voiceTranscript = '';
+      document.getElementById('voice-transcript').innerHTML = '<span style="color: var(--text-faint);">Speak in your chosen language...</span>';
+      document.getElementById('voice-classification').classList.remove('active');
+      document.getElementById('voice-guidance-box').classList.add('hidden');
+      document.getElementById('voice-confirm-btn').classList.add('hidden');
+      document.getElementById('voice-start-btn').classList.remove('hidden');
+      document.getElementById('mic-icon').className = 'mic-icon idle';
+      document.getElementById('voice-status').textContent = 'Tap to Start Speaking';
+      document.getElementById('voice-start-btn').textContent = '🎙️ Start Listening';
+      document.getElementById('voice-start-btn').classList.remove('recording');
+    }
+
+    function closeVoiceReport() {
+      document.getElementById('voice-overlay').classList.add('hidden');
+      stopRecording();
+    }
+
+    function toggleVoiceRecording() {
+      if (isRecording) {
+        stopRecording();
+      } else {
+        startRecording();
+      }
+    }
+
+    function startRecording() {
+      if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+        showToast('Voice recognition not supported in this browser. Try Chrome.', 'error');
+        return;
+      }
+
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = bhashiniLangCodes[selectedLang] || 'en-IN';
+
+      voiceTranscript = '';
+
+      recognition.onstart = () => {
+        isRecording = true;
+        document.getElementById('mic-icon').className = 'mic-icon listening';
+        document.getElementById('voice-status').textContent = '🔴 Listening (' + selectedLang.toUpperCase() + ')...';
+        document.getElementById('voice-start-btn').textContent = '⏹️ Stop & Analyze with AI';
+        document.getElementById('voice-start-btn').classList.add('recording');
+      };
+
+      recognition.onresult = (event) => {
+        let finalTranscript = '';
+        let interimTranscript = '';
+
+        for (let i = 0; i < event.results.length; i++) {
+          const result = event.results[i];
+          if (result.isFinal) {
+            finalTranscript += result[0].transcript;
+          } else {
+            interimTranscript += result[0].transcript;
+          }
+        }
+
+        voiceTranscript = finalTranscript;
+        const display = finalTranscript + '<span style="color: var(--text-faint);">' + interimTranscript + '</span>';
+        document.getElementById('voice-transcript').innerHTML = display || '<span style="color: var(--text-faint);">Listening...</span>';
+      };
+
+      recognition.onerror = (event) => {
+        if (event.error !== 'aborted') {
+          showToast('Voice error: ' + event.error, 'error');
+        }
+        stopRecording();
+      };
+
+      recognition.onend = async () => {
+        isRecording = false;
+        document.getElementById('mic-icon').className = 'mic-icon idle';
+        document.getElementById('voice-status').textContent = 'Analyzing with Gemini & Bhashini AI...';
+        document.getElementById('voice-start-btn').textContent = '🎙️ Retry';
+        document.getElementById('voice-start-btn').classList.remove('recording');
+
+        if (voiceTranscript.trim()) {
+          await analyzeVoiceWithGeminiBhashini(voiceTranscript);
+        }
+      };
+
+      recognition.start();
+    }
+
+    function stopRecording() {
+      if (recognition) {
+        recognition.stop();
+        recognition = null;
+      }
+      isRecording = false;
+    }
+
+    async function analyzeVoiceWithGeminiBhashini(text) {
+      document.getElementById('voice-status').textContent = '⚡ Running Gemini 3.8 Flash AI Model...';
+
+      try {
+        const resp = await rapidSync.processVoiceAI(text, selectedLang);
+        const data = resp.result || {};
+
+        document.getElementById('voice-category').textContent = data.category || 'Other';
+        document.getElementById('voice-severity').textContent = data.severity || 'Medium';
+        document.getElementById('voice-threat-score').textContent = (data.severityScore || 50) + '/100';
+        document.getElementById('voice-classification').classList.add('active');
+
+        // Guidance Box
+        currentAIGuidance = data.firstAidGuidance || 'Emergency responders notified. Stay safe and avoid hazards.';
+        document.getElementById('voice-guidance-text').textContent = currentAIGuidance;
+        document.getElementById('voice-guidance-box').classList.remove('hidden');
+
+        document.getElementById('voice-confirm-btn').classList.remove('hidden');
+        document.getElementById('voice-status').textContent = '✅ Analysis Complete! Ready to Dispatch.';
+
+        window._voiceClassification = {
+          category: data.category || 'Other',
+          severity: data.severity || 'Medium',
+          severityScore: data.severityScore || 50,
+          affected: data.affected || 1,
+          text: data.translatedText || text,
+          originalText: text,
+          guidance: currentAIGuidance
+        };
+
+        // Automatic audio confirmation via Text to Speech
+        speakText(currentAIGuidance, selectedLang);
+
+      } catch (err) {
+        console.error('Voice AI analysis error:', err);
+        showToast('Using local classification: ' + err.message, 'warning');
+      }
+    }
+
+    function playAIGuidanceAudio() {
+      if (currentAIGuidance) {
+        speakText(currentAIGuidance, selectedLang);
+      }
+    }
+
+    async function confirmVoiceReport() {
+      const c = window._voiceClassification;
+      if (!c) return;
+
+      let loc = document.getElementById('location').value || 'Location Auto GPS';
+      let lat = window._currentCoords?.latitude ? parseFloat(window._currentCoords.latitude) : 13.0604;
+      let lon = window._currentCoords?.longitude ? parseFloat(window._currentCoords.longitude) : 80.2496;
+      const match = loc.match(/(-?\d+\.\d+)\s*[, ]\s*(-?\d+\.\d+)/);
+      if (match) {
+        lat = parseFloat(match[1]);
+        lon = parseFloat(match[2]);
+      }
+
+      const newIncident = {
+        id: Date.now(),
+        title: `[Bhashini AI] ${c.category} Emergency`,
+        category: c.category,
+        severity: c.severity,
+        severityScore: c.severityScore,
+        location: loc || `${lat}, ${lon} (GPS Auto)`,
+        latitude: lat,
+        longitude: lon,
+        coords: { lat, lon },
+        affected: c.affected,
+        description: `${c.text} (Original: ${c.originalText || c.text})`,
+        contact: currentUser ? currentUser.email : 'Voice Report',
+        status: 'Reported',
+        timestamp: new Date().toLocaleString(),
+        reportedBy: currentUser ? currentUser.email : 'civilian.demo@rapidresponse.org',
+        reportedRole: 'civilian',
+        source: 'voice'
+      };
+
+      if (window.PuyalHaptics) {
+        window.PuyalHaptics.beginIncidentReporting();
+      }
+      const createRes = await rapidSync.createIncident(newIncident);
+      if (createRes && createRes.success === false) {
+        if (window.PuyalHaptics) window.PuyalHaptics.endIncidentReporting(false);
+        showToast(createRes.error || 'Only civilian reports are accepted.', 'error');
+        return;
+      }
+      if (window.PuyalHaptics) {
+        window.PuyalHaptics.endIncidentReporting(true);
+      }
+      const wasOfflineQueued = Boolean(createRes && createRes.offlineQueued);
+
+      if (window.db && navigator.onLine) {
+        window.db.collection('incidents').add({
+          ...newIncident,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        }).catch(console.warn);
+      }
+
+      speakText(
+        wasOfflineQueued ? 'Emergency voice report saved offline and queued for sync.' : 'Emergency confirmed. Dispatched to command center.',
+        currentAppLanguage || 'en'
+      );
+      closeVoiceReport();
+      await loadUserIncidents();
+      showToast(
+        wasOfflineQueued ? '📴 Voice report saved offline — will auto-sync on reconnect!' : '✅ Multilingual emergency broadcast submitted to Admin Command!',
+        wasOfflineQueued ? 'warning' : 'success'
+      );
+    }
+
+    // ====================================================================
+    // SOS — REAL-TIME 20 FPS ADAPTIVE VIDEO & 64ms 16kHz PCM AUDIO STREAM
+    // ====================================================================
+    function updateBroadcasterStatusBadge() {
+      const statusEl = document.getElementById('sos-status-label');
+      if (!statusEl) return;
+      if (typeof navigator !== 'undefined' && !navigator.onLine) {
+        statusEl.textContent = '● Offline SOS Armed — Local Recording & Queued for Sync';
+        statusEl.style.color = '#facc15';
+        return;
+      }
+      const wsOpen = sosBroadcasterWs && sosBroadcasterWs.readyState === WebSocket.OPEN;
+      const rtt = sosWsLatencyMs !== null ? ` · ${sosWsLatencyMs}ms` : '';
+      const viewerStr = sosCommandViewers > 0 ? ` · 👁️ HQ Watching (${sosCommandViewers})` : '';
+      const fpsStr = currentFpsActual > 0 ? `${currentFpsActual} FPS` : '30 FPS';
+      const codecStr = canEncodeWebP ? 'WebP' : 'JPEG';
+      if (wsOpen) {
+        statusEl.textContent = hasPhysicalAudio
+          ? `● WS ${fpsStr} ${currentStreamRes} ${codecStr} + 24kHz Mic${rtt}${viewerStr}`
+          : `● WS ${fpsStr} ${currentStreamRes} ${codecStr}${rtt}${viewerStr}`;
+        statusEl.style.color = '#4ade80';
+      } else {
+        statusEl.textContent = `● HTTP Relay (Reconnecting WS...)${viewerStr}`;
+        statusEl.style.color = '#facc15';
+      }
+    }
+
+    function int16ToBase64(int16Arr) {
+      const bytes = new Uint8Array(int16Arr.buffer, int16Arr.byteOffset, int16Arr.byteLength);
+      let binary = '';
+      const chunk = 0x8000;
+      for (let i = 0; i < bytes.length; i += chunk) {
+        binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+      }
+      return btoa(binary);
+    }
+
+    function blobToDataUrl(blob) {
+      return new Promise((resolve) => {
+        try {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result || null);
+          reader.onerror = () => resolve(null);
+          reader.readAsDataURL(blob);
+        } catch (e) {
+          resolve(null);
+        }
+      });
+    }
+
+    function resampleToTargetInt16(float32Input, inputSampleRate, targetRate = STREAM_AUDIO_RATE) {
+      if (!float32Input || !float32Input.length) return new Int16Array(0);
+      if (inputSampleRate === targetRate) {
+        const out = new Int16Array(float32Input.length);
+        for (let i = 0; i < float32Input.length; i++) {
+          const s = Math.max(-1, Math.min(1, float32Input[i]));
+          out[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
+        }
+        return out;
+      }
+      const ratio = inputSampleRate / targetRate;
+      const newLen = Math.max(1, Math.floor(float32Input.length / ratio));
+      const out = new Int16Array(newLen);
+      // Anti-aliased box-filtered resampling when downsampling (e.g. 48kHz -> 24kHz)
+      if (ratio >= 1.5) {
+        for (let i = 0; i < newLen; i++) {
+          const start = i * ratio;
+          const end = Math.min(float32Input.length, (i + 1) * ratio);
+          const iStart = Math.floor(start);
+          const iEnd = Math.max(iStart + 1, Math.floor(end));
+          let acc = 0;
+          let cnt = 0;
+          for (let j = iStart; j < iEnd && j < float32Input.length; j++) {
+            acc += float32Input[j];
+            cnt++;
+          }
+          const avg = cnt > 0 ? acc / cnt : (float32Input[iStart] || 0);
+          const clamped = Math.max(-1, Math.min(1, avg));
+          out[i] = clamped < 0 ? clamped * 0x8000 : clamped * 0x7fff;
+        }
+      } else {
+        for (let i = 0; i < newLen; i++) {
+          const pos = i * ratio;
+          const idx = Math.floor(pos);
+          const frac = pos - idx;
+          const s0 = float32Input[idx] || 0;
+          const s1 = float32Input[Math.min(idx + 1, float32Input.length - 1)] || s0;
+          const sample = Math.max(-1, Math.min(1, s0 + (s1 - s0) * frac));
+          out[i] = sample < 0 ? sample * 0x8000 : sample * 0x7fff;
+        }
+      }
+      return out;
+    }
+
+    function downsampleTo16kInt16(float32Input, inputSampleRate) {
+      return resampleToTargetInt16(float32Input, inputSampleRate, 16000);
+    }
+
+    function connectSosBroadcasterWs() {
+      if (!sosActiveFlag || !currentSosAlertId) return;
+      if (typeof navigator !== 'undefined' && !navigator.onLine) {
+        updateBroadcasterStatusBadge();
+        return;
+      }
+      if (sosBroadcasterWs && (sosBroadcasterWs.readyState === WebSocket.OPEN || sosBroadcasterWs.readyState === WebSocket.CONNECTING)) {
+        return;
+      }
+      try {
+        const wsUrl = rapidSync.getSosWebSocketUrl('broadcaster', currentSosAlertId);
+        const ws = new WebSocket(wsUrl);
+        ws.binaryType = 'arraybuffer';
+        sosBroadcasterWs = ws;
+
+        ws.onopen = () => {
+          if (!sosActiveFlag) {
+            ws.close();
+            return;
+          }
+          ws.send(JSON.stringify({ type: 'SUBSCRIBE', role: 'broadcaster', sosId: currentSosAlertId }));
+          ws.send(JSON.stringify({ type: 'PING', ts: Date.now() }));
+          if (currentCoords) {
+            ws.send(JSON.stringify({ type: 'LOCATION_UPDATE', sosId: currentSosAlertId, coords: currentCoords, ts: Date.now() }));
+          }
+          clearInterval(sosWsPingInterval);
+          sosWsPingInterval = setInterval(() => {
+            if (ws.readyState === WebSocket.OPEN) {
+              ws.send(JSON.stringify({ type: 'PING', ts: Date.now() }));
+            }
+          }, 3000);
+          updateBroadcasterStatusBadge();
+        };
+
+        ws.onmessage = (evt) => {
+          try {
+            const msg = JSON.parse(evt.data);
+            if (msg.type === 'PONG' && msg.clientTs) {
+              sosWsLatencyMs = Math.max(1, Date.now() - msg.clientTs);
+              updateBroadcasterStatusBadge();
+            } else if (msg.type === 'VIEWER_STATUS') {
+              const prevCount = sosCommandViewers;
+              sosCommandViewers = Number(msg.viewerCount || 0);
+              updateBroadcasterStatusBadge();
+              if (sosCommandViewers > prevCount) {
+                showToast('👁️ Admin Command Center connected to your live stream!', 'success');
+              }
+            }
+          } catch (e) {}
+        };
+
+        ws.onclose = () => {
+          if (sosBroadcasterWs === ws) sosBroadcasterWs = null;
+          clearInterval(sosWsPingInterval);
+          if (sosActiveFlag) {
+            updateBroadcasterStatusBadge();
+            clearTimeout(sosWsReconnectTimer);
+            if (typeof navigator === 'undefined' || navigator.onLine) {
+              sosWsReconnectTimer = setTimeout(connectSosBroadcasterWs, 900);
+            }
+          }
+        };
+
+        ws.onerror = () => {};
+      } catch (e) {
+        console.warn('WebSocket init fallback to HTTP:', e);
+      }
+    }
+
+    function ensureBroadcasterAudioContext() {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return null;
+        if (!audioContext || audioContext.state === 'closed') {
+          audioContext = new AudioCtx({ latencyHint: 'interactive' });
+        }
+        if (audioContext.state === 'suspended') {
+          audioContext.resume().catch(() => {});
+        }
+        return audioContext;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    async function setupAudioStreamer(stream) {
+      try {
+        const ctx = ensureBroadcasterAudioContext();
+        if (!ctx) {
+          hasPhysicalAudio = false;
+          return;
+        }
+        if (audioWorkletNode) {
+          try { audioWorkletNode.port.onmessage = null; audioWorkletNode.disconnect(); } catch (e) {}
+          audioWorkletNode = null;
+        }
+        if (audioProcessorNode) {
+          try { audioProcessorNode.disconnect(); } catch (e) {}
+          audioProcessorNode = null;
+        }
+        if (audioMuteGain) {
+          try { audioMuteGain.disconnect(); } catch (e) {}
+          audioMuteGain = null;
+        }
+        const source = audioContext.createMediaStreamSource(stream);
+
+        // Broadcast voice DSP chain: rumble high-pass (80Hz) + vocal clarity shelf + dynamic leveling
+        const highpassFilter = audioContext.createBiquadFilter();
+        highpassFilter.type = 'highpass';
+        highpassFilter.frequency.value = 80;
+        highpassFilter.Q.value = 0.7;
+
+        const vocalClarityFilter = audioContext.createBiquadFilter();
+        vocalClarityFilter.type = 'peaking';
+        vocalClarityFilter.frequency.value = 2800;
+        vocalClarityFilter.Q.value = 1.0;
+        vocalClarityFilter.gain.value = 2.5;
+
+        const vocalCompressor = audioContext.createDynamicsCompressor();
+        vocalCompressor.threshold.value = -22;
+        vocalCompressor.knee.value = 18;
+        vocalCompressor.ratio.value = 3.5;
+        vocalCompressor.attack.value = 0.004;
+        vocalCompressor.release.value = 0.12;
+
+        audioAnalyser = audioContext.createAnalyser();
+        audioAnalyser.fftSize = 256;
+        audioAnalyser.smoothingTimeConstant = 0.72;
+
+        source.connect(highpassFilter);
+        highpassFilter.connect(vocalClarityFilter);
+        vocalClarityFilter.connect(vocalCompressor);
+        vocalCompressor.connect(audioAnalyser);
+
+        // Ultra-low-latency 21.3ms 24kHz HD PCM ring buffer (512 Int16 samples = 1024 bytes per binary packet)
+        const TARGET_CHUNK_SAMPLES = 512;
+        const ringBuf = new Int16Array(TARGET_CHUNK_SAMPLES * 6);
+        let ringWrite = 0;
+
+        // Pre-allocated binary audio packet: [0x02, seq(4LE), level(1), sampleRate(2LE), Int16 PCM...]
+        const audioPktBuf = new Uint8Array(8 + TARGET_CHUNK_SAMPLES * 2);
+        const audioPktView = new DataView(audioPktBuf.buffer);
+        const audioPktInt16View = new Int16Array(audioPktBuf.buffer, 8, TARGET_CHUNK_SAMPLES);
+
+        const handleAudioFloatSamples = (inputSamples) => {
+          if (!sosActiveFlag || userMicMuted || !inputSamples || !inputSamples.length) return;
+          let sumSq = 0;
+          for (let i = 0; i < inputSamples.length; i++) {
+            sumSq += inputSamples[i] * inputSamples[i];
+          }
+          const rms = Math.sqrt(sumSq / inputSamples.length);
+          liveAudioLevel = Math.min(100, Math.max(2, Math.round(rms * 380)));
+
+          const int16 = resampleToTargetInt16(inputSamples, audioContext.sampleRate || 48000, STREAM_AUDIO_RATE);
+          for (let i = 0; i < int16.length; i++) {
+            ringBuf[ringWrite++] = int16[i];
+            if (ringWrite >= TARGET_CHUNK_SAMPLES) {
+              audioPktInt16View.set(ringBuf.subarray(0, TARGET_CHUNK_SAMPLES));
+              const remaining = ringWrite - TARGET_CHUNK_SAMPLES;
+              if (remaining > 0) {
+                ringBuf.copyWithin(0, TARGET_CHUNK_SAMPLES, ringWrite);
+              }
+              ringWrite = remaining;
+              audioSeq++;
+
+              if (currentSosAlertId) {
+                if (sosBroadcasterWs && sosBroadcasterWs.readyState === WebSocket.OPEN) {
+                  if (sosBroadcasterWs.bufferedAmount < 192 * 1024) {
+                    audioPktBuf[0] = 0x02;
+                    audioPktView.setUint32(1, audioSeq, true);
+                    audioPktBuf[5] = Math.min(100, Math.max(0, Math.round(liveAudioLevel)));
+                    audioPktView.setUint16(6, STREAM_AUDIO_RATE, true);
+                    sosBroadcasterWs.send(audioPktBuf.buffer);
+                  }
+                } else {
+                  const audioPcmBase64 = int16ToBase64(audioPktInt16View);
+                  rapidSync.streamSOSAudio(currentSosAlertId, audioPcmBase64, STREAM_AUDIO_RATE, liveAudioLevel, audioSeq);
+                }
+              }
+            }
+          }
+        };
+
+        audioMuteGain = audioContext.createGain();
+        audioMuteGain.gain.value = 0;
+
+        let usedWorklet = false;
+        if (audioContext.audioWorklet && typeof AudioWorkletNode !== 'undefined') {
+          try {
+            if (!audioWorkletUrl) {
+              const workletCode = `
+                class PuyalAudioCaptureProcessor extends AudioWorkletProcessor {
+                  constructor() {
+                    super();
+                    this._buf = new Float32Array(512);
+                    this._idx = 0;
+                  }
+                  process(inputs) {
+                    const input = inputs && inputs[0] && inputs[0][0];
+                    if (input) {
+                      for (let i = 0; i < input.length; i++) {
+                        this._buf[this._idx++] = input[i];
+                        if (this._idx >= this._buf.length) {
+                          const copy = this._buf.slice();
+                          this.port.postMessage(copy, [copy.buffer]);
+                          this._idx = 0;
+                        }
+                      }
+                    }
+                    return true;
+                  }
+                }
+                registerProcessor('puyal-audio-capture', PuyalAudioCaptureProcessor);
+              `;
+              audioWorkletUrl = URL.createObjectURL(new Blob([workletCode], { type: 'application/javascript' }));
+            }
+            await audioContext.audioWorklet.addModule(audioWorkletUrl);
+            if (!sosActiveFlag) return;
+            audioWorkletNode = new AudioWorkletNode(audioContext, 'puyal-audio-capture');
+            audioWorkletNode.port.onmessage = (ev) => {
+              if (ev && ev.data) handleAudioFloatSamples(ev.data);
+            };
+            vocalCompressor.connect(audioWorkletNode);
+            audioWorkletNode.connect(audioMuteGain);
+            audioMuteGain.connect(audioContext.destination);
+            usedWorklet = true;
+          } catch (workletErr) {
+            usedWorklet = false;
+          }
+        }
+
+        if (!usedWorklet) {
+          audioProcessorNode = audioContext.createScriptProcessor(512, 1, 1);
+          audioProcessorNode.onaudioprocess = (event) => {
+            handleAudioFloatSamples(event.inputBuffer.getChannelData(0));
+          };
+          vocalCompressor.connect(audioProcessorNode);
+          audioProcessorNode.connect(audioMuteGain);
+          audioMuteGain.connect(audioContext.destination);
+        }
+
+        hasPhysicalAudio = true;
+        const audioModeLabel = document.getElementById('sos-audio-mode-label');
+        if (audioModeLabel) audioModeLabel.textContent = '🎙️ LIVE HD 24kHz PCM · 21ms';
+        const freqLabel = document.getElementById('sos-audio-freq-label');
+        if (freqLabel) freqLabel.textContent = usedWorklet ? '24kHz HD AudioWorklet · 21ms' : '24kHz HD PCM · 21ms Binary';
+
+        visualizeAudio();
+      } catch (e) {
+        console.warn('AudioContext streamer error:', e);
+        hasPhysicalAudio = false;
+      }
+    }
+
+    function toggleUserMicMute() {
+      userMicMuted = !userMicMuted;
+      if (sosStream) {
+        sosStream.getAudioTracks().forEach(t => {
+          t.enabled = !userMicMuted;
+        });
+      }
+      const btn = document.getElementById('btn-toggle-user-mic');
+      const audioModeLabel = document.getElementById('sos-audio-mode-label');
+      if (btn) {
+        if (userMicMuted) {
+          btn.textContent = '🔇 Mic: MUTED';
+          btn.style.background = 'rgba(239, 68, 68, 0.25)';
+          btn.style.color = '#fca5a5';
+          btn.style.borderColor = 'rgba(252, 165, 165, 0.45)';
+        } else {
+          btn.textContent = '🎙️ Mic: LIVE';
+          btn.style.background = 'rgba(16, 185, 129, 0.25)';
+          btn.style.color = '#86efac';
+          btn.style.borderColor = 'rgba(134, 239, 172, 0.45)';
+        }
+      }
+      if (audioModeLabel) {
+        audioModeLabel.textContent = userMicMuted
+          ? '🔇 MICROPHONE MUTED'
+          : (hasPhysicalAudio ? '🎙️ LIVE HD 24kHz PCM STREAMING' : 'SIMULATED AUDIO RELAY ACTIVE');
+      }
+    }
+
+    async function activateSOS() {
+      if (sosActiveFlag) {
+        document.getElementById('sos-overlay').classList.remove('hidden');
+        return;
+      }
+
+      sosActiveFlag = true;
+      userMicMuted = false;
+      hasPhysicalVideo = false;
+      hasPhysicalAudio = false;
+      videoSeq = 0;
+      audioSeq = 0;
+      currentFpsActual = 0;
+      sosWsLatencyMs = null;
+      sosCommandViewers = 0;
+      broadcasterFrameTimestamps = [];
+
+      // Synchronously create/resume AudioContext inside user-click gesture so browser autoplay/capture policy allows mic PCM streaming
+      ensureBroadcasterAudioContext();
+
+      // Reset mic button & audio label to clean initial state
+      const micBtn = document.getElementById('btn-toggle-user-mic');
+      if (micBtn) {
+        micBtn.textContent = '🎙️ Mic: LIVE';
+        micBtn.style.background = 'rgba(16, 185, 129, 0.25)';
+        micBtn.style.color = '#86efac';
+        micBtn.style.borderColor = 'rgba(134, 239, 172, 0.45)';
+      }
+      const audioModeLabel = document.getElementById('sos-audio-mode-label');
+      if (audioModeLabel) audioModeLabel.textContent = 'AUDIO RELAY ACTIVE';
+
+      document.getElementById('sos-overlay').classList.remove('hidden');
+      document.getElementById('sos-time').textContent = new Date().toLocaleTimeString();
+      document.getElementById('sos-location').textContent = 'Acquiring high-accuracy GPS...';
+      document.getElementById('sos-coords').textContent = 'Fetching GPS...';
+      if (window.PuyalGpsAccuracy) {
+        window.PuyalGpsAccuracy.updateGpsAccuracyBadge('sos-accuracy-badge', null, { theme: 'light' });
+      }
+
+      const fallbackCoords = window._currentCoords || (window.getCurrentOrCachedCoords ? window.getCurrentOrCachedCoords() : { latitude: 13.0604, longitude: 80.2496, accuracy: 10 });
+      currentCoords = fallbackCoords;
+      document.getElementById('sos-coords').textContent = `${fallbackCoords.latitude}, ${fallbackCoords.longitude}`;
+      document.getElementById('sos-location').textContent = `● Live GPS ±${fallbackCoords.accuracy || 10}m`;
+      if (window.PuyalGpsAccuracy) {
+        window.PuyalGpsAccuracy.updateGpsAccuracyBadge('sos-accuracy-badge', fallbackCoords.accuracy || 10, { theme: 'light' });
+      }
+
+      // 1. Acquire Camera/Mic IN PARALLEL with SOS dispatch for fastest possible stream startup
+      const hasMediaDevices = Boolean(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+      const camPromise = hasMediaDevices
+        ? navigator.mediaDevices.getUserMedia({
+            video: { facingMode: sosFacingMode, width: { ideal: 1280, min: 640 }, height: { ideal: 720, min: 360 }, frameRate: { ideal: 30, min: 15, max: 30 } },
+            audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1, sampleRate: 48000 }
+          }).catch(err => ({ __camErr: err }))
+        : Promise.resolve({ __camErr: new Error('MediaDevices unavailable') });
+
+      await dispatchSOS(fallbackCoords.latitude, fallbackCoords.longitude, fallbackCoords.accuracy || 10);
+      if (!sosActiveFlag) {
+        camPromise.then(res => {
+          if (res && !res.__camErr && res.getTracks) res.getTracks().forEach(t => t.stop());
+        });
+        return;
+      }
+      if (window.PuyalHaptics) {
+        window.PuyalHaptics.startStreaming();
+      }
+      connectSosBroadcasterWs();
+      geoWatchStartedBySos = liveGeoWatchId === null;
+      startLiveGeoWatch();
+
+      // Immediate GPS fix attempt on top of continuous watchPosition
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            if (!sosActiveFlag) return;
+            applyDetectedCoords(
+              pos.coords.latitude,
+              pos.coords.longitude,
+              pos.coords.accuracy || 8,
+              'SOS Lock GPS',
+              { speed: pos.coords.speed, heading: pos.coords.heading }
+            );
+          },
+          (err) => {
+            console.warn('SOS geolocation initial fix fallback:', err.message);
+          },
+          { enableHighAccuracy: true, timeout: 6000, maximumAge: 10000 }
+        );
+      }
+
+      // 2. Bind Physical Camera + Microphone once parallel getUserMedia finishes (or fallback)
+      const mediaResult = await camPromise;
+      if (!sosActiveFlag) {
+        if (mediaResult && !mediaResult.__camErr && mediaResult.getTracks) {
+          mediaResult.getTracks().forEach(t => t.stop());
+        }
+        return;
+      }
+
+      if (mediaResult && !mediaResult.__camErr) {
+        sosStream = mediaResult;
+        hasPhysicalVideo = mediaResult.getVideoTracks().length > 0;
+        const video = document.getElementById('sos-video');
+        video.muted = true;
+        video.playsInline = true;
+        video.srcObject = mediaResult;
+        video.style.display = 'block';
+        video.play().catch(() => {});
+        document.getElementById('sos-canvas').style.display = 'none';
+        document.getElementById('sos-camera-label').textContent = '📹 Live HD Physical Camera (30 FPS)';
+
+        if (mediaResult.getAudioTracks().length > 0) {
+          setupAudioStreamer(mediaResult);
+        }
+
+        isSimulatedFeed = false;
+        startLiveFrameRelay();
+      } else if (hasMediaDevices) {
+        console.warn('Camera+Mic unavailable, trying Microphone-only stream:', mediaResult?.__camErr?.message);
+        try {
+          const audioOnlyStream = await navigator.mediaDevices.getUserMedia({
+            audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1, sampleRate: 48000 }
+          });
+          if (!sosActiveFlag) {
+            audioOnlyStream.getTracks().forEach(t => t.stop());
+            return;
+          }
+          sosStream = audioOnlyStream;
+          hasPhysicalVideo = false;
+          setupAudioStreamer(audioOnlyStream);
+          activateSimulatedEmergencyFeed(true);
+          showToast('🎙️ Live microphone audio connected! Using tactical video canvas.', 'info');
+        } catch (audioErr) {
+          if (!sosActiveFlag) return;
+          console.warn('Physical camera/mic hardware inaccessible. Engaging Simulated Tactical Emergency Feed Fallback:', audioErr);
+          activateSimulatedEmergencyFeed(false);
+        }
+      } else {
+        activateSimulatedEmergencyFeed(false);
+      }
+
+      // Only speak aloud if physical microphone is NOT capturing locally, avoiding mic-echo feedback
+      if (!hasPhysicalAudio) {
+        speakText('SOS Emergency Activated. Live telemetry streaming to Admin Command Center.', 'en');
+      }
+    }
+
+    async function switchSosCamera() {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        showToast('Camera switching is not supported in this browser.', 'warning');
+        return;
+      }
+      const nextFacing = sosFacingMode === 'environment' ? 'user' : 'environment';
+      try {
+        const newCamStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: nextFacing }, width: { ideal: 1280, min: 640 }, height: { ideal: 720, min: 360 }, frameRate: { ideal: 30, min: 15, max: 30 } },
+          audio: false
+        });
+        const newVideoTrack = newCamStream.getVideoTracks()[0];
+        if (!newVideoTrack) return;
+
+        // Replace only video tracks while keeping audio track + AudioWorklet streamer untouched
+        if (sosStream) {
+          sosStream.getVideoTracks().forEach(t => {
+            sosStream.removeTrack(t);
+            t.stop();
+          });
+          sosStream.addTrack(newVideoTrack);
+        } else {
+          sosStream = newCamStream;
+        }
+        sosFacingMode = nextFacing;
+        hasPhysicalVideo = true;
+        isSimulatedFeed = false;
+        const video = document.getElementById('sos-video');
+        video.muted = true;
+        video.playsInline = true;
+        video.srcObject = sosStream;
+        video.style.display = 'block';
+        video.play().catch(() => {});
+        document.getElementById('sos-canvas').style.display = 'none';
+        document.getElementById('sos-camera-label').textContent = `📹 Live HD Camera (${nextFacing === 'user' ? 'Front' : 'Rear'} · 30 FPS)`;
+        showToast(`Switched to ${nextFacing === 'user' ? 'front' : 'rear'} HD camera.`, 'success');
+      } catch (err) {
+        showToast('Alternate camera unavailable on this device.', 'warning');
+      }
+    }
+
+    function activateSimulatedEmergencyFeed(keepLiveMic = false) {
+      isSimulatedFeed = true;
+      const video = document.getElementById('sos-video');
+      const canvas = document.getElementById('sos-canvas');
+      const label = document.getElementById('sos-camera-label');
+      const audioModeLabel = document.getElementById('sos-audio-mode-label');
+
+      video.style.display = 'none';
+      canvas.style.display = 'block';
+      if (label) label.textContent = '📹 Simulated Tactical Camera (30 FPS)';
+      if (audioModeLabel && !keepLiveMic && !hasPhysicalAudio) {
+        audioModeLabel.textContent = 'TELEMETRY AUDIO SIGNAL';
+      }
+
+      startLiveFrameRelay();
+      if (!keepLiveMic) {
+        showToast('⚡ Camera hardware unavailable: Simulated emergency tactical feed active at 30 FPS.', 'warning');
+      }
+    }
+
+    function toggleSimulatedFeedMode() {
+      if (isSimulatedFeed) {
+        if (sosStream && hasPhysicalVideo) {
+          isSimulatedFeed = false;
+          document.getElementById('sos-video').style.display = 'block';
+          document.getElementById('sos-canvas').style.display = 'none';
+          document.getElementById('sos-camera-label').textContent = '📹 Live Physical Camera Feed (30 FPS)';
+          showToast('Switched to physical camera feed.', 'success');
+        } else {
+          showToast('Physical camera not available on this device. Retaining simulated tactical feed.', 'warning');
+        }
+      } else {
+        activateSimulatedEmergencyFeed(hasPhysicalAudio);
+      }
+    }
+
+    function drawProceduralEmergencyFrame(bannerText) {
+      const canvas = document.getElementById('sos-canvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const w = canvas.width || 400;
+      const h = canvas.height || 300;
+
+      // Dark tactical slate background with night-vision grid
+      ctx.fillStyle = '#090d16';
+      ctx.fillRect(0, 0, w, h);
+
+      // Radar scanlines
+      ctx.strokeStyle = 'rgba(34, 197, 94, 0.12)';
+      ctx.lineWidth = 1;
+      for (let y = 0; y < h; y += 18) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y);
+        ctx.stroke();
+      }
+      for (let x = 0; x < w; x += 36) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, h);
+        ctx.stroke();
+      }
+
+      // Tactical crosshair
+      const cx = w / 2;
+      const cy = h / 2;
+      ctx.strokeStyle = '#22c55e';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 34, 0, Math.PI * 2);
+      ctx.moveTo(cx - 48, cy); ctx.lineTo(cx - 10, cy);
+      ctx.moveTo(cx + 10, cy); ctx.lineTo(cx + 48, cy);
+      ctx.moveTo(cx, cy - 48); ctx.lineTo(cx, cy - 10);
+      ctx.moveTo(cx, cy + 10); ctx.lineTo(cx, cy + 48);
+      ctx.stroke();
+
+      // Smooth rotating radar beam (15 FPS motion)
+      const now = Date.now();
+      const angle = (now / 450) % (Math.PI * 2);
+      ctx.strokeStyle = 'rgba(74, 222, 128, 0.85)';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(cx + Math.cos(angle) * 64, cy + Math.sin(angle) * 64);
+      ctx.stroke();
+
+      // Top Alert Header
+      ctx.fillStyle = 'rgba(220, 38, 38, 0.92)';
+      ctx.fillRect(10, 10, w - 20, 26);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 12px monospace';
+      ctx.textAlign = 'left';
+      ctx.fillText(bannerText || '🔴 LIVE CIVILIAN SOS — 30 FPS REAL-TIME FEED', 18, 27);
+
+      // Telemetry HUD overlay
+      ctx.fillStyle = '#4ade80';
+      ctx.font = '11px monospace';
+      const timeStr = new Date().toISOString().replace('T', ' ').slice(0, 19);
+      ctx.fillText(`TIME: ${timeStr} UTC`, 14, h - 46);
+
+      const lat = currentCoords ? currentCoords.latitude.toFixed(4) : '13.0604';
+      const lon = currentCoords ? currentCoords.longitude.toFixed(4) : '80.2496';
+      const hudAcc = currentCoords?.accuracy || 8;
+      const hudScore = window.PuyalGpsAccuracy ? window.PuyalGpsAccuracy.computeGpsAccuracyScore(hudAcc) : null;
+      const hudConfText = hudScore ? ` · ${hudScore.label.toUpperCase()} ${hudScore.score}%` : '';
+      ctx.fillText(`GPS: ${lat}, ${lon} (±${hudAcc}m${hudConfText})`, 14, h - 30);
+      ctx.fillText(`SEQ: #${simulatedPacketSeq} · ${w}x${h} @ 30 FPS · AUDIO: ${hasPhysicalAudio ? 'LIVE MIC' : 'TELEMETRY'}`, 14, h - 14);
+
+      // Equalizer bars
+      ctx.fillStyle = hasPhysicalAudio ? '#22c55e' : '#ef4444';
+      for (let i = 0; i < 9; i++) {
+        const amp = hasPhysicalAudio ? (liveAudioLevel / 100) * 20 : Math.abs(Math.sin((now / 150) + i)) * 16;
+        const barH = amp + 4;
+        ctx.fillRect(w - 76 + (i * 7), h - 14 - barH, 4, barH);
+      }
+    }
+
+    function stopFrameRelayTimers() {
+      if (streamInterval) {
+        clearTimeout(streamInterval);
+        clearInterval(streamInterval);
+        streamInterval = null;
+      }
+      if (streamPumpRaf) {
+        cancelAnimationFrame(streamPumpRaf);
+        streamPumpRaf = null;
+      }
+      const video = document.getElementById('sos-video');
+      if (video && videoFrameCbId !== null && typeof video.cancelVideoFrameCallback === 'function') {
+        try { video.cancelVideoFrameCallback(videoFrameCbId); } catch (e) {}
+      }
+      videoFrameCbId = null;
+    }
+
+    async function detectWebPSupport() {
+      if (canEncodeWebP !== null) return canEncodeWebP;
+      try {
+        const c = document.createElement('canvas');
+        c.width = 4;
+        c.height = 4;
+        const dataUrl = c.toDataURL('image/webp');
+        canEncodeWebP = typeof dataUrl === 'string' && dataUrl.startsWith('data:image/webp');
+      } catch (e) {
+        canEncodeWebP = false;
+      }
+      return canEncodeWebP;
+    }
+
+    function startLiveFrameRelay() {
+      stopFrameRelayTimers();
+      blobEncodeInFlight = false;
+      const canvas = document.getElementById('sos-canvas');
+      const video = document.getElementById('sos-video');
+
+      if (!sosCaptureCanvas) {
+        sosCaptureCanvas = document.createElement('canvas');
+        sosCaptureCanvas.width = 854;
+        sosCaptureCanvas.height = 480;
+        sosCaptureCtx = sosCaptureCanvas.getContext('2d', { alpha: false, desynchronized: true });
+        if (sosCaptureCtx) sosCaptureCtx.imageSmoothingQuality = 'high';
+      }
+
+      detectWebPSupport();
+      let lastFrameDispatchedAt = 0;
+
+      const scheduleNextFrame = () => {
+        if (!sosActiveFlag) return;
+        const hasPhysicalReady = !isSimulatedFeed && sosStream && hasPhysicalVideo && video && typeof video.requestVideoFrameCallback === 'function' && video.readyState >= 2;
+        if (hasPhysicalReady) {
+          videoFrameCbId = video.requestVideoFrameCallback(() => {
+            videoFrameCbId = null;
+            captureAndTransmitFrame();
+          });
+        } else {
+          streamPumpRaf = requestAnimationFrame(() => {
+            streamPumpRaf = null;
+            captureAndTransmitFrame();
+          });
+        }
+      };
+
+      const captureAndTransmitFrame = () => {
+        if (!sosActiveFlag || !currentSosAlertId) return;
+        const nowTs = performance.now();
+        // Pace at max ~34 FPS (29ms min gap) so hardware encoder + WS pipeline stay tear-free
+        if (blobEncodeInFlight || (nowTs - lastFrameDispatchedAt) < 28) {
+          streamInterval = setTimeout(scheduleNextFrame, 12);
+          return;
+        }
+
+        try {
+          const wsOpen = sosBroadcasterWs && sosBroadcasterWs.readyState === WebSocket.OPEN;
+          const buffered = wsOpen ? sosBroadcasterWs.bufferedAmount : 0;
+
+          // Backpressure protection: wait briefly if WS send buffer exceeds 192KB
+          if (wsOpen && buffered >= 196608) {
+            streamInterval = setTimeout(scheduleNextFrame, 24);
+            return;
+          }
+
+          // Adaptive HD resolution + quality based on live socket pressure
+          const maxDimW = buffered > 98304 ? 480 : buffered > 49152 ? 640 : 854;
+          const isWebP = Boolean(canEncodeWebP);
+          const encodeMime = isWebP ? 'image/webp' : 'image/jpeg';
+          const encodeQuality = buffered > 98304
+            ? (isWebP ? 0.56 : 0.58)
+            : buffered > 49152
+              ? (isWebP ? 0.68 : 0.70)
+              : (isWebP ? 0.78 : 0.80);
+
+          let targetCanvas = null;
+          let vol = liveAudioLevel || 25;
+
+          if (isSimulatedFeed || !sosStream || !hasPhysicalVideo) {
+            const simW = maxDimW >= 854 ? 640 : maxDimW;
+            const simH = Math.round((simW * 9) / 16);
+            if (canvas.width !== simW || canvas.height !== simH) {
+              canvas.width = simW;
+              canvas.height = simH;
+            }
+            currentStreamRes = `${simW}x${simH}`;
+            drawProceduralEmergencyFrame();
+            simulatedPacketSeq++;
+            targetCanvas = canvas;
+
+            if (!hasPhysicalAudio) {
+              vol = userMicMuted ? 0 : Math.round(30 + Math.sin(Date.now() / 200) * 26 + Math.random() * 10);
+              const audioBar = document.getElementById('audio-bar');
+              if (audioBar) audioBar.style.width = Math.min(100, vol * 1.2) + '%';
+              const freqLabel = document.getElementById('sos-audio-freq-label');
+              if (freqLabel) freqLabel.textContent = userMicMuted ? 'Mic Muted (0%)' : `Telemetry Signal: ${vol}%`;
+              drawSimulatedUserWaveform(vol);
+            }
+          } else if (video && video.videoWidth > 0 && video.videoHeight > 0 && sosCaptureCtx) {
+            const aspect = video.videoWidth / video.videoHeight;
+            const targetW = Math.min(video.videoWidth, maxDimW);
+            const targetH = Math.max(180, Math.round(targetW / aspect) & ~1);
+            if (sosCaptureCanvas.width !== targetW || sosCaptureCanvas.height !== targetH) {
+              sosCaptureCanvas.width = targetW;
+              sosCaptureCanvas.height = targetH;
+              sosCaptureCtx.imageSmoothingQuality = 'high';
+            }
+            currentStreamRes = `${targetW}x${targetH}`;
+            sosCaptureCtx.drawImage(video, 0, 0, targetW, targetH);
+            targetCanvas = sosCaptureCanvas;
+          } else {
+            const initW = 640;
+            const initH = 360;
+            if (canvas.width !== initW || canvas.height !== initH) {
+              canvas.width = initW;
+              canvas.height = initH;
+            }
+            currentStreamRes = `${initW}x${initH}`;
+            drawProceduralEmergencyFrame('🔴 LIVE SOS — INITIALIZING HD CAMERA FEED...');
+            simulatedPacketSeq++;
+            targetCanvas = canvas;
+          }
+
+          if (!targetCanvas) {
+            scheduleNextFrame();
+            return;
+          }
+
+          const snapVol = Math.min(100, Math.max(0, Math.round(vol)));
+          const snapHasRealAudio = hasPhysicalAudio && !userMicMuted;
+          const snapSosId = currentSosAlertId;
+          lastFrameDispatchedAt = nowTs;
+          blobEncodeInFlight = true;
+
+          targetCanvas.toBlob(async (blob) => {
+            try {
+              if (!blob || !sosActiveFlag || !currentSosAlertId || currentSosAlertId !== snapSosId) return;
+
+              videoSeq++;
+              const now = Date.now();
+              broadcasterFrameTimestamps.push(now);
+              broadcasterFrameTimestamps = broadcasterFrameTimestamps.filter(t => now - t <= 1000);
+              currentFpsActual = broadcasterFrameTimestamps.length;
+              if (videoSeq % 15 === 1) updateBroadcasterStatusBadge();
+
+              const isWsReady = sosBroadcasterWs &&
+                sosBroadcasterWs.readyState === WebSocket.OPEN &&
+                sosBroadcasterWs.bufferedAmount < 196608;
+
+              if (isWsReady) {
+                const imgAb = await blob.arrayBuffer();
+                if (!sosActiveFlag || !sosBroadcasterWs || sosBroadcasterWs.readyState !== WebSocket.OPEN) return;
+                const totalBytes = 8 + imgAb.byteLength;
+                if (reusableVideoPktBuf.length < totalBytes) {
+                  reusableVideoPktBuf = new Uint8Array(Math.ceil(totalBytes * 1.25));
+                }
+                const pktView = new DataView(reusableVideoPktBuf.buffer);
+                reusableVideoPktBuf[0] = 0x01;
+                pktView.setUint32(1, videoSeq, true);
+                reusableVideoPktBuf[5] = snapVol;
+                reusableVideoPktBuf[6] = (snapHasRealAudio ? 0x01 : 0x00) | (isWebP ? 0x02 : 0x00);
+                reusableVideoPktBuf[7] = 0x00;
+                reusableVideoPktBuf.set(new Uint8Array(imgAb), 8);
+                sosBroadcasterWs.send(reusableVideoPktBuf.subarray(0, totalBytes));
+              } else if ((videoSeq === 1 || videoSeq % 5 === 1) && !httpFrameInFlight) {
+                httpFrameInFlight = true;
+                try {
+                  const frameBase64 = await blobToDataUrl(blob);
+                  if (frameBase64 && sosActiveFlag && currentSosAlertId === snapSosId) {
+                    const userEmail = currentUser ? currentUser.email : 'civilian.demo@rapidresponse.org';
+                    await rapidSync.streamSOSFrame(snapSosId, frameBase64, snapVol, currentCoords, userEmail, {
+                      hasRealAudio: snapHasRealAudio,
+                      seq: videoSeq
+                    });
+                  }
+                } finally {
+                  httpFrameInFlight = false;
+                }
+              }
+            } catch (err) {
+              console.warn('Binary video encode step:', err);
+            } finally {
+              blobEncodeInFlight = false;
+              if (sosActiveFlag) scheduleNextFrame();
+            }
+          }, encodeMime, encodeQuality);
+        } catch (e) {
+          blobEncodeInFlight = false;
+          console.warn('Frame relay step:', e);
+          if (sosActiveFlag) streamInterval = setTimeout(scheduleNextFrame, 30);
+        }
+      };
+
+      scheduleNextFrame();
+    }
+
+    async function dispatchSOS(lat, lon, accuracy) {
+      const sosData = {
+        userId: currentUser ? currentUser.uid : 'demo_user_1',
+        email: currentUser ? currentUser.email : 'civilian.demo@rapidresponse.org',
+        latitude: lat,
+        longitude: lon,
+        accuracy: accuracy,
+        active: true,
+        reportedRole: 'civilian',
+        media: { hasVideo: true, hasAudio: true }
+      };
+
+      let offlineSos = typeof navigator !== 'undefined' && !navigator.onLine;
+      try {
+        const res = await rapidSync.createSOS(sosData);
+        if (res.alert && res.alert.id) {
+          currentSosAlertId = res.alert.id;
+        }
+        if (res && res.offlineQueued) {
+          offlineSos = true;
+        }
+      } catch (e) {
+        console.error('Server SOS dispatch error:', e);
+        offlineSos = true;
+      }
+
+      if (window.db && (typeof navigator === 'undefined' || navigator.onLine)) {
+        try {
+          window.db.collection('sos_alerts').add({
+            ...sosData,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+          }).catch(console.warn);
+        } catch (e) {}
+      }
+
+      if (offlineSos && typeof window.triggerOfflineAlert === 'function') {
+        window.triggerOfflineAlert({
+          id: `offline-sos-${currentSosAlertId || Date.now()}`,
+          title: 'SOS Emergency Queued Offline',
+          message: `GPS (${lat}, ${lon}) & SOS alert recorded without network — auto-transmitting as soon as signal returns.`,
+          level: 'critical',
+          sound: true,
+          notifyOS: true,
+          url: '/dashboard-user.html'
+        });
+      }
+
+      showToast(
+        offlineSos
+          ? '📴 Offline SOS Armed: Location & alert saved locally for instant auto-sync!'
+          : '🚨 SOS broadcast live to Admin Command Center!',
+        'error'
+      );
+    }
+
+    function visualizeAudio() {
+      if (!audioAnalyser || !sosActiveFlag) return;
+      const data = new Uint8Array(audioAnalyser.frequencyBinCount);
+      audioAnalyser.getByteFrequencyData(data);
+      const avg = data.reduce((a, b) => a + b) / data.length;
+      const level = userMicMuted ? 0 : Math.min(100, Math.round((avg / 128) * 100));
+      const bar = document.getElementById('audio-bar');
+      if (bar) bar.style.width = level + '%';
+      const freqLabel = document.getElementById('sos-audio-freq-label');
+      if (freqLabel) {
+        freqLabel.textContent = userMicMuted ? 'Mic Muted (0%)' : `24kHz HD PCM · 21ms · Level ${level}%`;
+      }
+
+      // Draw live time-domain waveform inside civilian SOS audio card
+      const waveCanvas = document.getElementById('sos-user-waveform-canvas');
+      if (waveCanvas) {
+        const wCtx = waveCanvas.getContext('2d');
+        const cw = waveCanvas.width;
+        const ch = waveCanvas.height;
+        wCtx.clearRect(0, 0, cw, ch);
+
+        const timeData = new Uint8Array(audioAnalyser.fftSize);
+        audioAnalyser.getByteTimeDomainData(timeData);
+
+        wCtx.lineWidth = 2;
+        wCtx.strokeStyle = userMicMuted ? '#64748b' : '#4ade80';
+        wCtx.beginPath();
+        const sliceWidth = cw / timeData.length;
+        let x = 0;
+        for (let i = 0; i < timeData.length; i++) {
+          const v = userMicMuted ? 1.0 : timeData[i] / 128.0;
+          const y = (v * ch) / 2;
+          if (i === 0) wCtx.moveTo(x, y);
+          else wCtx.lineTo(x, y);
+          x += sliceWidth;
+        }
+        wCtx.lineTo(cw, ch / 2);
+        wCtx.stroke();
+      }
+
+      audioAnimFrame = requestAnimationFrame(visualizeAudio);
+    }
+
+    function drawSimulatedUserWaveform(level) {
+      const waveCanvas = document.getElementById('sos-user-waveform-canvas');
+      if (!waveCanvas) return;
+      const wCtx = waveCanvas.getContext('2d');
+      const cw = waveCanvas.width;
+      const ch = waveCanvas.height;
+      wCtx.clearRect(0, 0, cw, ch);
+      wCtx.lineWidth = 2;
+      wCtx.strokeStyle = userMicMuted ? '#64748b' : '#38bdf8';
+      wCtx.beginPath();
+      const now = Date.now() / 120;
+      const amp = userMicMuted ? 0 : Math.max(2, (level / 100) * (ch * 0.38));
+      for (let x = 0; x <= cw; x += 6) {
+        const y = (ch / 2) + Math.sin(x * 0.08 + now) * amp * Math.cos(x * 0.03 - now * 0.5);
+        if (x === 0) wCtx.moveTo(x, y);
+        else wCtx.lineTo(x, y);
+      }
+      wCtx.stroke();
+    }
+
+    async function deactivateSOS(skipRemoteResolve = false) {
+      sosActiveFlag = false;
+      if (window.PuyalHaptics) {
+        window.PuyalHaptics.stopStreaming();
+      }
+      userMicMuted = false;
+      hasPhysicalVideo = false;
+      hasPhysicalAudio = false;
+      httpFrameInFlight = false;
+      blobEncodeInFlight = false;
+      sosCommandViewers = 0;
+      sosWsLatencyMs = null;
+      clearTimeout(sosWsReconnectTimer);
+      clearInterval(sosWsPingInterval);
+
+      if (geoWatchStartedBySos) {
+        geoWatchStartedBySos = false;
+        stopLiveGeoWatch();
+      }
+
+      document.getElementById('sos-overlay').classList.add('hidden');
+      const video = document.getElementById('sos-video');
+      if (video) {
+        try { video.pause(); } catch (e) {}
+        video.srcObject = null;
+      }
+
+      stopFrameRelayTimers();
+
+      if (sosBroadcasterWs) {
+        try { sosBroadcasterWs.close(); } catch (e) {}
+        sosBroadcasterWs = null;
+      }
+
+      if (currentSosAlertId) {
+        const alertToResolve = currentSosAlertId;
+        currentSosAlertId = null;
+        if (!skipRemoteResolve) {
+          try {
+            await rapidSync.resolveSOS(alertToResolve);
+          } catch (e) {}
+        }
+      }
+
+      if (audioWorkletNode) {
+        try { audioWorkletNode.port.onmessage = null; audioWorkletNode.disconnect(); } catch (e) {}
+        audioWorkletNode = null;
+      }
+      if (audioWorkletUrl) {
+        try { URL.revokeObjectURL(audioWorkletUrl); } catch (e) {}
+        audioWorkletUrl = null;
+      }
+      if (audioProcessorNode) {
+        try { audioProcessorNode.disconnect(); } catch (e) {}
+        audioProcessorNode = null;
+      }
+      if (audioMuteGain) {
+        try { audioMuteGain.disconnect(); } catch (e) {}
+        audioMuteGain = null;
+      }
+      if (sosStream) {
+        sosStream.getTracks().forEach(t => t.stop());
+        sosStream = null;
+      }
+      if (audioContext) {
+        try { audioContext.close(); } catch (e) {}
+        audioContext = null;
+        audioAnalyser = null;
+      }
+      if (audioAnimFrame) {
+        cancelAnimationFrame(audioAnimFrame);
+        audioAnimFrame = null;
+      }
+
+      isSimulatedFeed = false;
+      if (!skipRemoteResolve) {
+        speakText('SOS Emergency session ended.', 'en');
+        showToast('SOS broadcast ended.', 'warning');
+      }
+    }
+
+    // ====================================================================
+    // CIVILIAN REAL-TIME EMERGENCY DISPATCH & ROUTE TRACKING MAP
+    // ====================================================================
+    async function initCivilianTrackingMap() {
+      if (civilianTrackingMap || googleCivilianMap) return civMapInitPromise;
+      if (civMapInitPromise) return civMapInitPromise;
+
+      const mapEl = document.getElementById('civilian-tracking-map');
+      if (!mapEl) return null;
+
+      civMapInitPromise = (async () => {
+        if (window.TacticalGoogleMap) {
+          googleCivilianMap = new window.TacticalGoogleMap('civilian-tracking-map', {
+            center: { lat: 13.0530, lng: 80.2650 },
+            zoom: 13,
+            gestureHandling: 'cooperative'
+          });
+          const ok = await googleCivilianMap.init();
+          if (ok) {
+            usingGoogleCivMap = true;
+            const attrEl = document.getElementById('civilian-map-attribution');
+            if (attrEl) attrEl.innerHTML = 'Google Maps Platform &bull; Routes &amp; Markers';
+            prefetchCivilianOfflineTiles(false);
+            return true;
+          }
+          googleCivilianMap = null;
+        }
+
+        if (typeof L !== 'undefined') {
+          civilianTrackingMap = L.map('civilian-tracking-map', {
+            center: [13.0530, 80.2650],
+            zoom: 13,
+            scrollWheelZoom: true
+          });
+
+          const tileUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+          const tileOpts = {
+            maxZoom: 19,
+            layerCacheId: 'osm',
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors'
+          };
+          const osmTileLayer = typeof window.createCachedLeafletTileLayer === 'function'
+            ? window.createCachedLeafletTileLayer(tileUrl, tileOpts).addTo(civilianTrackingMap)
+            : L.tileLayer(tileUrl, tileOpts).addTo(civilianTrackingMap);
+
+          if (window.attachOfflineMapFallback) {
+            window.attachOfflineMapFallback(civilianTrackingMap, osmTileLayer);
+          }
+
+          const attrEl = document.getElementById('civilian-map-attribution');
+          if (attrEl) {
+            attrEl.innerHTML = 'OpenStreetMap &bull; Leaflet IndexedDB Cache';
+          }
+
+          setTimeout(() => {
+            if (civilianTrackingMap) civilianTrackingMap.invalidateSize();
+            prefetchCivilianOfflineTiles(false);
+          }, 500);
+        }
+        return true;
+      })();
+
+      return civMapInitPromise;
+    }
+
+    async function updateCivTileCacheBadge() {
+      const countEl = document.getElementById('civ-tile-cache-count');
+      if (!countEl || !window.PuyalTileCache) return;
+      try {
+        const stats = await window.PuyalTileCache.getStats();
+        countEl.textContent = stats && stats.count > 0 ? `(${stats.count})` : '';
+      } catch (e) {}
+    }
+
+    window.addEventListener('puyal-tile-cache-updated', (ev) => {
+      const countEl = document.getElementById('civ-tile-cache-count');
+      if (countEl && ev && ev.detail) {
+        countEl.textContent = ev.detail.count > 0 ? `(${ev.detail.count})` : '';
+      }
+    });
+
+    async function prefetchCivilianOfflineTiles(manual = false) {
+      if (!window.PuyalTileCache) return;
+      await updateCivTileCacheBadge();
+      if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+        if (manual && typeof showToast === 'function') {
+          const stats = await window.PuyalTileCache.getStats();
+          showToast(`📴 Offline: Serving ${stats.count} cached map tiles from IndexedDB.`, 'info');
+        }
+        return;
+      }
+      const btn = document.getElementById('btn-cache-civ-tiles');
+      if (manual && btn) btn.disabled = true;
+      try {
+        const coords = window._currentCoords || { latitude: 13.0530, longitude: 80.2650 };
+        const res = await window.PuyalTileCache.prefetchCenterTiles(
+          Number(coords.latitude) || 13.0530,
+          Number(coords.longitude) || 80.2650,
+          {
+            zooms: manual ? [11, 12, 13, 14] : [12, 13],
+            radiusByZoom: manual ? { 11: 1, 12: 2, 13: 2, 14: 1 } : { 12: 1, 13: 1 },
+            maxTiles: manual ? 56 : 18
+          }
+        );
+        await updateCivTileCacheBadge();
+        if (manual && typeof showToast === 'function') {
+          showToast(`💾 Offline Map Ready: ${res.totalCached || 0} base tiles stored in IndexedDB (+${res.fetched} new).`, 'success');
+        }
+      } catch (e) {
+        if (manual && typeof showToast === 'function') {
+          showToast('Unable to cache map tiles right now.', 'warning');
+        }
+      } finally {
+        if (manual && btn) btn.disabled = false;
+      }
+    }
+
+    async function updateCivilianTrackingDisplay(team, incident) {
+      if (!team) return;
+      activeDispatchedTeam = team;
+      if (incident) activeDispatchedIncident = incident;
+
+      const trackingSection = document.getElementById('civilian-tracking-section');
+      if (trackingSection) trackingSection.style.display = 'block';
+
+      await initCivilianTrackingMap();
+
+      // Update telemetry stats
+      const teamNameEl = document.getElementById('tracking-team-name');
+      const teamCatEl = document.getElementById('tracking-team-cat');
+      const distEl = document.getElementById('tracking-dist-km');
+      const progressEl = document.getElementById('tracking-progress-pct');
+      const etaEl = document.getElementById('tracking-eta-mins');
+      const speedEl = document.getElementById('tracking-speed-kmh');
+      const incTitleEl = document.getElementById('tracking-incident-title');
+      const stnNameEl = document.getElementById('tracking-station-name');
+      const statusPill = document.getElementById('civilian-tracking-status-pill');
+
+      const isArrived = team.progress >= 100 || team.status === 'On Scene';
+      if (teamNameEl) teamNameEl.textContent = team.name || 'Metro Rapid EMS Alpha';
+      if (teamCatEl) teamCatEl.textContent = team.category || 'Medical Emergency';
+      if (distEl) distEl.textContent = isArrived ? '0.0 km (ARRIVED)' : `${team.remainingDistKm !== undefined ? team.remainingDistKm : 1.4} km`;
+      if (progressEl) progressEl.textContent = `${team.progress || 35}% Route Covered`;
+      if (etaEl) {
+        etaEl.textContent = isArrived ? 'On Site' : `~${team.etaMinutes !== undefined ? team.etaMinutes : 3} mins`;
+        etaEl.style.color = isArrived ? '#059669' : '#dc2626';
+      }
+      if (speedEl) speedEl.textContent = isArrived ? 'Deployed On Scene' : `Speed: ~${team.speedKmh || 52} km/h`;
+      if (incTitleEl && activeDispatchedIncident) incTitleEl.textContent = activeDispatchedIncident.title;
+      if (stnNameEl) stnNameEl.textContent = `Depot: ${team.stationName || 'Central Command Base'}`;
+
+      if (statusPill) {
+        if (isArrived) {
+          statusPill.className = 'team-status-pill status-avail';
+          statusPill.textContent = '✅ ON SCENE / ARRIVED';
+        } else {
+          statusPill.className = 'team-status-pill status-dispatched';
+          statusPill.textContent = '● EN ROUTE DISPATCH';
+        }
+      }
+
+      if (usingGoogleCivMap && googleCivilianMap) {
+        await googleCivilianMap.renderCivilianDispatchTracking(team, activeDispatchedIncident);
+        return;
+      }
+
+      if (!civilianTrackingMap || typeof L === 'undefined') return;
+
+      const vLat = team.latitude || 13.0530;
+      const vLon = team.longitude || 80.2650;
+      const oLat = team.originLatitude || 13.0610;
+      const oLon = team.originLongitude || 80.2490;
+      const tLat = team.targetLatitude || (activeDispatchedIncident && activeDispatchedIncident.latitude) || 13.0450;
+      const tLon = team.targetLongitude || (activeDispatchedIncident && activeDispatchedIncident.longitude) || 80.2824;
+
+      // 1. Station Marker
+      if (!civLayers.stationMarker) {
+        const stnIcon = L.divIcon({
+          className: 'custom-map-icon',
+          html: '<div class="map-pin-station" style="width:34px; height:34px; font-size:16px;">🏢</div>',
+          iconSize: [34, 34],
+          iconAnchor: [17, 17]
+        });
+        civLayers.stationMarker = L.marker([oLat, oLon], { icon: stnIcon })
+          .addTo(civilianTrackingMap)
+          .bindPopup(`<strong>🏢 Dispatch Depot:</strong> ${team.stationName || 'Central Command Base'}`);
+      }
+
+      // 2. Incident Site Marker & 500m Hazard Ring
+      if (!civLayers.incidentMarker) {
+        const incIcon = L.divIcon({
+          className: 'custom-map-icon',
+          html: '<div class="map-pin-civilian" style="width:38px; height:38px; font-size:18px;">📍</div>',
+          iconSize: [38, 38],
+          iconAnchor: [19, 19]
+        });
+        civLayers.incidentMarker = L.marker([tLat, tLon], { icon: incIcon })
+          .addTo(civilianTrackingMap)
+          .bindPopup(`<strong>🚨 Your Reported Incident Site</strong><br>${activeDispatchedIncident ? activeDispatchedIncident.title : 'Incident Location'}`);
+
+        civLayers.incidentPerimeter = L.circle([tLat, tLon], {
+          radius: 500,
+          color: '#dc2626',
+          fillColor: '#dc2626',
+          fillOpacity: 0.12,
+          weight: 1.5,
+          dashArray: '4, 4'
+        }).addTo(civilianTrackingMap);
+      }
+
+      // 3. Vehicle Marker with Radar Beacon
+      const vehIconHtml = `
+        <div class="map-vehicle-beacon" title="${team.name}">
+          <div class="beacon-ring"></div>
+          <div class="vehicle-core" style="width:36px; height:36px; font-size:16px;">
+            🚑
+          </div>
+        </div>
+      `;
+      const vIcon = L.divIcon({
+        className: 'custom-map-icon',
+        html: vehIconHtml,
+        iconSize: [40, 40],
+        iconAnchor: [20, 20]
+      });
+
+      if (!civLayers.vehicleMarker) {
+        civLayers.vehicleMarker = L.marker([vLat, vLon], { icon: vIcon })
+          .addTo(civilianTrackingMap)
+          .bindPopup(`<strong>🚑 ${team.name}</strong><br>Status: ${team.status}<br>Speed: ~${team.speedKmh || 52} km/h`);
+      } else {
+        civLayers.vehicleMarker.setLatLng([vLat, vLon]);
+        civLayers.vehicleMarker.setIcon(vIcon);
+      }
+
+      // 4. Traveled Route Polyline (Green Emerald)
+      const traveledPoints = [[oLat, oLon], [vLat, vLon]];
+      if (!civLayers.routeTraveled) {
+        civLayers.routeTraveled = L.polyline(traveledPoints, {
+          color: '#10b981',
+          weight: 5,
+          opacity: 0.85
+        }).addTo(civilianTrackingMap);
+      } else {
+        civLayers.routeTraveled.setLatLngs(traveledPoints);
+      }
+
+      // 5. Ahead Route Polyline (Red animated pulsing dash)
+      const aheadPoints = [[vLat, vLon], [tLat, tLon]];
+      if (!civLayers.routeAhead) {
+        civLayers.routeAhead = L.polyline(aheadPoints, {
+          color: '#dc2626',
+          weight: 5,
+          opacity: 0.95,
+          className: 'route-pulse-dash',
+          dashArray: '10, 10'
+        }).addTo(civilianTrackingMap);
+      } else {
+        civLayers.routeAhead.setLatLngs(aheadPoints);
+      }
+    }
+
+    async function checkCivilianDispatches() {
+      try {
+        const teams = await rapidSync.fetchTeams();
+        const dispatched = teams.find(t => t.status === 'Dispatched');
+        if (dispatched && userIncidents.length > 0) {
+          const matchedInc = userIncidents.find(i => String(i.id) === String(dispatched.assignedIncidentId)) || userIncidents[0];
+          if (matchedInc) {
+            updateCivilianTrackingDisplay(dispatched, matchedInc);
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to load teams for civilian tracking:', e);
+      }
+    }
+
+    async function triggerCivilianDemoDispatch() {
+      try {
+        showToast('🚀 Launching real-time emergency dispatch simulation...', 'info');
+        const res = await fetch('/api/demo/simulate-dispatch', { method: 'POST' });
+        const data = await res.json();
+        if (data.success && data.team) {
+          const matchedInc = userIncidents.find(i => String(i.id) === String(data.team.assignedIncidentId)) || userIncidents[0];
+          if (matchedInc) {
+            await updateCivilianTrackingDisplay(data.team, matchedInc);
+          }
+          if (usingGoogleCivMap && googleCivilianMap && data.team.latitude && data.team.longitude) {
+            googleCivilianMap.flyTo(data.team.latitude, data.team.longitude, 14);
+          } else if (civilianTrackingMap && data.team.latitude && data.team.longitude) {
+            civilianTrackingMap.flyTo([data.team.latitude, data.team.longitude], 14, { duration: 1.2 });
+          }
+          showToast(`🚑 Dispatched ${data.team.name}! En route telemetry live.`, 'success');
+          speakText(`Emergency dispatch simulation initiated. Responders are en route to your location.`, 'en');
+        } else {
+          showToast(data.error || 'Submit a civilian report first to simulate dispatch.', 'warning');
+        }
+      } catch (e) {
+        showToast('Failed to start dispatch simulation: ' + e.message, 'error');
+      }
+    }
+
+    // ====================================================================
+    // REAL-TIME EVENT LISTENER (Status updates from Admin)
+    // ====================================================================
+    rapidSync.on('INCIDENT_UPDATED', (updated) => {
+      showToast(`📢 Dispatch status update: "${updated.title}" is now ${updated.status}`, 'info');
+      speakText(`Incident status updated to ${updated.status}`, 'en');
+      loadUserIncidents();
+    });
+
+    rapidSync.on('INCIDENT_CREATED', () => {
+      loadUserIncidents();
+    });
+
+    rapidSync.on('TEAM_ASSIGNED', (data) => {
+      loadUserIncidents();
+      if (data && data.incident) {
+        showToast(`🚑 Emergency Team ${data.team.name} dispatched to "${data.incident.title}"!`, 'info');
+        updateCivilianTrackingDisplay(data.team, data.incident);
+      }
+    });
+
+    rapidSync.on('TEAM_MOVEMENT_UPDATED', (data) => {
+      if (data && data.team) {
+        const matchedInc = activeDispatchedIncident || userIncidents.find(i => String(i.id) === String(data.team.assignedIncidentId)) || {
+          title: 'Structural Risk & Water Surge Alert',
+          latitude: 13.0450,
+          longitude: 80.2824
+        };
+        updateCivilianTrackingDisplay(data.team, matchedInc);
+      }
+    });
+
+    rapidSync.on('SOS_RESOLVED', (data) => {
+      if (sosActiveFlag && currentSosAlertId && data && String(currentSosAlertId) === String(data.id)) {
+        showToast('✅ Admin Command has dispatched responders & marked your SOS as resolved.', 'success');
+        speakText('Emergency responders have been dispatched to your location.', 'en');
+        deactivateSOS(true);
+      }
+      loadUserIncidents();
+    });
+
+    rapidSync.on('SOS_DEACTIVATED', (data) => {
+      if (sosActiveFlag && currentSosAlertId && data && String(currentSosAlertId) === String(data.id)) {
+        deactivateSOS(true);
+      }
+    });
+
+    rapidSync.on('OFFLINE_SYNCED', (info) => {
+      const count = info && info.syncedCount ? info.syncedCount : 1;
+      showToast(`✅ Reconnected! Synced ${count} queued offline emergency record(s) to Command Center.`, 'success');
+      loadUserIncidents();
+    });
+
+    window.addEventListener('online', () => {
+      if (sosActiveFlag) {
+        updateBroadcasterStatusBadge();
+        connectSosBroadcasterWs();
+      }
+    });
+    window.addEventListener('offline', () => {
+      if (sosActiveFlag) {
+        updateBroadcasterStatusBadge();
+      }
+    });
+
+    // Bind SOS button event listener with Vibration API Haptic Feedback Service + support deep-links
+    window.addEventListener('DOMContentLoaded', () => {
+      const sosLaunchBtn = document.getElementById('card-sos-launch');
+      if (sosLaunchBtn) {
+        if (window.PuyalHaptics && typeof window.PuyalHaptics.attachSosButtonListener === 'function') {
+          window.PuyalHaptics.attachSosButtonListener(sosLaunchBtn, () => activateSOS());
+        } else {
+          sosLaunchBtn.addEventListener('click', () => activateSOS());
+        }
+      }
+
+      const params = new URLSearchParams(window.location.search);
+      const action = (params.get('action') || '').toLowerCase();
+      if (action === 'sos') {
+        setTimeout(() => activateSOS(), 250);
+      } else if (action === 'voice') {
+        setTimeout(() => openVoiceReport(), 200);
+      } else if (action === 'report') {
+        setTimeout(() => focusCivilianReportForm(), 200);
+      } else if (action === 'track') {
+        setTimeout(() => focusCivilianTracking(), 250);
+      }
+    });
+
+    // ====================================================================
+    // GOOGLE MAPS GROUNDING — NEARBY HOSPITALS & SHELTERS (Gemini 4 Hydrogen)
+    // ====================================================================
+    function escapeMapsHtml(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function renderMapsGroundingOutput(container, data, fromCache) {
+      if (!container) return;
+      const summaryHtml = escapeMapsHtml(data.text || 'Verified Google Maps results')
+        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+        .replace(/\n/g, '<br>');
+
+      const places = Array.isArray(data.places) ? data.places : [];
+      const placesHtml = places.length > 0
+        ? `<div style="margin-top: 10px; display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 8px;">
+            ${places.map((p) => `
+              <a href="${escapeMapsHtml(p.uri)}" target="_blank" rel="noopener noreferrer"
+                 style="display: block; background: #ffffff; border: 1px solid #bae6fd; border-left: 4px solid #0284c7; border-radius: 8px; padding: 9px 11px; text-decoration: none; color: #0f172a;">
+                <div style="font-size: 12px; font-weight: 800; color: #0369a1;">📍 ${escapeMapsHtml(p.title)} ↗</div>
+                ${Array.isArray(p.reviewSnippets) && p.reviewSnippets[0]
+                  ? `<div style="font-size: 11px; color: #475569; margin-top: 4px; line-height: 1.35;">“${escapeMapsHtml(p.reviewSnippets[0])}”</div>`
+                  : '<div style="font-size: 11px; color: #64748b; margin-top: 3px;">Open directions in Google Maps</div>'}
+              </a>
+            `).join('')}
+          </div>`
+        : '';
+
+      const coordsText = data.coordinates
+        ? `${Number(data.coordinates.latitude).toFixed(4)}, ${Number(data.coordinates.longitude).toFixed(4)}`
+        : 'Current Sector';
+
+      container.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 8px;">
+          <span style="font-size: 11px; font-weight: 800; color: #0369a1;">
+            🗺️ Grounded via Google Maps (${escapeMapsHtml(data.model || 'gemini-4-hydrogen')}) &bull; GPS: ${coordsText}
+          </span>
+          ${fromCache ? '<span style="font-size: 10px; font-weight: 800; background: #fef3c7; color: #92400e; padding: 2px 6px; border-radius: 4px;">OFFLINE CACHED</span>' : ''}
+        </div>
+        <div style="font-size: 12px; line-height: 1.55; color: #1e293b;">${summaryHtml}</div>
+        ${placesHtml}
+        <div style="font-size: 10px; color: #64748b; margin-top: 8px;">Source: Google Maps Grounding · Tap any location link to open Google Maps</div>
+      `;
+    }
+
+    async function searchCivilianMapsGrounding(customQuery) {
+      const inputEl = document.getElementById('civ-maps-query');
+      const resultsEl = document.getElementById('civ-maps-grounding-results');
+      if (customQuery && inputEl) inputEl.value = customQuery;
+      const query = (inputEl ? inputEl.value : customQuery || '').trim() || 'nearest emergency hospitals and safe shelters';
+      if (!resultsEl) return;
+
+      const coords = window._currentCoords || (window.getCurrentOrCachedCoords ? window.getCurrentOrCachedCoords() : { latitude: 13.0604, longitude: 80.2496 });
+
+      if (typeof navigator !== 'undefined' && !navigator.onLine) {
+        try {
+          const cachedRaw = localStorage.getItem('puyal_maps_grounding_user_cache');
+          if (cachedRaw) {
+            const cachedData = JSON.parse(cachedRaw);
+            renderMapsGroundingOutput(resultsEl, cachedData, true);
+            return;
+          }
+        } catch (e) {}
+        resultsEl.innerHTML = `<div style="color: #92400e; font-weight: 700; font-size: 12px;">📴 Offline Mode: Live Google Maps Grounding requires connectivity, and no prior search is cached yet. Use the Offline Tactical Map above or dial <strong>108 / 112</strong>.</div>`;
+        return;
+      }
+
+      resultsEl.innerHTML = `<div style="font-size: 12px; color: #0369a1; font-weight: 700;">⏳ Querying Google Maps via Gemini 4 Hydrogen near ${Number(coords.latitude).toFixed(4)}, ${Number(coords.longitude).toFixed(4)}...</div>`;
+
+      try {
+        const res = await fetch('/api/gemini/maps-grounding', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            query,
+            latitude: coords.latitude,
+            longitude: coords.longitude,
+            role: 'civilian'
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || 'Maps Grounding query failed');
+        }
+        try {
+          localStorage.setItem('puyal_maps_grounding_user_cache', JSON.stringify(data));
+        } catch (e) {}
+        renderMapsGroundingOutput(resultsEl, data, false);
+      } catch (err) {
+        resultsEl.innerHTML = `<div style="color: #dc2626; font-weight: 700; font-size: 12px;">⚠️ ${escapeMapsHtml(err.message)}</div>`;
+      }
+    }
+  </script>
+
+  <!-- Offline QR Generator, Haptic Feedback & Incident Dispatch Card -->
+  <script src="js/qrcode.min.js"></script>
+  <script src="js/incident-qr.js"></script>
+  <script src="js/haptic-feedback.js"></script>
+  <!-- Google Maps Platform Manager & Gemini AI Assistant Suite -->
+  <script src="js/google-maps-manager.js"></script>
+  <script src="js/gemini-assistant.js"></script>
+  <script src="js/pwa-offline.js"></script>
+</body>
+</html>

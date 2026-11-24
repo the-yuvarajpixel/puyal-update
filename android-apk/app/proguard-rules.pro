@@ -1,0 +1,2 @@
+-keep class com.puyal.command.MainActivity$PuyalAndroidBridge { *; }
+-keepattributes JavascriptInterface
